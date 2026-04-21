@@ -2544,11 +2544,10 @@
         show('menu');
       }, 'btnOpenMenu');
 
-      wire(els.logoutBtn, () => {
-        const cleanName = String(els.startMediatorInput?.value || '').trim().replace(/ +/g, ' ');
+      wire(els.logoutBtn, async () => {
         const storage = safeLocalStorage();
         if (typeof window.saveCurrentMediatorSession === 'function') {
-          window.saveCurrentMediatorSession();
+          await window.saveCurrentMediatorSession();
         }
         startDate = null;
         stationsCount = 4;
@@ -3095,19 +3094,19 @@
           els.phoneAssignedTo.value = state.members.includes(previousAssigned) ? previousAssigned : clean;
         }
       }
-      window.saveCurrentMediatorSession = function() {
-        saveAppState();
+      window.saveCurrentMediatorSession = async function() {
+        await saveAppState();
       };
-      window.setActiveMediator = function(name) {
+      window.setActiveMediator = async function(name) {
         const nextName = String(name || '').trim().split(' ').filter(Boolean).join(' ') || 'Médiateur';
         const previousName = getCurrentMediatorSessionName();
         if (previousName && previousName !== 'Médiateur' && previousName !== nextName) {
-          saveAppState();
+          await saveAppState();
         }
         const storage = safeLocalStorage();
         if (storage) storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, nextName);
         applyActiveMediator(nextName);
-        loadMediatorSession(nextName);
+        return await loadMediatorSession(nextName);
       };
       window.openQrImportShortcut = function() {
         clearQrStatus();
@@ -3174,7 +3173,7 @@
         if (target) target.classList.add('active');
       }
       function currentPauseEnd() { return els.pauseStart.value ? addMinutes(els.pauseStart.value, PAUSE_DURATION_MIN) : ''; }
-      function saveAppState() {
+      async function saveAppState() {
         const storage = safeLocalStorage();
         if (!storage) return;
         const payload = {
@@ -3203,7 +3202,7 @@
             activeMediator,
             savedAt: Date.now()
           }));
-          void writeSessionRecord(activeMediator, payload);
+          await writeSessionRecord(activeMediator, payload);
         }
       }
       function clearSavedState(name) {
@@ -4034,7 +4033,7 @@
 
         return parsed;
       }
-      function applyParsedQrData(parsed) {
+      async function applyParsedQrData(parsed) {
         if (parsed.serviceDate) {
           els.serviceDate.value = parsed.serviceDate;
         }
@@ -4091,7 +4090,7 @@
         resetMissionForm();
         updateMissionFields();
         renderMissions();
-        saveAppState();
+        await saveAppState();
       }
       function buildServiceExportText() {
         const dateFr = els.serviceDate.value ? frDate(new Date(els.serviceDate.value + 'T00:00:00')) : '--/--/----';
@@ -4669,10 +4668,10 @@
         };
       }
       if (els.qrText) els.qrText.oninput = () => {};
-      els.applyQrBtn.onclick = () => {
+      els.applyQrBtn.onclick = async () => {
         try {
           const parsed = parseQrImportText(els.qrText.value);
-          applyParsedQrData(parsed);
+          await applyParsedQrData(parsed);
           if (els.qrText) els.qrText.value = '';
           setQrStatus('Le texte QR a bien été appliqué au suivi de mission.', 'success');
         } catch (error) {
