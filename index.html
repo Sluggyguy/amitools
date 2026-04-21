@@ -1,0 +1,4864 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AMISTAR Tools</title>
+  <meta name="theme-color" content="#ffffff" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      background: #f6f7fb;
+      color: #111;
+      overflow: hidden;
+    }
+
+    .phone {
+      width: 100vw;
+      width: 100dvw;
+      height: 100vh;
+      height: 100dvh;
+      position: relative;
+      overflow: hidden;
+      border-radius: 0;
+      background: #f6f7fb;
+      box-shadow: none;
+    }
+
+    @media (min-width: 700px) {
+      body {
+        padding: 24px;
+        align-items: flex-start;
+        background: #e9edf5;
+      }
+
+      .phone {
+        width: min(420px, 100vw);
+        height: auto;
+        aspect-ratio: 9 / 16;
+        border-radius: 28px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      }
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      padding: 20px;
+      padding-top: max(20px, env(safe-area-inset-top));
+      padding-right: max(20px, env(safe-area-inset-right));
+      padding-bottom: max(34px, env(safe-area-inset-bottom));
+      padding-left: max(20px, env(safe-area-inset-left));
+    }
+
+    .screen.active { display: flex; }
+
+    .hidden { display: none !important; }
+
+    .title {
+      font-weight: 900;
+      font-size: 22px;
+      text-align: center;
+      letter-spacing: .22em;
+      color: #111;
+    }
+
+    .title .calc {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: #000;
+      color: #fff;
+      font-size: 18px;
+      letter-spacing: .18em;
+    }
+
+    .centerBlock {
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .homeButton {
+      min-width: 70%;
+      font-size: 20px;
+      letter-spacing: .12em;
+      border-radius: 24px;
+      padding: 22px 28px;
+    }
+
+    .startActions {
+      width: min(82vw, 320px);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .startMainBtn {
+      width: 100%;
+      flex: 0 0 auto;
+    }
+
+    .startQrBtn {
+      width: 112px;
+      min-width: 112px;
+      min-height: 112px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 30px;
+    }
+
+    .startQrBtn .ps-qrIconImg {
+      width: 54px;
+      height: 54px;
+      flex: 0 0 54px;
+      border-radius: 8px;
+    }
+
+    .btn {
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: linear-gradient(180deg,#111111 0%, #1b1b1d 100%);
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: .04em;
+      cursor: pointer;
+      box-shadow: 0 10px 22px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.06);
+      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: 0 8px 18px rgba(0,0,0,.10), inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .btn.secondary {
+      background: linear-gradient(180deg,#ffffff 0%, #eef2f8 100%);
+      color: #111;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 8px 18px rgba(16,24,40,.08), inset 0 1px 0 rgba(255,255,255,.95);
+    }
+
+    .btn.full { width: 100%; }
+
+    .btn.primaryAction {
+      min-height: 56px;
+      border-radius: 20px;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      padding: 14px 16px;
+    }
+
+    .btn.footerBtn {
+      min-height: 52px;
+      border-radius: 18px;
+      font-size: 15px;
+    }
+
+    .iconBtn {
+      min-width: 48px;
+      min-height: 48px;
+      padding: 0 14px;
+      border-radius: 16px;
+    }
+
+    .screenHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .screenTitle {
+      font-size: 18px;
+      font-weight: 1000;
+      letter-spacing: .04em;
+    }
+
+    .menuTopSpacer { height: 10px; }
+
+    .menuTopBar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .weatherWidget {
+      min-height: 40px;
+      max-width: 170px;
+      padding: 0 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(180deg,#ffffff 0%, #eef2f8 100%);
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 8px 18px rgba(16,24,40,.08), inset 0 1px 0 rgba(255,255,255,.95);
+      color: #111;
+      overflow: hidden;
+      flex: 0 1 auto;
+    }
+
+    .weatherIcon {
+      font-size: 16px;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .weatherText {
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .offBtn {
+      min-width: 150px;
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      letter-spacing: .02em;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .offBtnIcon {
+      width: 18px;
+      height: 18px;
+      display: block;
+      flex: 0 0 18px;
+    }
+
+    .menuLayout {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      flex: 1;
+      min-height: 0;
+      padding-top: 4px;
+    }
+
+    .menuSection {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .menuSectionHeader {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .menuSectionTitle {
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: #6f7785;
+    }
+
+    .menuDivider {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(17,17,17,.12), rgba(17,17,17,0));
+    }
+
+    .primaryToolsGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .primaryToolTile {
+      min-height: 168px;
+      aspect-ratio: auto;
+      padding: 18px 16px;
+      align-items: flex-start;
+      justify-content: space-between;
+      text-align: left;
+      border-radius: 26px;
+    }
+
+    .primaryToolTile .tileIcon {
+      margin: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      font-size: 20px;
+    }
+
+    .primaryToolTile .tileLabel {
+      font-size: 15px;
+      line-height: 1.25;
+      letter-spacing: .03em;
+    }
+
+    .primaryToolTile .tileHint {
+      font-size: 10px;
+      line-height: 1.25;
+      letter-spacing: .05em;
+      margin-top: 8px;
+    }
+
+    .toolsGrid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      padding: 0;
+      align-content: start;
+      justify-items: stretch;
+    }
+
+    .infoToolTile {
+      min-height: 118px;
+      aspect-ratio: auto;
+      padding: 14px 12px;
+      border-radius: 20px;
+    }
+
+    .infoToolTile .tileLabel {
+      font-size: 11px;
+      line-height: 1.25;
+      letter-spacing: .03em;
+    }
+
+    .infoToolTile .tileHint {
+      margin-top: 5px;
+      font-size: 8px;
+    }
+
+    .toolTile:active { transform: translateY(0); }
+
+    .toolTile > span {
+      position: relative;
+      z-index: 1;
+      display: block;
+      width: 100%;
+    }
+
+    .toolTile.primary {
+      background: linear-gradient(180deg,#111111 0%, #1b1b1d 100%);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.05);
+      box-shadow: 0 14px 28px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .tileIcon {
+      position: relative;
+      z-index: 1;
+      width: 42px;
+      height: 42px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: #111;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      box-shadow: 0 8px 18px rgba(0,0,0,.18);
+    }
+
+    .toolTile.primary .tileIcon {
+      background: #fff;
+      color: #111;
+    }
+
+    .tileLabel {
+      display: block;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.35;
+      letter-spacing: .04em;
+      overflow-wrap: anywhere;
+      text-wrap: balance;
+    }
+
+    .tileHint {
+      display: block;
+      margin-top: 6px;
+      font-size: 9px;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #6f7785;
+    }
+
+    .toolTile.primary .tileHint {
+      color: rgba(255,255,255,.72);
+    }
+
+    .menuHomeWrap {
+      margin-top: auto;
+      padding-bottom: 28px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .homeIconBtn {
+      width: 58px;
+      height: 58px;
+      padding: 0;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      line-height: 1;
+      box-shadow: 0 12px 24px rgba(16,24,40,.16), inset 0 1px 0 rgba(255,255,255,.95);
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.08);
+    }
+
+    .spacer { flex: 1; }
+    .setupActions { margin-top: 18px; padding: 0 2px 26px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .label { font-size: 12px; color: #6a7380; font-weight: 700; }
+
+    input, select {
+      border: 1px solid #e6e9f2;
+      border-radius: 14px;
+      padding: 12px;
+      font-weight: 800;
+      background: #fff;
+      outline: none;
+    }
+
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+    .pill {
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 14px;
+      background: #eef1f8;
+    }
+
+    .pill button {
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 900;
+    }
+
+    .pill button.active {
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px 12px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .k { color: #6a7380; font-weight: 800; font-size: 12px; }
+    .v { font-weight: 1000; }
+
+    ul { margin: 10px 0 0; padding-left: 18px; }
+    li { margin: 7px 0; font-weight: 900; font-size: 14px; line-height: 1.25; }
+
+    .footerActions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .followBackBtn.hidden {
+      display: none !important;
+    }
+    .footerActions .btn { flex: 1; }
+
+    .toggle {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f7f8fc;
+      border: 1px solid #e9ecf5;
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+
+    .toggle input { width: 18px; height: 18px; }
+    .toggle .ttext { display: flex; flex-direction: column; gap: 2px; }
+    .toggle .ttext .main { font-weight: 900; font-size: 13px; color: #111; }
+
+    .agenciesWrap,
+    .metrosWrap,
+    .welcomeWrap,
+    .zonesWrap {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow: auto;
+      padding-right: 2px;
+      padding-bottom: 70px;
+    }
+
+    .agencyCard,
+    .zoneCard,
+    .metroCard,
+    .welcomeSchedule,
+    .welcomeInfoCard {
+      background: linear-gradient(180deg,#ffffff 0%, #f3f5fa 100%);
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 22px;
+      padding: 14px;
+      box-shadow: 0 10px 24px rgba(16,24,40,.08);
+    }
+
+    .agencyTop,
+    .zoneHeader,
+    .metroTop {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .agencyName,
+    .zoneTitle,
+    .metroTitle {
+      font-size: 18px;
+      font-weight: 1000;
+      line-height: 1.15;
+    }
+
+    .agencyTag,
+    .zoneBadge,
+    .metroBadge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 12px;
+      background: #111;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 1000;
+      box-shadow: 0 8px 16px rgba(0,0,0,.14);
+    }
+
+    .agencyTag { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+    .metroBadge.a { background: #d93a3a; }
+    .metroBadge.b { background: #22a55a; }
+
+    .agencyLine,
+    .metroInfo {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .agencyKey,
+    .metroKey {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #7a8391;
+    }
+
+    .agencyVal,
+    .metroVal,
+    .zoneLine {
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.38;
+      color: #111;
+    }
+
+    .agencyFootnote,
+    .metroNote,
+    .zoneIntro,
+    .welcomeCaption,
+    .metroAccess {
+      background: #f7f8fc;
+      border: 1px solid #e7ebf4;
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #4c5563;
+      font-weight: 800;
+    }
+
+    .metroGrid,
+    .zoneList,
+    .welcomeInfoGrid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .metroInfo,
+    .zoneItem {
+      background: #fff;
+      border: 1px solid #e7ebf4;
+      border-radius: 16px;
+      padding: 12px 13px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    .zoneLine strong {
+      display: inline-block;
+      min-width: 34px;
+      font-weight: 1000;
+    }
+
+    .zoneCard.z1 { border-left: 8px solid #4f7cff; }
+    .zoneCard.z2 { border-left: 8px solid #5bbf7a; }
+    .zoneCard.z3 { border-left: 8px solid #f2a23e; }
+    .zoneCard.z4 { border-left: 8px solid #d96b8d; }
+
+    .welcomeTable {
+      width: 100%;
+      border-collapse: collapse;
+      border-spacing: 0;
+      table-layout: fixed;
+      border-radius: 0;
+      overflow: visible;
+      background: #fff;
+      box-shadow: none;
+    }
+
+    .welcomeTable th,
+    .welcomeTable td {
+      border: 3px solid #111;
+      padding: 12px 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .welcomeTable th {
+      background: linear-gradient(180deg,#f07bb1 0%, #ea6fa8 100%);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 1000;
+      line-height: 1.15;
+    }
+
+    .welcomeTable td {
+      background: #fbfbfd;
+      color: #111;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .welcomeTable td.rdv {
+      background: linear-gradient(180deg,#c8efd9 0%, #b6e6cb 100%);
+    }
+
+    .welcomeTable td.closed {
+      background: linear-gradient(180deg,#b7b7ba 0%, #a9a9ad 100%);
+      color: #111;
+    }
+
+    .welcomeInfoLine {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .welcomeIcon {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: #eef2fb;
+      color: #5b84ee;
+      font-size: 17px;
+      font-weight: 1000;
+      border: 1px solid rgba(91,132,238,.14);
+    }
+
+    .welcomeText {
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.35;
+      color: #364152;
+    }
+
+    .signature {
+      position: absolute;
+      bottom: max(6px, env(safe-area-inset-bottom));
+      width: 100%;
+      text-align: center;
+      font-size: 11px;
+      color: #777;
+      font-weight: 600;
+      pointer-events: none;
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      opacity: 0;
+      pointer-events: none;
+      transition: .18s;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(17,17,17,.92);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .toast.show { opacity: 1; }
+
+    /* Outil prise de service scoped */
+    .ps-screen {
+      overflow: hidden;
+      background: #eef1f7;
+      padding-bottom: 18px;
+    }
+
+    .ps-shell {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 100%;
+      height: 100%;
+    }
+
+    .ps-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .ps-header-top {
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .ps-topRight {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .ps-titleBox h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .ps-titleBox p {
+      margin: 6px 0 0;
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .ps-clockBox {
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid #d9deea;
+      padding: 9px 11px;
+      min-width: 98px;
+      text-align: center;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, .06);
+    }
+
+    .ps-clockBox .ps-time {
+      font-size: 22px;
+      font-weight: 1000;
+      line-height: 1;
+    }
+
+    .ps-clockBox .ps-date {
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #6b7280;
+    }
+
+    .ps-card {
+      background: #ffffff;
+      border: 1px solid #d9deea;
+      border-radius: 20px;
+      padding: 12px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, .06);
+    }
+
+    .ps-sectionTitle {
+      font-size: 14px;
+      font-weight: 1000;
+      margin: 0 0 10px;
+    }
+
+    .ps-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .ps-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .ps-field.ps-full { grid-column: 1 / -1; }
+
+    .ps-label {
+      font-size: 10px;
+      color: #6b7280;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .ps-screen input,
+    .ps-screen select {
+      width: 100%;
+      border: 1px solid #d9deea;
+      background: #fff;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 800;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .ps-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .ps-btn {
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 15px;
+      padding: 10px 12px;
+      background: linear-gradient(180deg, #111 0%, #1e1f22 100%);
+      color: #fff;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(0,0,0,.13);
+    }
+
+    .ps-btn.ps-secondary {
+      background: linear-gradient(180deg, #fff 0%, #f3f5fa 100%);
+      color: #111827;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, .06);
+    }
+
+    .ps-btn.ps-danger {
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .ps-btn.ps-small {
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .ps-scanHighlightBtn.ps-btn.ps-small {
+      font-size: inherit;
+    }
+
+    #psScanQrBtn.ps-scanHighlightBtn {
+      font-size: 23px;
+      font-weight: 1000;
+      line-height: 1;
+    }
+
+    #psToggleEditBtn {
+      min-width: 150px;
+    }
+
+    .ps-qrIconBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 84px;
+    }
+
+    .ps-qrIconImg {
+      width: 16px;
+      height: 16px;
+      display: block;
+      object-fit: contain;
+      flex: 0 0 16px;
+      border-radius: 3px;
+    }
+
+    .ps-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .ps-tabBtn {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .ps-tabBtn.ps-active {
+      background: linear-gradient(180deg, #111 0%, #1e1f22 100%);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(0,0,0,.13);
+    }
+
+    .ps-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .ps-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 999px;
+      padding: 7px 9px;
+      background: #f3f6fb;
+      border: 1px solid #d9deea;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .ps-chip button {
+      border: 0;
+      background: transparent;
+      color: #6b7280;
+      cursor: pointer;
+      font-weight: 1000;
+      font-size: 14px;
+      padding: 0;
+    }
+
+    .ps-hint {
+      font-size: 11px;
+      color: #6b7280;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .ps-hidden { display: none !important; }
+
+    .ps-stats {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .ps-stat {
+      background: #f5f7fb;
+      border: 1px solid #d9deea;
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 10px;
+      font-weight: 900;
+      color: #6b7280;
+    }
+
+    .ps-toolScreen {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+      flex: 1;
+    }
+
+    #psScreenForm {
+      overflow-y: auto;
+      padding-right: 2px;
+      padding-bottom: 180px;
+    }
+
+    .ps-toolScreen.ps-active { display: flex; }
+
+    .ps-topActions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #psScreenFollow .ps-topActions {
+      justify-content: center;
+    }
+
+    .ps-topActionsRight {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .ps-qrScreen {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .ps-qrScreen.ps-active {
+      display: flex;
+    }
+
+    .ps-qrHelp {
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.45;
+      color: #4b5563;
+      background: #f7f8fc;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .ps-qrActions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+      align-items: center;
+    }
+
+    .ps-qrActions .ps-btn {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .ps-qrHeaderTitle {
+      font-size: 14px;
+      font-weight: 1000;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .ps-qrHeaderSpacer {
+      flex: 1;
+    }
+
+    .ps-scanHighlightBtn {
+      min-width: 116px;
+      min-height: 42px;
+      padding: 10px 18px;
+      border-radius: 14px;
+      font-size: 23px;
+      font-weight: 1000;
+      letter-spacing: .04em;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 20px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+
+    .ps-scanHeaderActions {
+      width: auto !important;
+      justify-content: center !important;
+      gap: 10px;
+    }
+
+    .ps-qrStatus {
+      font-size: 12px;
+      font-weight: 900;
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: none;
+    }
+
+    .ps-qrStatus.show {
+      display: block;
+    }
+
+    .ps-qrStatus.success {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #166534;
+    }
+
+    .ps-qrStatus.error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+
+    .ps-hiddenFileInput {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .ps-liveScanWrap {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .ps-liveScanWrap.ps-active {
+      display: flex;
+    }
+
+    .ps-liveScanOverlay {
+      position: absolute;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)) 16px;
+      background: rgba(15, 23, 42, .96);
+      border-radius: inherit;
+    }
+
+    .ps-liveScanOverlay.ps-active {
+      display: flex;
+    }
+
+    .ps-liveScanTopBar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      color: #fff;
+    }
+
+    .ps-liveScanTitle {
+      font-size: 18px;
+      font-weight: 1000;
+      line-height: 1.15;
+    }
+
+    .ps-liveScanTopHint {
+      margin-top: 4px;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+      color: rgba(255,255,255,.82);
+    }
+
+    .ps-liveScanViewport {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      min-height: 300px;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #111827;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 16px 32px rgba(0,0,0,.28);
+    }
+
+    .ps-liveScanVideo {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .ps-liveScanFrame {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: min(62vw, 260px);
+      height: min(62vw, 260px);
+      transform: translate(-50%, -50%);
+      border: 3px solid rgba(255,255,255,.94);
+      border-radius: 24px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,.20);
+      pointer-events: none;
+    }
+
+    .ps-liveScanHint {
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(255,255,255,.88);
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .ps-missions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      min-height: 180px;
+      max-height: none;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .ps-followMission {
+      border-radius: 16px;
+      border: 1px solid #d9deea;
+      padding: 10px;
+      background: #fff;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, .05);
+    }
+
+    .ps-followMission.ps-pauseMission {
+      background: linear-gradient(180deg, #fff5da 0%, #ffe8b8 100%);
+      border-color: #efca73;
+    }
+
+    .ps-followMission.ps-rdsMission {
+      background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+      border-color: #93c5fd;
+    }
+
+    .ps-followMission.ps-sncfMission {
+      background: linear-gradient(180deg, #f7f2ff 0%, #efe7ff 100%);
+      border-color: #c4b5fd;
+    }
+
+    .ps-followMission.ps-current {
+      box-shadow: 0 0 0 3px rgba(57, 255, 20, 0.95), 0 0 14px rgba(57, 255, 20, 0.45), 0 6px 14px rgba(15, 23, 42, .05);
+    }
+
+    .ps-followMission.ps-past {
+      background: linear-gradient(180deg, #f2f4f7 0%, #e5e7eb 100%);
+      border-color: #cbd5e1;
+      box-shadow: none;
+    }
+
+    .ps-followMission.ps-past .ps-followTitle,
+    .ps-followMission.ps-past .ps-followSub,
+    .ps-followMission.ps-past .ps-followTime {
+      color: #6b7280;
+    }
+
+    .ps-followRow {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .ps-followTime {
+      font-size: 14px;
+      font-weight: 1000;
+      line-height: 1.15;
+    }
+
+    .ps-followMain { min-width: 0; }
+
+    .ps-followTitle {
+      font-size: 13px;
+      font-weight: 1000;
+      line-height: 1.2;
+    }
+
+    .ps-followSub {
+      margin-top: 3px;
+      font-size: 11px;
+      color: #6b7280;
+      font-weight: 800;
+      line-height: 1.25;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .ps-inlineAction {
+      margin-top: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border-radius: 999px;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .ps-infoModal {
+      position: absolute;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, .46);
+    }
+
+    .ps-infoModal.ps-active {
+      display: flex;
+    }
+
+    .ps-infoModalCard {
+      width: min(100%, 320px);
+      background: #fff;
+      border: 1px solid #d9deea;
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, .20);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .ps-infoModalTop {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .ps-infoModalTitle {
+      font-size: 15px;
+      font-weight: 1000;
+      line-height: 1.2;
+      color: #111827;
+    }
+
+    .ps-infoModalBody {
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.45;
+      color: #475569;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 12px;
+      white-space: pre-wrap;
+    }
+
+    .ps-infoModalActions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .ps-emptyState {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px dashed #d9deea;
+      background: #f7f8fc;
+      color: #6b7280;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .ps-editModeNote {
+      font-size: 11px;
+      color: #6b7280;
+      font-weight: 800;
+      text-align: center;
+      margin-top: 6px;
+    }
+
+    .ps-footerNote {
+      display: none;
+    }
+
+    .ps-compactCheck {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0;
+      margin: 0;
+      font-size: 12px;
+      font-weight: 900;
+      color: #111827;
+      background: transparent;
+      border: 0;
+      white-space: nowrap;
+    }
+
+    .ps-compactCheck input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      flex: 0 0 16px;
+    }
+
+    .ps-compactCheck span {
+      line-height: 1;
+    }
+
+    .ps-commentToggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 900;
+      color: #111827;
+    }
+
+    .ps-commentToggle input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      flex: 0 0 16px;
+    }
+
+    .ps-commentBox {
+      margin-top: 10px;
+    }
+
+    .ps-commentActions {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .ps-followComment {
+      margin-top: 2px;
+      border-radius: 16px;
+      border: 1px solid #d9deea;
+      padding: 12px;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+      box-shadow: 0 6px 14px rgba(15, 23, 42, .05);
+    }
+
+    .ps-followCommentTitle {
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    .ps-followCommentText {
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.4;
+      color: #111827;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .ps-screen textarea {
+      width: 100%;
+      min-height: 96px;
+      border: 1px solid #d9deea;
+      background: #fff;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      outline: none;
+      font-family: inherit;
+      resize: vertical;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 420px) {
+      .primaryToolsGrid { gap: 12px; }
+      .primaryToolTile { min-height: 152px; padding: 16px 14px; border-radius: 22px; }
+      .toolsGrid { gap: 12px; padding: 0; }
+      .toolTile { border-radius: 20px; padding: 12px; font-size: 12px; }
+      .tileIcon { width: 38px; height: 38px; border-radius: 12px; font-size: 16px; }
+      .tileLabel { font-size: 11px; line-height: 1.28; letter-spacing: .03em; }
+      .tileHint { font-size: 8px; letter-spacing: .04em; }
+      .welcomeTable th, .welcomeTable td { padding: 10px 6px; font-size: 11px; }
+      .welcomeInfoCard { padding: 12px; border-radius: 18px; }
+      .welcomeText { font-size: 12px; }
+      .ps-grid { grid-template-columns: 1fr; }
+      .ps-missions { flex: 1; min-height: 160px; max-height: none; }
+      .ps-clockBox { min-width: 92px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+
+    <section class="screen active" id="screenStart">
+      <div class="centerBlock">
+        <div class="title">AMISTAR<span class="calc">TOOLS</span></div>
+        <div class="field" style="width:min(82vw, 320px); gap:8px;">
+          <div class="label" style="text-align:left;">Veuillez entrer votre prénom</div>
+          <input id="startMediatorName" type="text" placeholder="Ex : Arnaud" maxlength="40" />
+        </div>
+        <div class="startActions">
+          <button class="btn homeButton startMainBtn" id="btnOpenMenu" disabled>Commencer</button>
+          <button class="btn secondary startQrBtn" id="btnStartQrShortcut" type="button" aria-label="Ouvrir le scanner QR directement">
+            <img class="ps-qrIconImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='white'/%3E%3Crect x='4' y='4' width='56' height='56' rx='6' fill='none' stroke='black' stroke-width='4'/%3E%3Crect x='10' y='10' width='16' height='16' fill='none' stroke='black' stroke-width='4'/%3E%3Crect x='15' y='15' width='6' height='6' fill='black'/%3E%3Crect x='38' y='10' width='16' height='16' fill='none' stroke='black' stroke-width='4'/%3E%3Crect x='43' y='15' width='6' height='6' fill='black'/%3E%3Crect x='10' y='38' width='16' height='16' fill='none' stroke='black' stroke-width='4'/%3E%3Crect x='15' y='43' width='6' height='6' fill='black'/%3E%3Crect x='31' y='30' width='4' height='16' rx='1' fill='black'/%3E%3Crect x='27' y='34' width='12' height='4' rx='1' fill='black'/%3E%3Crect x='40' y='31' width='4' height='10' rx='1' fill='black'/%3E%3Crect x='44' y='37' width='10' height='4' rx='1' fill='black'/%3E%3Crect x='40' y='45' width='4' height='9' rx='1' fill='black'/%3E%3Crect x='24' y='46' width='12' height='4' rx='1' fill='black'/%3E%3Crect x='23' y='26' width='4' height='8' rx='1' fill='black'/%3E%3Crect x='19' y='30' width='8' height='4' rx='1' fill='black'/%3E%3Ccircle cx='49' cy='49' r='2.5' fill='black'/%3E%3Ccircle cx='31' cy='53' r='2.5' fill='black'/%3E%3Ccircle cx='18' cy='31' r='2.5' fill='black'/%3E%3C/svg%3E" alt="QR" />
+          </button>
+        </div>
+      </div>
+      <div class="signature">App made by : Arnaud Thomas</div>
+    </section>
+
+    <section class="screen" id="screenMenu">
+      <div class="menuTopSpacer"></div>
+      <div class="menuTopBar">
+        <div class="weatherWidget" id="weatherWidget" aria-live="polite">
+          <span class="weatherIcon" id="weatherIcon">⛅</span>
+          <span class="weatherText" id="weatherText">--° · Météo</span>
+        </div>
+        <button class="btn secondary offBtn" id="btnLogout" type="button" aria-label="Déconnection">
+          <svg class="offBtnIcon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2v9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M7.05 4.93A9 9 0 1 0 16.95 4.93" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+          </svg>
+          Déconnection
+        </button>
+      </div>
+      <div class="menuLayout">
+        <div class="menuSection">
+          <div class="menuSectionHeader">
+            <div class="menuSectionTitle">Outils principaux</div>
+            <div class="menuDivider"></div>
+          </div>
+          <div class="primaryToolsGrid">
+            <button class="toolTile primary primaryToolTile" id="tilePriseService" type="button" aria-label="Prise de service">
+              <div class="tileIcon">S</div>
+              <span>
+                <span class="tileLabel">Prise de<br>service</span><br>
+                <span class="tileHint">préparation et suivi</span>
+              </span>
+            </button>
+
+            <button class="toolTile primary primaryToolTile" id="tileCabotage">
+              <div class="tileIcon">C</div>
+              <span>
+                <span class="tileLabel">Cabotage<br>calculator</span><br>
+                <span class="tileHint">calcul rapide terrain</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div class="menuSection">
+          <div class="menuSectionHeader">
+            <div class="menuSectionTitle">Informations</div>
+            <div class="menuDivider"></div>
+          </div>
+          <div class="toolsGrid">
+            <button class="toolTile infoToolTile" id="tileAgences">
+              <div class="tileIcon">A</div>
+              <span>
+                <span class="tileLabel">Horaires<br>agences STAR</span><br>
+                
+              </span>
+            </button>
+
+            <button class="toolTile infoToolTile" id="tileMetros">
+              <div class="tileIcon">M</div>
+              <span>
+                <span class="tileLabel">Horaires<br>métro</span>
+              </span>
+            </button>
+
+            <button class="toolTile infoToolTile" id="tileAccueil">
+              <div class="tileIcon">P</div>
+              <span>
+                <span class="tileLabel">Horaires<br>plateaux d’accueil</span><br>
+                
+              </span>
+            </button>
+
+            <button class="toolTile infoToolTile" id="tileZones">
+              <div class="tileIcon">Z</div>
+              <span>
+                <span class="tileLabel">Zones<br>réseau STAR</span>
+              </span>
+            </button>
+
+            <button class="toolTile infoToolTile" type="button" aria-label="Emplacement libre information 1">
+              <div class="tileIcon">+</div>
+              <span>
+                <span class="tileLabel">Nouvelle<br>info</span>
+              </span>
+            </button>
+
+            <button class="toolTile infoToolTile" type="button" aria-label="Emplacement libre information 2">
+              <div class="tileIcon">+</div>
+              <span>
+                <span class="tileLabel">Nouvelle<br>info</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="signature">App made by : Arnaud Thomas</div>
+    </section>
+
+    <section class="screen" id="screenAgences">
+      <div class="screenHeader">
+        <div class="screenTitle">Horaires agences STAR</div>
+        <button class="btn secondary iconBtn" id="btnBackAgences">Menu</button>
+      </div>
+      <div class="agenciesWrap">
+        <div class="agencyCard">
+          <div class="agencyTop">
+            <div class="agencyName">Sainte-Anne<br><span style="font-size:12px;font-weight:800;color:#6a7380;">Safe place Umay</span></div>
+            <div class="agencyTag">STAR</div>
+          </div>
+          <div class="agencyLine"><div class="agencyKey">Adresse</div><div class="agencyVal">Place Sainte-Anne, Rennes</div></div>
+          <div class="agencyLine"><div class="agencyKey">Horaires</div><div class="agencyVal">Du lundi au samedi de 10h à 19h</div></div>
+          <div class="agencyLine"><div class="agencyKey">Vente de titres</div><div class="agencyVal">STAR • STAR + BreizhGo*</div></div>
+        </div>
+
+        <div class="agencyCard">
+          <div class="agencyTop"><div class="agencyName">Henri Fréville</div><div class="agencyTag">STAR</div></div>
+          <div class="agencyLine"><div class="agencyKey">Adresse</div><div class="agencyVal">Avenue Henri Fréville, Rennes</div></div>
+          <div class="agencyLine"><div class="agencyKey">Horaires</div><div class="agencyVal">Du lundi au vendredi, de 7h30 à 12h<br>Ouvert uniquement 5 jours en début et fin de mois</div></div>
+          <div class="agencyLine"><div class="agencyKey">Vente de titres</div><div class="agencyVal">STAR • STAR + BreizhGo*</div></div>
+        </div>
+
+        <div class="agencyCard">
+          <div class="agencyTop"><div class="agencyName">Villejean-Université</div><div class="agencyTag">STAR</div></div>
+          <div class="agencyLine"><div class="agencyKey">Adresse</div><div class="agencyVal">Avenue de la Bataille Flandres-Dunkerque, Rennes</div></div>
+          <div class="agencyLine"><div class="agencyKey">Horaires</div><div class="agencyVal">Du lundi au vendredi, de 7h30 à 12h<br>Ouvert uniquement 5 jours en début et fin de mois</div></div>
+          <div class="agencyLine"><div class="agencyKey">Vente de titres</div><div class="agencyVal">STAR</div></div>
+        </div>
+
+        <div class="agencyCard">
+          <div class="agencyTop"><div class="agencyName">Beaulieu-Université</div><div class="agencyTag">STAR</div></div>
+          <div class="agencyLine"><div class="agencyKey">Adresse</div><div class="agencyVal">Avenue du Professeur Charles Foulon, Rennes</div></div>
+          <div class="agencyLine"><div class="agencyKey">Horaires</div><div class="agencyVal">Agence ouverte uniquement en période de rentrée scolaire<br>(entre mi-août et mi-septembre)</div></div>
+          <div class="agencyLine"><div class="agencyKey">Vente de titres</div><div class="agencyVal">STAR</div></div>
+        </div>
+
+        <div class="agencyCard">
+          <div class="agencyTop"><div class="agencyName">Maison du Vélo</div><div class="agencyTag">Vélo</div></div>
+          <div class="agencyLine"><div class="agencyKey">Adresse</div><div class="agencyVal">15 bis Place de la Gare, Rennes</div></div>
+          <div class="agencyLine"><div class="agencyKey">Horaires</div><div class="agencyVal">Du lundi au samedi, de 9h à 18h</div></div>
+          <div class="agencyLine"><div class="agencyKey">Vente de titres</div><div class="agencyVal">Pas de vente de titre STAR • Dédié uniquement aux locations vélos</div></div>
+        </div>
+
+        <div class="agencyCard">
+          <div class="agencyTop">
+            <div class="agencyName">Espace KorriGo<br><span style="font-size:12px;font-weight:800;color:#6a7380;">Safe place Umay</span></div>
+            <div class="agencyTag">KorriGo</div>
+          </div>
+          <div class="agencyLine"><div class="agencyKey">Adresse</div><div class="agencyVal">Gare SNCF de Rennes</div></div>
+          <div class="agencyLine"><div class="agencyKey">Horaires</div><div class="agencyVal">Du lundi au samedi, de 7h à 20h<br>Dimanche et jours fériés, de 13h à 20h (niveau 0 uniquement)</div></div>
+          <div class="agencyLine"><div class="agencyKey">Vente de titres</div><div class="agencyVal">STAR • BreizhGo (cars et TER)</div></div>
+        </div>
+
+        <div class="agencyFootnote">* vente de titres combinés STAR + BreizhGo mensuels uniquement — pas de vente de titre BreizhGo seul.</div>
+      </div>
+      <div class="signature">App made by : Arnaud Thomas</div>
+    </section>
+
+    <section class="screen" id="screenMetros">
+      <div class="screenHeader">
+        <div class="screenTitle">Horaires métro</div>
+        <button class="btn secondary iconBtn" id="btnBackMetros">Menu</button>
+      </div>
+      <div class="metrosWrap">
+        <div class="metroNote">Le métro lignes A et B ferme ses portes tous les jours à 00h45. Pendant l’été, il n’y a pas de prolongation du service en fin de semaine.</div>
+        <div class="metroCard lineA">
+          <div class="metroTop"><div class="metroTitle"><span class="metroBadge a">A</span> Ligne A</div></div>
+          <div class="metroVal" style="margin-bottom:10px;">Circulation tous les jours de l’année, excepté le 1er mai (Fête du travail).</div>
+          <div class="metroGrid">
+            <div class="metroInfo"><div class="metroKey">Semaine hors période estivale</div><div class="metroVal">Du lundi au mercredi : 5h15 → 0h25<br>Les jeudis et vendredis : 5h15 → 1h25</div></div>
+            <div class="metroInfo"><div class="metroKey">Week-end hors période estivale</div><div class="metroVal">Les samedis : 5h15 → 1h25<br>Les dimanches et jours fériés : 7h10 → 0h25</div></div>
+            <div class="metroInfo"><div class="metroKey">Fréquence</div><div class="metroVal">Un métro toutes les 1 min 21 à 4 min, du lundi au vendredi, entre 6h et minuit.</div></div>
+          </div>
+          <div class="metroAccess">Accessible aux personnes à mobilité réduite.</div>
+        </div>
+
+        <div class="metroCard lineB">
+          <div class="metroTop"><div class="metroTitle"><span class="metroBadge b">B</span> Ligne B</div></div>
+          <div class="metroVal" style="margin-bottom:10px;">Circulation tous les jours de l’année, excepté le 1er mai (Fête du travail).</div>
+          <div class="metroGrid">
+            <div class="metroInfo"><div class="metroKey">Semaine hors période estivale</div><div class="metroVal">Du lundi au mercredi : 5h10 → 0h20<br>Les jeudis et vendredis : 5h10 → 1h20</div></div>
+            <div class="metroInfo"><div class="metroKey">Week-end hors période estivale</div><div class="metroVal">Les samedis : 5h10 → 1h20<br>Les dimanches et jours fériés : 7h15 → 0h20</div></div>
+            <div class="metroInfo"><div class="metroKey">Fréquence</div><div class="metroVal">Un métro toutes les 2 min 05 à 5 min environ toute la journée.</div></div>
+          </div>
+          <div class="metroAccess">Accessible aux personnes à mobilité réduite.</div>
+        </div>
+      </div>
+      <div class="signature">App made by : Arnaud Thomas</div>
+    </section>
+
+    <section class="screen" id="screenAccueil">
+      <div class="screenHeader">
+        <div class="screenTitle">Horaires plateaux d’accueil</div>
+        <button class="btn secondary iconBtn" id="btnBackAccueil">Menu</button>
+      </div>
+      <div class="welcomeWrap">
+        <div class="welcomeSchedule">
+          <table class="welcomeTable" aria-label="Horaires des plateaux d’accueil">
+            <thead>
+              <tr>
+                <th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="rdv">9h30–12h30<br>(sur RDV)</td>
+                <td class="closed">Fermé</td>
+                <td class="rdv">9h30–12h30<br>(sur RDV)</td>
+                <td class="closed">Fermé</td>
+                <td class="rdv">9h30–12h30<br>(sur RDV)</td>
+              </tr>
+              <tr>
+                <td>14h–17h</td>
+                <td>14h–17h</td>
+                <td>14h–17h</td>
+                <td>14h–17h</td>
+                <td>14h–17h</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="welcomeCaption">Les créneaux en vert correspondent aux accueils sur rendez-vous.</div>
+        </div>
+
+        <div class="welcomeInfoCard">
+          <div class="welcomeInfoGrid">
+            <div class="welcomeInfoLine"><div class="welcomeIcon">📅</div><div class="welcomeText">Du lundi au vendredi</div></div>
+            <div class="welcomeInfoLine"><div class="welcomeIcon">📍</div><div class="welcomeText">53 avenue de Pays-Bas<br>35200 Rennes</div></div>
+            <div class="welcomeInfoLine"><div class="welcomeIcon">✉️</div><div class="welcomeText">rennes@pimmsmediation.fr</div></div>
+            <div class="welcomeInfoLine"><div class="welcomeIcon">📞</div><div class="welcomeText">02.99.32.02.58</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="signature">App made by : Arnaud Thomas</div>
+    </section>
+
+    <section class="screen" id="screenZones">
+      <div class="screenHeader">
+        <div class="screenTitle">Zones réseau STAR</div>
+        <button class="btn secondary iconBtn" id="btnBackZones">Menu</button>
+      </div>
+      <div class="zonesWrap">
+        <div class="zoneIntro">Cartographie des zones du réseau STAR. Sélection rapide des principales lignes par secteur.</div>
+
+        <div class="zoneCard z1">
+          <div class="zoneHeader"><div class="zoneTitle"><span class="zoneBadge">Zone 1</span></div></div>
+          <div class="zoneList">
+            <div class="zoneItem"><div class="zoneLine"><strong>C1</strong> — St Grégoire Champs Daguet</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>C3</strong> — Patton</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>C4</strong> — St Grégoire Grand Quartier</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>L11</strong> — Vezin-le-Coquet ZI Ouest</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>L12</strong> — Villejean Université</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>L14</strong> — Roazhon Park</div></div>
+          </div>
+        </div>
+
+        <div class="zoneCard z2">
+          <div class="zoneHeader"><div class="zoneTitle"><span class="zoneBadge">Zone 2</span></div></div>
+          <div class="zoneList">
+            <div class="zoneItem"><div class="zoneLine"><strong>C2</strong> — Cesson-Cévigné Champs Blancs</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>C5</strong> — Saint-Laurent</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>L10</strong> — Beaulieu Chimie</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>L14</strong> — Cesson-Cévigné Monniais</div></div>
+          </div>
+        </div>
+
+        <div class="zoneCard z3">
+          <div class="zoneHeader"><div class="zoneTitle"><span class="zoneBadge">Zone 3</span></div></div>
+          <div class="zoneList">
+            <div class="zoneItem"><div class="zoneLine"><strong>C1</strong> — Chantepie Rosa Parks</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>C2</strong> — Haut Sancé</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>C4</strong> — ZA Saint-Sulpice</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>C6</strong> — Cesson-Sévigné Rigourdière</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>L11</strong> — La Poterie</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>L13</strong> — Chantepie Cucé</div></div>
+          </div>
+        </div>
+
+        <div class="zoneCard z4">
+          <div class="zoneHeader"><div class="zoneTitle"><span class="zoneBadge">Zone 4</span></div></div>
+          <div class="zoneList">
+            <div class="zoneItem"><div class="zoneLine"><strong>C3</strong> — Henri Fréville</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>C5</strong> — Lycée Bréquigny</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>C6</strong> — St Jacques de la Lande Aéroport</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>L10</strong> — Porte de Cleunay</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>L12</strong> — La Poterie</div></div>
+            <div class="zoneItem"><div class="zoneLine"><strong>L13</strong> — Bruz Porte de Ker Lann</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="signature">App made by : Arnaud Thomas</div>
+    </section>
+
+    <section class="screen ps-screen" id="screenPriseService">
+      <div class="ps-shell">
+        <div class="ps-header ps-header-top">
+          <div class="ps-titleBox">
+            <h1>Prise de service</h1>
+          </div>
+          <div class="ps-topRight">
+            <div class="ps-clockBox">
+              <div class="ps-time" id="psLiveTime">--:--</div>
+              <div class="ps-date" id="psLiveDate">--/--/----</div>
+            </div>
+            <button class="btn secondary iconBtn" id="btnBackPriseService">Menu</button>
+          </div>
+        </div>
+
+                <div class="ps-tabs">
+          <button class="ps-btn ps-secondary ps-tabBtn ps-active" id="psTabFormBtn" type="button">Préparation</button>
+          <button class="ps-btn ps-secondary ps-tabBtn" id="psTabFollowBtn" type="button">Suivis de missions</button>
+        </div>
+
+        <div class="ps-toolScreen ps-active" id="psScreenForm">
+          <section class="ps-card">
+            <h2 class="ps-sectionTitle">Général</h2>
+            <div class="ps-grid">
+              <div class="ps-field">
+                <div class="ps-label">Date</div>
+                <input id="psServiceDate" type="date" />
+              </div>
+              <div class="ps-field">
+                <div class="ps-label">Horaire</div>
+                <select id="psServiceSlot">
+                  <option value="" selected>Choisir</option>
+                  <option value="M">M · 7h - 14h</option>
+                  <option value="J">J · 10h - 17h</option>
+                  <option value="AM">AM · 12h50 - 19h50</option>
+                  <option value="S01">S01 · 15h30 - 22h30</option>
+                  <option value="S05">S05 · 17h - 0h00</option>
+                  <option value="SPE">Spé · horaires libres</option>
+                </select>
+              </div>
+              <div class="ps-field ps-full ps-hidden" id="psSpecialHoursField">
+                <div class="ps-label">Horaires Spé</div>
+                <div class="ps-row">
+                  <input id="psSpecialStart" type="time" />
+                  <input id="psSpecialEnd" type="time" />
+                </div>
+              </div>
+              <div class="ps-field ps-full">
+                <div class="ps-label">Médiateurs du planning</div>
+                <div class="ps-row">
+                  <input id="psMemberInput" type="text" placeholder="Ajouter un médiateur" />
+                  <button class="ps-btn ps-small" id="psAddMemberBtn">Ajouter</button>
+                </div>
+                <div style="height:8px"></div>
+                <div class="ps-chips" id="psMembersList"></div>
+              </div>
+              <div class="ps-field">
+                <div class="ps-label">Téléphone</div>
+                <input id="psPhoneNumber" type="text" placeholder="Ex : 22" />
+              </div>
+              <div class="ps-field">
+                <div class="ps-label">Attribué à</div>
+                <select id="psPhoneAssignedTo"></select>
+              </div>
+              <div class="ps-field">
+                <div class="ps-label">KIZEO</div>
+                <select id="psKizeoNumber">
+                  <option value="">Choisir</option>
+                  <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+                  <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+                  <option>11</option><option>12</option><option>13</option><option>14</option><option>15</option>
+                </select>
+              </div>
+            </div>
+            <div class="ps-stats">
+              <div class="ps-stat" id="psStatSlot">Horaire à définir</div>
+              <div class="ps-stat" id="psStatPhone">Tél. --</div>
+              <div class="ps-stat" id="psStatPhoneAssigned">Pour --</div>
+              <div class="ps-stat" id="psStatKizeo">KIZEO --</div>
+              <div class="ps-stat" id="psStatPause">Pause --</div>
+            </div>
+          </section>
+
+          <section class="ps-card">
+            <h2 class="ps-sectionTitle">Pause</h2>
+            <div class="ps-field ps-full">
+              <div class="ps-label">Heure de pause</div>
+              <input id="psPauseStart" type="time" />
+            </div>
+          </section>
+
+          <section class="ps-card">
+            <h2 class="ps-sectionTitle">Nouvelle mission</h2>
+            <div class="ps-hidden" id="psMissionSuccessMessage" style="margin-bottom:10px; padding:10px 12px; border-radius:14px; background:#ecfdf5; border:1px solid #a7f3d0; color:#166534; font-size:12px; font-weight:900;">Mission ajoutée avec succès</div>
+            <div class="ps-grid">
+              <div class="ps-field">
+                <div class="ps-label">Début</div>
+                <input id="psMissionStart" type="time" />
+              </div>
+              <div class="ps-field">
+                <div class="ps-label">Fin</div>
+                <input id="psMissionEnd" type="time" />
+              </div>
+              <div class="ps-field ps-full">
+                <div class="ps-label">Type</div>
+                <div class="ps-row" style="align-items:center; gap:12px; flex-wrap:nowrap; justify-content:space-between;">
+                  <select id="psMissionType" style="flex:1 1 auto; min-width:0;">
+                    <option value="" selected>Choisir</option>
+                    <option>Cabotage</option>
+                    <option>Embarquement</option>
+                    <option>PAP</option>
+                    <option>Pôle échange</option>
+                    <option>Médiation sociale</option>
+                    <option>Autre</option>
+                  </select>
+                  <label class="ps-compactCheck ps-hidden" id="psBoardingSchoolWrap" for="psBoardingSchool" style="flex:0 0 auto; margin-left:10px;">
+                    <input type="checkbox" id="psBoardingSchool" />
+                    <span>Scolaire</span>
+                  </label>
+                </div>
+              </div>
+              <div class="ps-field ps-full ps-hidden" id="psOtherMissionField">
+                <div class="ps-label">Mission autre</div>
+                <div class="ps-chips" id="psOtherMissionSelector">
+                  <button class="ps-btn ps-small ps-secondary" type="button" data-other-mission="RDS">RDS</button>
+                  <button class="ps-btn ps-small ps-secondary" type="button" data-other-mission="TAC">TAC</button>
+                  <button class="ps-btn ps-small ps-secondary" type="button" data-other-mission="STAR me guide">STAR me guide</button>
+                  <button class="ps-btn ps-small ps-secondary" type="button" data-other-mission="SNCF">SNCF</button>
+                </div>
+                <div style="height:8px"></div>
+                <input id="psOtherMissionCustom" type="text" placeholder="Ajouter une mission" />
+              </div>
+              <div class="ps-field ps-hidden" id="psCabotageModeField">
+                <div class="ps-label">Cabotage</div>
+                <select id="psCabotageMode">
+                  <option value="">Choisir</option>
+                  <option value="metroA">Métro A</option>
+                  <option value="metroB">Métro B</option>
+                  <option value="bus">BUS</option>
+                  <option value="busMetro">Bus métropolitain</option>
+                </select>
+              </div>
+              <div class="ps-field ps-full ps-hidden" id="psCabotageSectorField">
+                <div class="ps-label">Secteur cabotage</div>
+                <select id="psCabotageSector"></select>
+              </div>
+              <div class="ps-field ps-full ps-hidden" id="psMissionPlaceField">
+                <div class="ps-label">Lieu</div>
+                <input id="psMissionPlace" type="text" placeholder="Ex : République" />
+                <select id="psMissionPlaceSelect" class="ps-hidden">
+                  <option value="">Choisir</option>
+                  <option>Dinan</option>
+                  <option>Messac</option>
+                  <option>Vitré</option>
+                </select>
+                <select id="psMissionPapSelect" class="ps-hidden">
+                  <option value="">Choisir</option>
+                  <option>REP</option>
+                  <option>CLE</option>
+                  <option>POT</option>
+                  <option>TRI</option>
+                  <option>VU</option>
+                  <option>HFR</option>
+                  <option>GAR</option>
+                  <option>STAa</option>
+                  <option>STAb</option>
+                  <option>IJC</option>
+                </select>
+                <select id="psMissionBoardingSelect" class="ps-hidden">
+                  <option value="">Choisir</option>
+                  <option>SJG</option>
+                  <option>REP</option>
+                  <option>Navette Stade</option>
+                  <option>STAa ( JFK )</option>
+                  <option>STAb ( CVI )</option>
+                  <option>GARa ( JFK )</option>
+                  <option>GARb ( CVI )</option>
+                </select>
+                
+              </div>
+              <div class="ps-field ps-full ps-hidden" id="psMissionLineField">
+                <div class="ps-label">Ligne / précision</div>
+                <input id="psMissionLine" type="text" placeholder="Ex : Ligne 13 / PAP Triangle" />
+              </div>
+              <div class="ps-field ps-hidden" id="psBusLineField">
+                <div class="ps-label">Ligne de bus</div>
+                <select id="psBusLineSelect">
+                  <option value="">Choisir</option>
+                  <option value="C1">C1</option>
+                  <option value="C2">C2</option>
+                  <option value="C3">C3</option>
+                  <option value="C4">C4</option>
+                  <option value="C5">C5</option>
+                  <option value="C6">C6</option>
+                  <option value="L10">L10</option>
+                  <option value="L11">L11</option>
+                  <option value="L12">L12</option>
+                  <option value="L13">L13</option>
+                  <option value="L14">L14</option>
+                </select>
+              </div>
+              <div class="ps-field ps-hidden" id="psBusLineFieldSecondary">
+                <div class="ps-label">Ligne de bus additionnelle</div>
+                <select id="psBusLineSelectSecondary">
+                  <option value="">Aucune</option>
+                  <option value="C1">C1</option>
+                  <option value="C2">C2</option>
+                  <option value="C3">C3</option>
+                  <option value="C4">C4</option>
+                  <option value="C5">C5</option>
+                  <option value="C6">C6</option>
+                  <option value="L10">L10</option>
+                  <option value="L11">L11</option>
+                  <option value="L12">L12</option>
+                  <option value="L13">L13</option>
+                  <option value="L14">L14</option>
+                </select>
+              </div>
+              <div class="ps-field ps-hidden" id="psBusZoneField">
+                <div class="ps-label">Zone</div>
+                <select id="psBusZoneSelect">
+                  <option value="">Choisir</option>
+                  <option value="Z1">Z1</option>
+                  <option value="Z2">Z2</option>
+                  <option value="Z3">Z3</option>
+                  <option value="Z4">Z4</option>
+                </select>
+              </div>
+              <div class="ps-field ps-full">
+                <div class="ps-label">Médiateurs affectés</div>
+                <div class="ps-chips" id="psMemberSelector"></div>
+              </div>
+            </div>
+            <div style="height:10px"></div>
+            <div class="ps-row">
+              <button class="ps-btn" id="psAddMissionBtn">Ajouter mission</button>
+              <button class="ps-btn ps-secondary" id="psResetMissionBtn">Réinitialiser</button>
+            </div>
+          </section>
+
+          <section class="ps-card">
+            <h2 class="ps-sectionTitle">Commentaire</h2>
+            <div class="ps-hidden" id="psCommentSuccessMessage" style="margin-bottom:10px; padding:10px 12px; border-radius:14px; background:#ecfdf5; border:1px solid #a7f3d0; color:#166534; font-size:12px; font-weight:900;">Commentaire ajouté</div>
+            <label class="ps-commentToggle" for="psCommentEnabled">
+              <input id="psCommentEnabled" type="checkbox" />
+              <span>Ajouter un commentaire</span>
+            </label>
+            <div class="ps-commentBox ps-hidden" id="psCommentBox">
+              <div class="ps-field ps-full">
+                <div class="ps-label">Commentaire</div>
+                <textarea id="psCommentText"></textarea>
+              </div>
+              <div class="ps-commentActions">
+                <button class="ps-btn ps-small" id="psValidateCommentBtn" type="button">Valider le commentaire</button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="ps-toolScreen" id="psScreenFollow">
+          <div class="ps-topActions">
+            <div class="ps-topActionsRight">
+              <button class="ps-btn ps-secondary ps-small ps-qrIconBtn" id="psQrBtn" type="button"><img class="ps-qrIconImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='white'/%3E%3Crect x='4' y='4' width='56' height='56' rx='6' fill='none' stroke='black' stroke-width='4'/%3E%3Crect x='10' y='10' width='16' height='16' fill='none' stroke='black' stroke-width='4'/%3E%3Crect x='15' y='15' width='6' height='6' fill='black'/%3E%3Crect x='38' y='10' width='16' height='16' fill='none' stroke='black' stroke-width='4'/%3E%3Crect x='43' y='15' width='6' height='6' fill='black'/%3E%3Crect x='10' y='38' width='16' height='16' fill='none' stroke='black' stroke-width='4'/%3E%3Crect x='15' y='43' width='6' height='6' fill='black'/%3E%3Crect x='31' y='30' width='4' height='16' rx='1' fill='black'/%3E%3Crect x='27' y='34' width='12' height='4' rx='1' fill='black'/%3E%3Crect x='40' y='31' width='4' height='10' rx='1' fill='black'/%3E%3Crect x='44' y='37' width='10' height='4' rx='1' fill='black'/%3E%3Crect x='40' y='45' width='4' height='9' rx='1' fill='black'/%3E%3Crect x='24' y='46' width='12' height='4' rx='1' fill='black'/%3E%3Crect x='23' y='26' width='4' height='8' rx='1' fill='black'/%3E%3Crect x='19' y='30' width='8' height='4' rx='1' fill='black'/%3E%3Ccircle cx='49' cy='49' r='2.5' fill='black'/%3E%3Ccircle cx='31' cy='53' r='2.5' fill='black'/%3E%3Ccircle cx='18' cy='31' r='2.5' fill='black'/%3E%3C/svg%3E" alt="QR" /><span>QR</span></button>
+              <button class="ps-btn ps-secondary ps-small" id="psToggleEditBtn" type="button">✏️ Modifier</button>
+              <button class="ps-btn ps-secondary ps-small" id="psBackToFormBtn">Retour</button>
+            </div>
+          </div>
+          <section class="ps-card" style="padding-top:10px; flex:1; display:flex; flex-direction:column; min-height:0;">
+            <div class="ps-stats" style="margin-top:0; margin-bottom:10px;">
+              <div class="ps-stat" id="psFollowStatSlot">Horaire à définir</div>
+              <div class="ps-stat" id="psFollowStatPhone">Tél. --</div>
+              <div class="ps-stat" id="psFollowStatPhoneAssigned">Pour --</div>
+              <div class="ps-stat" id="psFollowStatKizeo">KIZEO --</div>
+              <div class="ps-stat" id="psFollowStatPause">Pause --</div>
+            </div>
+            <div id="psMissionsWrap" class="ps-missions"></div>
+            <div class="ps-editModeNote ps-hidden" id="psEditModeNote">Mode modification actif : les boutons Reprendre et Supprimer sont visibles.</div>
+          </section>
+        </div>
+
+        <div class="ps-qrScreen" id="psQrScreen">
+          <div class="ps-topActions" style="justify-content:space-between; align-items:center;">
+            <h2 class="ps-qrHeaderTitle">Import QR</h2>
+            <div class="ps-topActionsRight ps-scanHeaderActions" style="width:auto; justify-content:flex-end;">
+              <button class="ps-btn ps-small ps-scanHighlightBtn" id="psScanQrBtn" type="button">Scanner</button>
+              <button class="ps-btn ps-secondary ps-small ps-hidden" id="psStopScanQrBtn" type="button">Arrêter</button>
+              <button class="ps-btn ps-secondary ps-small" id="psQrBackBtn" type="button">Retour</button>
+            </div>
+          </div>
+          <section class="ps-card" style="display:flex; flex-direction:column; gap:12px; min-height:0;">
+            <div class="ps-qrHelp">
+              Colle ici le texte brut obtenu après lecture d’un QR code.
+            </div>
+            <div class="ps-field ps-full">
+              <div class="ps-label">Texte du QR</div>
+              <textarea id="psQrText" placeholder="Colle ici le texte complet du QR..."></textarea>
+            </div>
+            <div class="ps-qrStatus" id="psQrStatus"></div>
+            <div class="ps-qrActions">
+              <button class="ps-btn" id="psApplyQrBtn" type="button">Appliquer au suivi</button>
+              <input id="psNativeCameraInput" class="ps-hiddenFileInput" type="file" accept="image/*" capture="environment" />
+            </div>
+            <div class="ps-liveScanWrap" id="psLiveScanWrap">
+              <div class="ps-liveScanViewport">
+                <video id="psLiveScanVideo" class="ps-liveScanVideo" playsinline autoplay muted></video>
+                <div class="ps-liveScanFrame"></div>
+              </div>
+              <div class="ps-liveScanHint">Cadre le QR dans la zone. Dès qu’il est détecté, le texte est ajouté automatiquement.</div>
+            </div>
+          </section>
+        </div>
+
+        <div class="ps-liveScanOverlay" id="psLiveScanOverlay">
+          <div class="ps-liveScanTopBar">
+            <div>
+              <div class="ps-liveScanTitle">Scan QR en direct</div>
+              <div class="ps-liveScanTopHint">Cadre le QR devant la caméra. L’import se fera automatiquement dès détection.</div>
+            </div>
+            <button class="ps-btn ps-secondary ps-small" id="psOverlayStopScanBtn" type="button">Fermer</button>
+          </div>
+          <div class="ps-liveScanViewport">
+            <video id="psLiveScanVideoOverlay" class="ps-liveScanVideo" playsinline autoplay muted></video>
+            <div class="ps-liveScanFrame"></div>
+          </div>
+          <div class="ps-liveScanHint">Approche le QR et garde-le bien dans le cadre quelques instants.</div>
+        </div>
+
+        <div class="ps-infoModal" id="psInfoModal">
+          <div class="ps-infoModalCard">
+            <div class="ps-infoModalTop">
+              <div class="ps-infoModalTitle" id="psInfoModalTitle">Information zone</div>
+              <button class="ps-btn ps-secondary ps-small" id="psInfoModalCloseBtn" type="button">✕</button>
+            </div>
+            <div class="ps-infoModalBody" id="psInfoModalBody">—</div>
+            <div class="ps-infoModalActions">
+              <button class="ps-btn ps-secondary ps-small" id="psInfoModalOkBtn" type="button">Fermer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screenSetup">
+      <div class="screenHeader">
+        <div class="screenTitle">Cabotage calculator</div>
+        <button class="btn secondary iconBtn" id="btnBackSetupMenu">Menu</button>
+      </div>
+
+      <div class="card">
+        <div class="grid">
+          <div class="field">
+            <div class="label">Début mission</div>
+            <input type="time" id="startTimeInput" step="60" />
+          </div>
+          <div class="field">
+            <div class="label">Fin mission</div>
+            <input type="time" id="endTimeInput" step="60" disabled />
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <div class="label">Nombre de stations</div>
+            <div class="pill">
+              <button id="st2">2</button>
+              <button id="st3">3</button>
+              <button id="st4" class="active">4</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="label">Durée (temps sur place total)</div>
+            <div class="row">
+              <button class="btn secondary" id="durMinus">-5</button>
+              <div class="v" id="durLabel">60 min</div>
+              <button class="btn secondary" id="durPlus">+5</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <div class="setupActions">
+        <button class="btn primaryAction full" id="btnCalculate">Calculer</button>
+      </div>
+      <div class="signature">App made by : Arnaud Thomas</div>
+    </section>
+
+    <section class="screen" id="screenResult">
+      <div class="card">
+        <div class="kv">
+          <div class="k">Début mission</div><div class="v" id="rStart">—</div>
+          <div class="k">Fin mission</div><div class="v" id="rEnd">—</div>
+          <div class="k">Stations</div><div class="v" id="rStations">—</div>
+          <div class="k">Durée</div><div class="v" id="rDuration">—</div>
+          <div class="k">Sur place / station</div><div class="v" id="rInterval">—</div>
+        </div>
+
+        <label class="toggle" for="travelToggle">
+          <input type="checkbox" id="travelToggle" />
+          <span class="ttext"><span class="main">Temps métro entre stations (théorique)</span></span>
+        </label>
+
+        <ul id="rList"></ul>
+      </div>
+
+      <div class="footerActions">
+        <button class="btn secondary footerBtn" id="btnNewCalc">Recalculer</button>
+        <button class="btn secondary footerBtn followBackBtn hidden" id="btnMissionReturn">Retour</button>
+        <button class="btn footerBtn" id="btnMenu">Menu</button>
+      </div>
+
+      <div class="signature">App made by : Arnaud Thomas</div>
+      <div class="toast" id="toast">Copié</div>
+    </section>
+  </div>
+
+  <script>
+    (() => {
+      // Service worker désactivé pour éviter les problèmes de cache sur les données météo et les mises à jour de l'application.
+
+      let startDate = null;
+      let stationsCount = 4;
+      let durationMinutes = 60;
+      let includeTravel = false;
+      let cabotageMissionReturnTarget = null;
+      const TRAVEL_SECONDS = 210;
+      const CABOTAGE_STORAGE_KEY = 'amistar-cabotage-state-v1';
+      const ACTIVE_MEDIATOR_STORAGE_KEY = 'amistar-active-mediator-v1';
+
+      const $ = (id) => document.getElementById(id);
+      const screens = {
+        start: $('screenStart'),
+        menu: $('screenMenu'),
+        setup: $('screenSetup'),
+        result: $('screenResult'),
+        agences: $('screenAgences'),
+        metros: $('screenMetros'),
+        accueil: $('screenAccueil'),
+        zones: $('screenZones'),
+        priseService: $('screenPriseService')
+      };
+
+      const els = {
+        openMenuBtn: $('btnOpenMenu'),
+        startMediatorInput: $('startMediatorName'),
+        startQrShortcutBtn: $('btnStartQrShortcut'),
+        tileCabotage: $('tileCabotage'),
+        tileAgences: $('tileAgences'),
+        tileMetros: $('tileMetros'),
+        tileAccueil: $('tileAccueil'),
+        tileZones: $('tileZones'),
+        tilePriseService: $('tilePriseService'),
+        backAgencesBtn: $('btnBackAgences'),
+        backMetrosBtn: $('btnBackMetros'),
+        backAccueilBtn: $('btnBackAccueil'),
+        backZonesBtn: $('btnBackZones'),
+        backSetupMenuBtn: $('btnBackSetupMenu'),
+        backPriseServiceBtn: $('btnBackPriseService'),
+        startInput: $('startTimeInput'),
+        endInput: $('endTimeInput'),
+        st2: $('st2'),
+        st3: $('st3'),
+        st4: $('st4'),
+        minus: $('durMinus'),
+        plus: $('durPlus'),
+        durLabel: $('durLabel'),
+        calcBtn: $('btnCalculate'),
+        travelToggle: $('travelToggle'),
+        rStart: $('rStart'),
+        rEnd: $('rEnd'),
+        rStations: $('rStations'),
+        rDuration: $('rDuration'),
+        rInterval: $('rInterval'),
+        rList: $('rList'),
+        newCalc: $('btnNewCalc'),
+        menuBtn: $('btnMenu'),
+        missionReturnBtn: $('btnMissionReturn'),
+        logoutBtn: $('btnLogout'),
+        weatherWidget: $('weatherWidget'),
+        weatherIcon: $('weatherIcon'),
+        weatherText: $('weatherText')
+      };
+
+      function assert(cond, msg) {
+        if (!cond) throw new Error(msg);
+      }
+
+      function wire(el, fn, name) {
+        assert(el, `Élément introuvable: ${name}`);
+        el.onclick = fn;
+      }
+
+      function pad(n) { return String(n).padStart(2, '0'); }
+      function fmt(d) { return `${pad(d.getHours())}h${pad(d.getMinutes())}`; }
+      function addM(d, m) { return new Date(d.getTime() + m * 60000); }
+      function addS(d, s) { return new Date(d.getTime() + s * 1000); }
+      function minutesFromHHMM(v) {
+        const [h, m] = String(v).split(':').map(Number);
+        return (h * 60) + m;
+      }
+      function durationBetweenHHMM(start, end) {
+        const s = minutesFromHHMM(start);
+        const e = minutesFromHHMM(end);
+        if (e >= s) return e - s;
+        return (24 * 60 - s) + e;
+      }
+
+      function show(screenName) {
+        Object.values(screens).forEach((screen) => {
+          assert(screen, 'Un écran est introuvable');
+          screen.classList.remove('active');
+        });
+        assert(screens[screenName], `Écran inconnu: ${screenName}`);
+        screens[screenName].classList.add('active');
+      }
+
+      function safeLocalStorage() {
+        try { return window.localStorage; } catch { return null; }
+      }
+
+      function weatherCodeToUi(code, isDay, cloudCover = null, cloudCoverLow = null) {
+        if (code === 0) return isDay ? { icon: '☀️', label: 'Ensoleillé' } : { icon: '🌙', label: 'Temps clair' };
+        if (code === 1) return isDay ? { icon: '🌤️', label: 'Peu nuageux' } : { icon: '🌙', label: 'Peu nuageux' };
+        if (code === 2) return { icon: '⛅', label: 'Partiellement nuageux' };
+        if (code === 3) return { icon: '☁️', label: 'Très nuageux' };
+        if (code === 45) return { icon: '🌫️', label: 'Brume' };
+        if (code === 48) return { icon: '🌫️', label: 'Brouillard' };
+        if ([51, 56].includes(code)) return { icon: '🌦️', label: 'Bruine' };
+        if ([53, 61, 80].includes(code)) return { icon: '🌦️', label: 'Pluie faible' };
+        if ([55, 63, 81].includes(code)) return { icon: '🌧️', label: 'Pluie modérée' };
+        if ([65, 82].includes(code)) return { icon: '🌧️', label: 'Forte pluie' };
+        if ([66, 67].includes(code)) return { icon: '🧊', label: 'Verglas' };
+        if (code === 71) return { icon: '🌨️', label: 'Neige faible' };
+        if ([73, 77, 85].includes(code)) return { icon: '❄️', label: 'Neige modérée' };
+        if ([75, 86].includes(code)) return { icon: '❄️', label: 'Forte neige' };
+        if (code === 95) return { icon: '⛈️', label: 'Orage' };
+        if (code === 96) return { icon: '⛈️', label: 'Orage fort' };
+        if (code === 99) return { icon: '🧊', label: 'Grêle' };
+
+        const lowCloud = Number.isFinite(Number(cloudCoverLow)) ? Number(cloudCoverLow) : null;
+        const totalCloud = Number.isFinite(Number(cloudCover)) ? Number(cloudCover) : null;
+        const fallbackCloud = lowCloud !== null ? lowCloud : totalCloud;
+
+        if (fallbackCloud !== null) {
+          if (fallbackCloud <= 5) return isDay ? { icon: '☀️', label: 'Ensoleillé' } : { icon: '🌙', label: 'Temps clair' };
+          if (fallbackCloud <= 20) return isDay ? { icon: '🌤️', label: 'Peu nuageux' } : { icon: '🌙', label: 'Peu nuageux' };
+          if (fallbackCloud <= 40) return { icon: '⛅', label: 'Partiellement nuageux' };
+          if (fallbackCloud <= 60) return { icon: '⛅', label: 'Partiellement couvert' };
+          if (fallbackCloud <= 80) return { icon: '☁️', label: 'Nuageux' };
+          if (fallbackCloud <= 95) return { icon: '☁️', label: 'Très nuageux' };
+          return { icon: '☁️', label: 'Couvert' };
+        }
+
+        return isDay ? { icon: '⛅', label: 'Nuageux' } : { icon: '🌙', label: 'Nuageux' };
+      }
+
+      async function fetchWeather() {
+        if (!els.weatherWidget || !els.weatherIcon || !els.weatherText) return;
+        try {
+          const lat = 48.1113;
+          const lon = -1.6800;
+          const cacheBuster = Date.now();
+          const url = `https://api.open-meteo.com/v1/meteofrance?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,cloud_cover,cloud_cover_low&timezone=Europe%2FParis&_=${cacheBuster}`;
+          const response = await fetch(url, { cache: 'no-store' });
+          if (!response.ok) throw new Error('weather fetch failed');
+          const data = await response.json();
+          const current = data.current;
+          if (!current) throw new Error('missing current weather');
+          const temp = Math.round(current.temperature_2m);
+          const isDay = Number(current.is_day) === 1;
+          const ui = weatherCodeToUi(current.weather_code, isDay, current.cloud_cover, current.cloud_cover_low);
+          els.weatherIcon.textContent = ui.icon;
+          els.weatherText.textContent = `${temp}° · ${ui.label}`;
+          els.weatherWidget.classList.remove('hidden');
+        } catch {
+          const hour = new Date().getHours();
+          const isDay = hour >= 7 && hour < 21;
+          els.weatherIcon.textContent = isDay ? '⛅' : '🌙';
+          els.weatherText.textContent = isDay ? '—° · Météo' : '—° · Nuit claire';
+          els.weatherWidget.classList.remove('hidden');
+        }
+      }
+
+      function saveCabotageState() {
+        const storage = safeLocalStorage();
+        if (!storage) return;
+        const payload = {
+          startTime: startDate ? `${pad(startDate.getHours())}:${pad(startDate.getMinutes())}` : '',
+          stationsCount,
+          durationMinutes,
+          includeTravel
+        };
+        storage.setItem(CABOTAGE_STORAGE_KEY, JSON.stringify(payload));
+      }
+
+      function loadCabotageState() {
+        const storage = safeLocalStorage();
+        if (!storage) return false;
+        const raw = storage.getItem(CABOTAGE_STORAGE_KEY);
+        if (!raw) return false;
+        try {
+          const saved = JSON.parse(raw);
+          if (saved && typeof saved.stationsCount === 'number' && [2, 3, 4].includes(saved.stationsCount)) stationsCount = saved.stationsCount;
+          if (saved && typeof saved.durationMinutes === 'number' && saved.durationMinutes >= 5) durationMinutes = saved.durationMinutes;
+          includeTravel = !!(saved && saved.includeTravel);
+          if (saved && typeof saved.startTime === 'string' && saved.startTime.includes(':')) {
+            const [h, m] = saved.startTime.split(':').map(Number);
+            if (Number.isInteger(h) && Number.isInteger(m)) {
+              startDate = new Date();
+              startDate.setHours(h, m, 0, 0);
+            }
+          }
+          return true;
+        } catch {
+          storage.removeItem(CABOTAGE_STORAGE_KEY);
+          return false;
+        }
+      }
+
+      function renderSetup() {
+        els.durLabel.textContent = `${durationMinutes} min`;
+        els.travelToggle.checked = includeTravel;
+        if (!startDate) {
+          els.startInput.value = '';
+          els.endInput.value = '';
+          return;
+        }
+        els.startInput.value = `${pad(startDate.getHours())}:${pad(startDate.getMinutes())}`;
+        const end = addM(startDate, durationMinutes);
+        els.endInput.value = `${pad(end.getHours())}:${pad(end.getMinutes())}`;
+      }
+
+      function compute() {
+        assert(startDate instanceof Date, 'startDate doit être défini');
+        const dwellMins = durationMinutes / stationsCount;
+        const dwellSec = dwellMins * 60;
+        const depTimes = [];
+        const arrTimesDisplay = [];
+        for (let i = 1; i <= stationsCount; i++) {
+          const baseArr = (i === 1) ? startDate : depTimes[i - 2];
+          const dep = addS(baseArr, dwellSec);
+          const arrShown = (i === 1) ? baseArr : (includeTravel ? addS(baseArr, TRAVEL_SECONDS) : baseArr);
+          depTimes.push(dep);
+          arrTimesDisplay.push(arrShown);
+        }
+        return { end: depTimes[depTimes.length - 1], dwellMins, depTimes, arrTimesDisplay };
+      }
+
+      function updateResultUI() {
+        if (!startDate) return;
+        if (els.menuBtn) els.menuBtn.classList.toggle('hidden', !!cabotageMissionReturnTarget);
+        if (els.missionReturnBtn) els.missionReturnBtn.classList.toggle('hidden', !cabotageMissionReturnTarget);
+        const { end, dwellMins, depTimes, arrTimesDisplay } = compute();
+        els.rStart.textContent = fmt(startDate);
+        els.rEnd.textContent = fmt(end);
+        els.rStations.textContent = String(stationsCount);
+        els.rDuration.textContent = `${durationMinutes} min`;
+        els.rInterval.textContent = `${Math.round(dwellMins)} min`;
+        els.rList.innerHTML = '';
+        depTimes.forEach((dep, i) => {
+          const li = document.createElement('li');
+          li.textContent = `Station ${i + 1} → Arrivée ${fmt(arrTimesDisplay[i])} | Départ ${fmt(dep)}`;
+          els.rList.appendChild(li);
+        });
+      }
+
+      function setStations(count) {
+        stationsCount = count;
+        [els.st2, els.st3, els.st4].forEach((btn) => btn.classList.remove('active'));
+        if (count === 2) els.st2.classList.add('active');
+        if (count === 3) els.st3.classList.add('active');
+        if (count === 4) els.st4.classList.add('active');
+        renderSetup();
+        saveCabotageState();
+      }
+
+      wire(els.openMenuBtn, () => {
+        const cleanName = String(els.startMediatorInput?.value || '').trim().replace(/ +/g, ' ');
+        if (!cleanName) return;
+        const storage = safeLocalStorage();
+        if (storage) storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, cleanName);
+        if (typeof window.setActiveMediator === 'function') window.setActiveMediator(cleanName);
+        show('menu');
+      }, 'btnOpenMenu');
+
+      wire(els.logoutBtn, () => {
+        const storage = safeLocalStorage();
+        if (storage) {
+          storage.removeItem(CABOTAGE_STORAGE_KEY);
+          storage.removeItem('prise-service-app-state-v1');
+          storage.removeItem(ACTIVE_MEDIATOR_STORAGE_KEY);
+        }
+        startDate = null;
+        stationsCount = 4;
+        durationMinutes = 60;
+        includeTravel = false;
+        cabotageMissionReturnTarget = null;
+        renderSetup();
+        if (els.startMediatorInput) {
+          els.startMediatorInput.value = '';
+          els.openMenuBtn.disabled = true;
+        }
+        if (typeof window.resetPriseServiceState === 'function') window.resetPriseServiceState();
+        show('start');
+      }, 'btnLogout');
+
+      wire(els.tileCabotage, () => {
+        cabotageMissionReturnTarget = null;
+        loadCabotageState();
+        setStations(stationsCount);
+        if (!startDate) {
+          startDate = new Date();
+          startDate.setSeconds(0, 0);
+          saveCabotageState();
+        }
+        renderSetup();
+        show('setup');
+      }, 'tileCabotage');
+      wire(els.tileAgences, () => show('agences'), 'tileAgences');
+      wire(els.tileMetros, () => show('metros'), 'tileMetros');
+      wire(els.tileAccueil, () => show('accueil'), 'tileAccueil');
+      wire(els.tileZones, () => show('zones'), 'tileZones');
+      wire(els.tilePriseService, () => show('priseService'), 'tilePriseService');
+      wire(els.backAgencesBtn, () => show('menu'), 'btnBackAgences');
+      wire(els.backMetrosBtn, () => show('menu'), 'btnBackMetros');
+      wire(els.backAccueilBtn, () => show('menu'), 'btnBackAccueil');
+      wire(els.backZonesBtn, () => show('menu'), 'btnBackZones');
+      wire(els.backSetupMenuBtn, () => show('menu'), 'btnBackSetupMenu');
+      wire(els.backPriseServiceBtn, () => show('menu'), 'btnBackPriseService');
+      wire(els.minus, () => { durationMinutes = Math.max(5, durationMinutes - 5); renderSetup(); saveCabotageState(); }, 'durMinus');
+      wire(els.plus, () => { durationMinutes += 5; renderSetup(); saveCabotageState(); }, 'durPlus');
+      wire(els.st2, () => setStations(2), 'st2');
+      wire(els.st3, () => setStations(3), 'st3');
+      wire(els.st4, () => setStations(4), 'st4');
+      wire(els.calcBtn, () => { if (!startDate) return; updateResultUI(); show('result'); }, 'btnCalculate');
+      wire(els.newCalc, () => { setStations(stationsCount); show('setup'); }, 'btnNewCalc');
+      wire(els.menuBtn, () => { cabotageMissionReturnTarget = null; show('menu'); }, 'btnMenu');
+      wire(els.missionReturnBtn, () => {
+        if (cabotageMissionReturnTarget === 'priseServiceFollow') {
+          const tabBtn = document.getElementById('psTabFollowBtn');
+          if (tabBtn) tabBtn.click();
+          show('priseService');
+        } else {
+          show('setup');
+        }
+        cabotageMissionReturnTarget = null;
+      }, 'btnMissionReturn');
+
+      window.openCabotageFromMission = function openCabotageFromMission(payload) {
+        assert(payload && payload.start && payload.end, 'Mission cabotage invalide');
+        const [h, m] = payload.start.split(':').map(Number);
+        startDate = new Date();
+        startDate.setHours(h, m, 0, 0);
+        stationsCount = [2, 3, 4].includes(payload.stationsCount) ? payload.stationsCount : 4;
+        durationMinutes = Math.max(5, durationBetweenHHMM(payload.start, payload.end));
+        if (typeof payload.includeTravel === 'boolean') includeTravel = payload.includeTravel;
+        cabotageMissionReturnTarget = payload.returnTarget || 'priseServiceFollow';
+        setStations(stationsCount);
+        renderSetup();
+        updateResultUI();
+        saveCabotageState();
+        show('result');
+      };
+
+      els.startInput.onchange = (e) => {
+        const parts = e.target.value.split(':');
+        if (parts.length < 2) return;
+        const h = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        if (!startDate) startDate = new Date();
+        startDate.setHours(h, m, 0, 0);
+        renderSetup();
+        saveCabotageState();
+      };
+
+      if (els.startMediatorInput) {
+        const storage = safeLocalStorage();
+        const rememberedMediator = storage ? String(storage.getItem(ACTIVE_MEDIATOR_STORAGE_KEY) || '').trim().replace(/ +/g, ' ') : '';
+        if (rememberedMediator) els.startMediatorInput.value = rememberedMediator;
+        const refreshStartButton = () => {
+          const clean = String(els.startMediatorInput.value || '').trim().replace(/ +/g, ' ');
+          els.openMenuBtn.disabled = !clean;
+        };
+        refreshStartButton();
+        els.startMediatorInput.addEventListener('input', refreshStartButton);
+        els.startMediatorInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !els.openMenuBtn.disabled) {
+            e.preventDefault();
+            els.openMenuBtn.click();
+          }
+        });
+      }
+
+      if (els.startQrShortcutBtn) {
+        els.startQrShortcutBtn.onclick = () => {
+          const cleanName = String(els.startMediatorInput?.value || '').trim().replace(/ +/g, ' ');
+          const storage = safeLocalStorage();
+          const mediatorName = cleanName || (storage ? String(storage.getItem(ACTIVE_MEDIATOR_STORAGE_KEY) || '').trim().replace(/ +/g, ' ') : '') || 'Médiateur';
+          if (storage) storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, mediatorName);
+          if (typeof window.setActiveMediator === 'function') window.setActiveMediator(mediatorName);
+          if (typeof window.openQrImportShortcut === 'function') {
+            window.openQrImportShortcut();
+          } else {
+            show('priseService');
+          }
+        };
+      }
+
+      els.travelToggle.onchange = (e) => {
+        includeTravel = !!e.target.checked;
+        saveCabotageState();
+        if (screens.result.classList.contains('active')) updateResultUI();
+      };
+
+      loadCabotageState();
+      setStations(stationsCount);
+      renderSetup();
+      fetchWeather();
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') fetchWeather();
+      });
+      window.addEventListener('focus', fetchWeather);
+      setInterval(fetchWeather, 10 * 60 * 1000);
+      if (els.weatherWidget) {
+        els.weatherWidget.style.cursor = 'pointer';
+        els.weatherWidget.title = 'Actualiser la météo';
+        els.weatherWidget.addEventListener('click', fetchWeather);
+      }
+      show('start');
+    })();
+  </script>
+
+  <script>
+    (() => {
+      const SLOT_MAP = {
+        M: { start: '07:00', end: '14:00' },
+        J: { start: '10:00', end: '17:00' },
+        AM: { start: '12:50', end: '19:50' },
+        S01: { start: '15:30', end: '22:30' },
+        S05: { start: '17:00', end: '00:00' },
+        SPE: { start: '', end: '' },
+      };
+      const PAUSE_DURATION_MIN = 20;
+      const STORAGE_KEY = 'prise-service-app-state-v1';
+      const PRISE_SERVICE_SESSION_PREFIX = 'prise-service-session-v2-';
+      const CABOTAGE_MAP = {
+        metroA: {
+          'CAB nord ANF': 'PON - VU - JFK',
+          'CAB nord ( spé ) JFK': 'PON - ANF',
+          'CAB centre STA': 'REP - CDG - GAR',
+          'CAB centre ( spé ) GAR': 'CDG - REP',
+          'CAB sud HFR': 'GCL - JCA',
+          'CAB Sud ( spé ) GCL': 'JCA - HFR',
+          'CAB sud POT': 'BLO - TRI - ITA',
+        },
+        metroB: {
+          'CAB sud MAB': 'CLE - LCO - SJG',
+          'CAB centre SGE': 'GARB - COL',
+          'CAB centre COL': 'GAR - SGE - STAb',
+          'CAB nord LGA': 'GCH - JFE - STAb',
+          'CAB nord CVI': 'ATA - BUN - IJC',
+          'CAB nord ( spé ) CVI': 'ATA - BUN',
+        }
+      };
+      const BUS_ZONE_MAP = {
+        C1: ['Z1', 'Z3'],
+        C2: ['Z2', 'Z3'],
+        C3: ['Z1', 'Z4'],
+        C4: ['Z1', 'Z3'],
+        C5: ['Z2', 'Z4'],
+        C6: ['Z3', 'Z4'],
+        L10: ['Z2', 'Z4'],
+        L11: ['Z1', 'Z3'],
+        L12: ['Z1', 'Z4'],
+        L13: ['Z3', 'Z4'],
+        L14: ['Z1', 'Z2']
+      };
+      const BUS_ZONE_DETAIL_MAP = {
+        'C1|Z1': 'St Grégoire Champs Daguet',
+        'C3|Z1': 'Patton',
+        'C4|Z1': 'St Grégoire Grand Quartier',
+        'L11|Z1': 'Vezin-le-Coquet ZI Ouest',
+        'L12|Z1': 'Villejean Université',
+        'L14|Z1': 'Roazhon Park',
+        'C2|Z2': 'Cesson-Cévigné Champs Blancs',
+        'C5|Z2': 'Saint-Laurent',
+        'L10|Z2': 'Beaulieu Chimie',
+        'L14|Z2': 'Cesson-Cévigné Monniais',
+        'C1|Z3': 'Chantepie Rosa Parks',
+        'C2|Z3': 'Haut Sancé',
+        'C4|Z3': 'ZA Saint-Sulpice',
+        'C6|Z3': 'Cesson-Sévigné Rigourdière',
+        'L11|Z3': 'La Poterie',
+        'L13|Z3': 'Chantepie Cucé',
+        'C3|Z4': 'Henri Fréville',
+        'C5|Z4': 'Lycée Bréquigny',
+        'C6|Z4': 'St Jacques de la Lande Aéroport',
+        'L10|Z4': 'Porte de Cleunay',
+        'L12|Z4': 'La Poterie',
+        'L13|Z4': 'Bruz Porte de Ker Lann'
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const ACTIVE_MEDIATOR_STORAGE_KEY = 'amistar-active-mediator-v1';
+      let missionIdCounter = 1;
+      const state = {
+        members: [],
+        missions: [],
+        selectedMembers: [],
+        serviceWindow: { start: '', end: '' },
+        mockNowHHMM: null,
+        editMode: false,
+        validatedComment: '',
+        lastRenderedMinute: '',
+        qrDetector: null,
+        qrStream: null,
+        qrScanInterval: null,
+        qrCanvas: null,
+        qrLastText: '',
+        editingMissionId: null,
+        selectedOtherMission: '',
+      };
+
+      const els = {
+        liveTime: $('psLiveTime'),
+        liveDate: $('psLiveDate'),
+        serviceDate: $('psServiceDate'),
+        serviceSlot: $('psServiceSlot'),
+        memberInput: $('psMemberInput'),
+        addMemberBtn: $('psAddMemberBtn'),
+        membersList: $('psMembersList'),
+        phoneNumber: $('psPhoneNumber'),
+        phoneAssignedTo: $('psPhoneAssignedTo'),
+        kizeoNumber: $('psKizeoNumber'),
+        pauseStart: $('psPauseStart'),
+        cabotageModeField: $('psCabotageModeField'),
+        cabotageMode: $('psCabotageMode'),
+        cabotageSectorField: $('psCabotageSectorField'),
+        cabotageSector: $('psCabotageSector'),
+        specialHoursField: $('psSpecialHoursField'),
+        specialStart: $('psSpecialStart'),
+        specialEnd: $('psSpecialEnd'),
+        missionStart: $('psMissionStart'),
+        missionEnd: $('psMissionEnd'),
+        missionType: $('psMissionType'),
+        otherMissionField: $('psOtherMissionField'),
+        otherMissionSelector: $('psOtherMissionSelector'),
+        otherMissionCustom: $('psOtherMissionCustom'),
+        missionPlaceField: $('psMissionPlaceField'),
+        missionPlace: $('psMissionPlace'),
+        missionPlaceSelect: $('psMissionPlaceSelect'),
+        missionPapSelect: $('psMissionPapSelect'),
+        missionBoardingSelect: $('psMissionBoardingSelect'),
+        boardingSchoolWrap: $('psBoardingSchoolWrap'),
+        boardingSchool: $('psBoardingSchool'),
+        missionLineField: $('psMissionLineField'),
+        missionLine: $('psMissionLine'),
+        busZoneField: $('psBusZoneField'),
+        busZoneSelect: $('psBusZoneSelect'),
+        busLineField: $('psBusLineField'),
+        busLineSelect: $('psBusLineSelect'),
+        busLineFieldSecondary: $('psBusLineFieldSecondary'),
+        busLineSelectSecondary: $('psBusLineSelectSecondary'),
+        memberSelector: $('psMemberSelector'),
+        addMissionBtn: $('psAddMissionBtn'),
+        resetMissionBtn: $('psResetMissionBtn'),
+        missionsWrap: $('psMissionsWrap'),
+        statSlot: $('psStatSlot'),
+        statPhone: $('psStatPhone'),
+        statPhoneAssigned: $('psStatPhoneAssigned'),
+        statKizeo: $('psStatKizeo'),
+        statPause: $('psStatPause'),
+        screenForm: $('psScreenForm'),
+        screenFollow: $('psScreenFollow'),
+        backToFormBtn: $('psBackToFormBtn'),
+        followStatSlot: $('psFollowStatSlot'),
+        followStatPhone: $('psFollowStatPhone'),
+        followStatPhoneAssigned: $('psFollowStatPhoneAssigned'),
+        followStatKizeo: $('psFollowStatKizeo'),
+        followStatPause: $('psFollowStatPause'),
+        tabFormBtn: $('psTabFormBtn'),
+        tabFollowBtn: $('psTabFollowBtn'),
+        toggleEditBtn: $('psToggleEditBtn'),
+        editModeNote: $('psEditModeNote'),
+        missionSuccessMessage: $('psMissionSuccessMessage'),
+        commentEnabled: $('psCommentEnabled'),
+        commentBox: $('psCommentBox'),
+        commentText: $('psCommentText'),
+        validateCommentBtn: $('psValidateCommentBtn'),
+        commentSuccessMessage: $('psCommentSuccessMessage'),
+        qrBtn: $('psQrBtn'),
+        qrScreen: $('psQrScreen'),
+        qrBackBtn: $('psQrBackBtn'),
+        qrText: $('psQrText'),
+        applyQrBtn: $('psApplyQrBtn'),
+        scanQrBtn: $('psScanQrBtn'),
+        stopScanQrBtn: $('psStopScanQrBtn'),
+        nativeCameraInput: $('psNativeCameraInput'),
+        liveScanWrap: $('psLiveScanWrap'),
+        liveScanVideo: $('psLiveScanVideo'),
+        liveScanOverlay: $('psLiveScanOverlay'),
+        liveScanVideoOverlay: $('psLiveScanVideoOverlay'),
+        overlayStopScanBtn: $('psOverlayStopScanBtn'),
+        qrStatus: $('psQrStatus'),
+        infoModal: $('psInfoModal'),
+        infoModalTitle: $('psInfoModalTitle'),
+        infoModalBody: $('psInfoModalBody'),
+        infoModalCloseBtn: $('psInfoModalCloseBtn'),
+        infoModalOkBtn: $('psInfoModalOkBtn'),
+      };
+
+      function assert(cond, msg) { if (!cond) throw new Error(msg); }
+      function pad(n) { return String(n).padStart(2, '0'); }
+      function nowDate() { return new Date(); }
+      function toIsoDate(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+      function frDate(d) { return d.toLocaleDateString('fr-FR'); }
+      function frTime(d) { return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); }
+      function currentNowHHMM() { return state.mockNowHHMM || frTime(nowDate()); }
+      function normalizeName(v) { return v.trim().replace(/\s+/g, ' '); }
+      function minutesFromHHMM(v) {
+        const [h, m] = v.split(':').map(Number);
+        return h * 60 + m;
+      }
+      function hhmmFromMinutes(total) {
+        const normalized = ((total % (24 * 60)) + (24 * 60)) % (24 * 60);
+        const h = Math.floor(normalized / 60);
+        const m = normalized % 60;
+        return `${pad(h)}:${pad(m)}`;
+      }
+      function addMinutes(hhmm, minutes) { return hhmmFromMinutes(minutesFromHHMM(hhmm) + minutes); }
+      function compareTimes(a, b) { return minutesFromHHMM(a) - minutesFromHHMM(b); }
+      function isTimeInRange(nowHHMM, start, end) {
+        const n = minutesFromHHMM(nowHHMM);
+        const s = minutesFromHHMM(start);
+        const e = minutesFromHHMM(end);
+        if (end === '00:00' && s > e) return n >= s || n < 1;
+        if (s <= e) return n >= s && n < e;
+        return n >= s || n < e;
+      }
+      function isPast(nowHHMM, end) {
+        const n = minutesFromHHMM(nowHHMM);
+        const e = minutesFromHHMM(end);
+        if (end === '00:00') return n >= 1 && n < 12 * 60;
+        return n >= e;
+      }
+      function currentServiceStart() { return state.serviceWindow.start || ''; }
+      function currentServiceEnd() { return state.serviceWindow.end || ''; }
+      function safeLocalStorage() { try { return window.localStorage; } catch { return null; } }
+      function currentDayKey() { return toIsoDate(nowDate()); }
+      function normalizeMediatorSessionKey(name) {
+        return String(name || '').trim().split(/ +/g).join(' ').toLowerCase();
+      }
+      function getMediatorSessionStorageKey(name) {
+        return `${PRISE_SERVICE_SESSION_PREFIX}${currentDayKey()}-${normalizeMediatorSessionKey(name)}`;
+      }
+      function cleanupOldMediatorSessions() {
+        const storage = safeLocalStorage();
+        if (!storage) return;
+        const todayPrefix = `${PRISE_SERVICE_SESSION_PREFIX}${currentDayKey()}-`;
+        Object.keys(storage).forEach((key) => {
+          if (key.startsWith(PRISE_SERVICE_SESSION_PREFIX) && !key.startsWith(todayPrefix)) {
+            storage.removeItem(key);
+          }
+        });
+      }
+      function getStoredMediator() {
+        const storage = safeLocalStorage();
+        const raw = storage ? String(storage.getItem(ACTIVE_MEDIATOR_STORAGE_KEY) || '') : '';
+        const clean = raw.trim().replace(/\s+/g, ' ');
+        return clean || 'Médiateur';
+      }
+      function applyActiveMediator(name) {
+        const clean = String(name || '').trim().replace(/\s+/g, ' ') || 'Médiateur';
+        const previousAssigned = els.phoneAssignedTo ? els.phoneAssignedTo.value : '';
+        state.members = [clean, ...state.members.filter((member) => member !== clean)];
+        state.selectedMembers = state.selectedMembers.filter((member) => state.members.includes(member));
+        if (!state.selectedMembers.length) state.selectedMembers = [...state.members];
+        renderMembers();
+        renderMemberSelector();
+        fillPhoneAssigned();
+        if (els.phoneAssignedTo) {
+          els.phoneAssignedTo.value = state.members.includes(previousAssigned) ? previousAssigned : clean;
+        }
+      }
+      window.setActiveMediator = function(name) {
+        applyActiveMediator(name);
+        loadMediatorSession(name);
+      };
+      window.openQrImportShortcut = function() {
+        clearQrStatus();
+        stopLiveQrScan();
+        showMainScreen('screenPriseService');
+        showToolScreen('qr');
+        saveAppState();
+      };
+      window.resetPriseServiceState = function() {
+        clearSavedState();
+        state.members = [];
+        state.missions = [];
+        state.selectedMembers = [];
+        state.serviceWindow = { start: '', end: '' };
+        state.mockNowHHMM = null;
+        state.editMode = false;
+        state.editingMissionId = null;
+        state.validatedComment = '';
+        els.serviceDate.value = toIsoDate(nowDate());
+        els.serviceSlot.value = '';
+        els.specialStart.value = '';
+        els.specialEnd.value = '';
+        els.phoneNumber.value = '';
+        els.kizeoNumber.value = '';
+        els.pauseStart.value = '';
+        if (els.commentEnabled) els.commentEnabled.checked = false;
+        if (els.commentText) els.commentText.value = '';
+        if (els.qrText) els.qrText.value = '';
+        clearQrStatus();
+        els.phoneAssignedTo.innerHTML = '';
+        renderMembers();
+        renderMemberSelector();
+        resetMissionForm();
+        updateSpecialHoursVisibility();
+        updateMissionFields();
+        renderMissions();
+        stopLiveQrScan();
+        showToolScreen('form');
+      };
+      function updateClock() {
+        const d = nowDate();
+        const timeText = frTime(d);
+        els.liveTime.textContent = timeText;
+        els.liveDate.textContent = frDate(d);
+        const minuteKey = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${timeText}`;
+        if (state.lastRenderedMinute !== minuteKey) {
+          state.lastRenderedMinute = minuteKey;
+          renderMissions();
+        }
+      }
+      function showToolScreen(name) {
+        const isForm = name === 'form';
+        const isFollow = name === 'follow';
+        const isQr = name === 'qr';
+        if (els.screenForm) els.screenForm.classList.toggle('ps-active', isForm);
+        if (els.screenFollow) els.screenFollow.classList.toggle('ps-active', isFollow);
+        if (els.qrScreen) els.qrScreen.classList.toggle('ps-active', isQr);
+        if (els.tabFormBtn) els.tabFormBtn.classList.toggle('ps-active', isForm);
+        if (els.tabFollowBtn) els.tabFollowBtn.classList.toggle('ps-active', isFollow || isQr);
+      }
+      function showMainScreen(screenId) {
+        document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
+        const target = document.getElementById(screenId);
+        if (target) target.classList.add('active');
+      }
+      function currentPauseEnd() { return els.pauseStart.value ? addMinutes(els.pauseStart.value, PAUSE_DURATION_MIN) : ''; }
+      function saveAppState() {
+        const storage = safeLocalStorage();
+        if (!storage) return;
+        const payload = {
+          serviceDate: els.serviceDate.value || toIsoDate(nowDate()),
+          serviceSlot: els.serviceSlot.value,
+          specialStart: els.specialStart.value,
+          specialEnd: els.specialEnd.value,
+          members: state.members,
+          selectedMembers: state.selectedMembers,
+          phoneNumber: els.phoneNumber.value,
+          phoneAssignedTo: els.phoneAssignedTo.value,
+          kizeoNumber: els.kizeoNumber.value,
+          pauseStart: els.pauseStart.value,
+          missions: state.missions,
+          editMode: state.editMode,
+          activeScreen: els.qrScreen && els.qrScreen.classList.contains('ps-active') ? 'qr' : (els.screenFollow.classList.contains('ps-active') ? 'follow' : 'form'),
+          commentEnabled: !!(els.commentEnabled && els.commentEnabled.checked),
+          commentText: els.commentText ? els.commentText.value : '',
+          validatedComment: state.validatedComment || '',
+          qrText: els.qrText ? els.qrText.value : '',
+        };
+        storage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        const activeMediator = getStoredMediator();
+        if (activeMediator) {
+          storage.setItem(getMediatorSessionStorageKey(activeMediator), JSON.stringify(payload));
+        }
+      }
+      function clearSavedState(name) {
+        const storage = safeLocalStorage();
+        if (!storage) return;
+        storage.removeItem(STORAGE_KEY);
+        const mediatorName = name || getStoredMediator();
+        if (mediatorName) {
+          storage.removeItem(getMediatorSessionStorageKey(mediatorName));
+        }
+      }
+      function fillCabotageSectorOptions() {
+        els.cabotageSector.innerHTML = '';
+        const mode = els.cabotageMode.value;
+        const map = CABOTAGE_MAP[mode] || null;
+        const first = document.createElement('option');
+        first.value = '';
+        first.textContent = 'Choisir';
+        els.cabotageSector.appendChild(first);
+        if (!map) return;
+        Object.entries(map).forEach(([sector, stations]) => {
+          const opt = document.createElement('option');
+          opt.value = `${sector} : ${stations}`;
+          opt.textContent = `${sector} · ${stations}`;
+          els.cabotageSector.appendChild(opt);
+        });
+      }
+      function updateSpecialHoursVisibility() {
+        const isSpe = els.serviceSlot.value === 'SPE';
+        els.specialHoursField.classList.toggle('ps-hidden', !isSpe);
+      }
+      function updateCommentVisibility() {
+        if (!els.commentBox || !els.commentEnabled) return;
+        els.commentBox.classList.toggle('ps-hidden', !els.commentEnabled.checked);
+      }
+      function setServiceTimes() {
+        const slotValue = els.serviceSlot.value;
+        if (!slotValue) {
+          state.serviceWindow = { start: '', end: '' };
+          els.statSlot.textContent = 'Horaire à définir';
+          els.missionStart.value = nextMissionStart() || '';
+          return;
+        }
+        const slot = SLOT_MAP[slotValue] || SLOT_MAP.AM;
+        if (slotValue === 'SPE') {
+          const start = els.specialStart.value || '';
+          const end = els.specialEnd.value || '';
+          state.serviceWindow = { start, end };
+          els.statSlot.textContent = start && end ? `Spé · ${start}-${end}` : 'Spé · à définir';
+        } else {
+          state.serviceWindow = { start: slot.start, end: slot.end };
+          els.statSlot.textContent = `${slotValue} · ${slot.start}-${slot.end}`;
+        }
+        els.missionStart.value = nextMissionStart();
+      }
+      function shouldResetForNewDay() {
+        return !!els.serviceDate.value && els.serviceDate.value !== toIsoDate(nowDate());
+      }
+      function resetForNewDay() {
+        cleanupOldMediatorSessions();
+        clearSavedState();
+        applyDefaultState();
+        const activeMediator = getStoredMediator();
+        applyActiveMediator(activeMediator);
+        renderMissions();
+        stopLiveQrScan();
+        showToolScreen('form');
+      }
+      function hydrateAppState(saved) {
+        const today = toIsoDate(nowDate());
+        if (!saved || saved.serviceDate !== today) {
+          return false;
+        }
+        els.serviceDate.value = saved.serviceDate || today;
+        els.serviceSlot.value = saved.serviceSlot || '';
+        els.specialStart.value = saved.specialStart || '';
+        els.specialEnd.value = saved.specialEnd || '';
+        state.members = Array.isArray(saved.members) && saved.members.length ? saved.members : [getStoredMediator()];
+        state.selectedMembers = Array.isArray(saved.selectedMembers) && saved.selectedMembers.length ? saved.selectedMembers : [state.members[0]];
+        state.missions = Array.isArray(saved.missions)
+          ? saved.missions.map((mission) => ({ ...mission, id: mission && mission.id ? mission.id : missionIdCounter++ }))
+          : [];
+        state.editMode = !!saved.editMode;
+        state.editingMissionId = null;
+        state.validatedComment = saved.validatedComment || '';
+        renderMembers();
+        renderMemberSelector();
+        fillPhoneAssigned();
+        els.phoneNumber.value = saved.phoneNumber || '';
+        if (saved.phoneAssignedTo && state.members.includes(saved.phoneAssignedTo)) {
+          els.phoneAssignedTo.value = saved.phoneAssignedTo;
+        } else if (state.members.length) {
+          els.phoneAssignedTo.value = state.members[0];
+        }
+        els.kizeoNumber.value = saved.kizeoNumber || '';
+        els.pauseStart.value = saved.pauseStart || '';
+        if (els.commentEnabled) els.commentEnabled.checked = !!saved.commentEnabled;
+        if (els.commentText) els.commentText.value = saved.commentText || '';
+        if (els.qrText) els.qrText.value = saved.qrText || '';
+        updateSpecialHoursVisibility();
+        updateCommentVisibility();
+        setServiceTimes();
+        resetMissionForm();
+        updateMissionFields();
+        renderMissions();
+        stopLiveQrScan();
+        showToolScreen(saved.activeScreen === 'qr' ? 'qr' : (saved.activeScreen === 'follow' ? 'follow' : 'form'));
+        return true;
+      }
+      function loadSavedState() {
+        const storage = safeLocalStorage();
+        if (!storage) return false;
+        const raw = storage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        try {
+          const saved = JSON.parse(raw);
+          if (!hydrateAppState(saved)) {
+            clearSavedState();
+            return false;
+          }
+          return true;
+        } catch {
+          clearSavedState();
+          return false;
+        }
+      }
+      function loadMediatorSession(name) {
+        cleanupOldMediatorSessions();
+        const storage = safeLocalStorage();
+        if (!storage) return false;
+        const raw = storage.getItem(getMediatorSessionStorageKey(name));
+        if (!raw) {
+          applyDefaultState();
+          applyActiveMediator(name);
+          stopLiveQrScan();
+          showToolScreen('form');
+          saveAppState();
+          return false;
+        }
+        try {
+          const saved = JSON.parse(raw);
+          if (!hydrateAppState(saved)) {
+            storage.removeItem(getMediatorSessionStorageKey(name));
+            applyDefaultState();
+            applyActiveMediator(name);
+            stopLiveQrScan();
+            showToolScreen('form');
+            saveAppState();
+            return false;
+          }
+          applyActiveMediator(name);
+          saveAppState();
+          return true;
+        } catch {
+          storage.removeItem(getMediatorSessionStorageKey(name));
+          applyDefaultState();
+          applyActiveMediator(name);
+          stopLiveQrScan();
+          showToolScreen('form');
+          saveAppState();
+          return false;
+        }
+      }
+      function addMember(name) {
+        const clean = normalizeName(name);
+        if (!clean) return;
+        if (!state.members.includes(clean)) state.members.push(clean);
+        if (!state.selectedMembers.includes(clean)) state.selectedMembers.push(clean);
+        renderMembers();
+        renderMemberSelector();
+        fillPhoneAssigned();
+        fillCabotageSectorOptions();
+        updateSpecialHoursVisibility();
+        if (!els.phoneAssignedTo.value && state.members.length) els.phoneAssignedTo.value = state.members[0];
+        renderMissions();
+        saveAppState();
+      }
+      function removeMember(name) {
+        state.members = state.members.filter((m) => m !== name);
+        state.selectedMembers = state.selectedMembers.filter((m) => m !== name);
+        state.missions = state.missions.map((mission) => ({ ...mission, members: mission.members.filter((m) => m !== name) }));
+        renderMembers();
+        renderMemberSelector();
+        fillPhoneAssigned();
+        if (!state.members.includes(els.phoneAssignedTo.value) && state.members.length) els.phoneAssignedTo.value = state.members[0];
+        renderMissions();
+        saveAppState();
+      }
+      function toggleMember(name) {
+        if (state.selectedMembers.includes(name)) {
+          state.selectedMembers = state.selectedMembers.filter((m) => m !== name);
+        } else {
+          state.selectedMembers.push(name);
+        }
+        renderMemberSelector();
+        saveAppState();
+      }
+      function renderMembers() {
+        els.membersList.innerHTML = '';
+        state.members.forEach((name) => {
+          const chip = document.createElement('div');
+          chip.className = 'ps-chip';
+          chip.innerHTML = `<span>${name}</span>`;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = '×';
+          btn.onclick = () => removeMember(name);
+          chip.appendChild(btn);
+          els.membersList.appendChild(chip);
+        });
+      }
+      function renderMemberSelector() {
+        els.memberSelector.innerHTML = '';
+        state.members.forEach((name) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `ps-btn ps-small ${state.selectedMembers.includes(name) ? '' : 'ps-secondary'}`;
+          btn.textContent = name;
+          btn.onclick = () => toggleMember(name);
+          els.memberSelector.appendChild(btn);
+        });
+      }
+      function renderOtherMissionSelector() {
+        if (!els.otherMissionSelector) return;
+        const customValue = String(els.otherMissionCustom?.value || '').trim();
+        els.otherMissionSelector.querySelectorAll('[data-other-mission]').forEach((btn) => {
+          const value = String(btn.dataset.otherMission || '');
+          const isActive = !customValue && state.selectedOtherMission === value;
+          btn.className = `ps-btn ps-small ${isActive ? '' : 'ps-secondary'}`;
+        });
+      }
+      function updateMissionFields() {
+        els.busZoneField.classList.add('ps-hidden');
+        els.busLineField.classList.add('ps-hidden');
+        if (els.busLineFieldSecondary) els.busLineFieldSecondary.classList.add('ps-hidden');
+        if (els.otherMissionField) els.otherMissionField.classList.add('ps-hidden');
+
+        const rawType = els.missionType.value;
+        const selectedOther = state.selectedOtherMission;
+        const type = rawType === 'Autre' ? selectedOther : rawType;
+
+        els.cabotageModeField.classList.add('ps-hidden');
+        els.cabotageSectorField.classList.add('ps-hidden');
+        els.missionPlaceField.classList.add('ps-hidden');
+        els.missionLineField.classList.add('ps-hidden');
+        els.missionPlaceSelect.classList.add('ps-hidden');
+        els.missionPapSelect.classList.add('ps-hidden');
+        els.missionBoardingSelect.classList.add('ps-hidden');
+        els.boardingSchoolWrap.classList.add('ps-hidden');
+        els.missionPlace.classList.remove('ps-hidden');
+
+        if (!rawType) {
+          return;
+        }
+
+        const isCabotage = rawType === 'Cabotage';
+        const isOther = rawType === 'Autre';
+        const isRDS = selectedOther === 'RDS';
+        const isSNCF = selectedOther === 'SNCF';
+        const isPap = rawType === 'PAP';
+        const isPoleEchange = rawType === 'Pôle échange';
+        const isEmbarquement = rawType === 'Embarquement';
+        const isMediationSociale = rawType === 'Médiation sociale';
+        const isTacOrGuide = selectedOther === 'TAC' || selectedOther === 'STAR me guide';
+        const isKnownOtherMission = ['RDS', 'TAC', 'STAR me guide', 'SNCF'].includes(selectedOther);
+        const isCustomOtherMission = isOther && !!selectedOther && !isKnownOtherMission;
+
+        if (isOther && els.otherMissionField) {
+          els.otherMissionField.classList.remove('ps-hidden');
+          if (!selectedOther) {
+            return;
+          }
+        }
+
+        if (isCabotage) {
+          els.cabotageModeField.classList.remove('ps-hidden');
+        }
+
+        if (isRDS || isTacOrGuide || isMediationSociale || isCustomOtherMission) {
+          return;
+        }
+        if (isSNCF) {
+          els.missionPlaceField.classList.remove('ps-hidden');
+          els.missionPlace.classList.add('ps-hidden');
+          els.missionPlaceSelect.classList.remove('ps-hidden');
+          els.missionPlace.value = els.missionPlaceSelect.value;
+          return;
+        }
+        if (isPap || isPoleEchange) {
+          els.missionPlaceField.classList.remove('ps-hidden');
+          els.missionPlace.classList.add('ps-hidden');
+          els.missionPapSelect.classList.remove('ps-hidden');
+          els.missionPlace.value = els.missionPapSelect.value;
+          return;
+        }
+        if (isEmbarquement) {
+          els.missionPlaceField.classList.remove('ps-hidden');
+          els.boardingSchoolWrap.classList.remove('ps-hidden');
+          if (els.boardingSchool.checked) {
+            els.missionPlace.classList.remove('ps-hidden');
+            els.missionPlace.readOnly = true;
+            els.missionPlace.value = 'Scolaire ( voir fiche mission )';
+          } else {
+            els.missionPlace.classList.add('ps-hidden');
+            els.missionPlace.readOnly = false;
+            els.missionBoardingSelect.classList.remove('ps-hidden');
+            els.missionPlace.value = els.missionBoardingSelect.value;
+          }
+          return;
+        }
+        if (!isCabotage) {
+          els.missionPlaceField.classList.remove('ps-hidden');
+          els.missionLineField.classList.remove('ps-hidden');
+          return;
+        }
+
+        const mode = els.cabotageMode.value;
+        const isMetro = mode === 'metroA' || mode === 'metroB';
+        const isBus = mode === 'bus';
+        const isBusMetro = mode === 'busMetro';
+
+        if (isMetro) {
+          fillCabotageSectorOptions();
+          els.cabotageSectorField.classList.remove('ps-hidden');
+          if (els.cabotageSector.value) els.missionPlace.value = els.cabotageSector.value;
+        } else if (isBus) {
+          els.busZoneField.classList.remove('ps-hidden');
+          els.busLineField.classList.remove('ps-hidden');
+          if (els.busLineFieldSecondary) els.busLineFieldSecondary.classList.remove('ps-hidden');
+          fillBusZoneOptions();
+          els.missionPlace.value = '';
+          const busLines = [els.busLineSelect.value, els.busLineSelectSecondary ? els.busLineSelectSecondary.value : ''].filter(Boolean).join(' + ');
+          els.missionLine.value = [busLines, els.busZoneSelect.value].filter(Boolean).join(' · ');
+        } else if (isBusMetro) {
+          els.missionLineField.classList.remove('ps-hidden');
+          els.missionPlace.value = '';
+        } else {
+          els.missionPlaceField.classList.remove('ps-hidden');
+          els.missionLineField.classList.remove('ps-hidden');
+        }
+      }
+      function fillBusZoneOptions() {
+        const line = els.busLineSelect.value;
+        const zones = BUS_ZONE_MAP[line] || [];
+        const currentZone = els.busZoneSelect.value;
+        els.busZoneSelect.innerHTML = '';
+        const first = document.createElement('option');
+        first.value = '';
+        first.textContent = 'Choisir';
+        els.busZoneSelect.appendChild(first);
+        zones.forEach((zone) => {
+          const opt = document.createElement('option');
+          opt.value = zone;
+          opt.textContent = zone;
+          els.busZoneSelect.appendChild(opt);
+        });
+        if (zones.includes(currentZone)) {
+          els.busZoneSelect.value = currentZone;
+        }
+      }
+      function fillPhoneAssigned() {
+        els.phoneAssignedTo.innerHTML = '';
+        if (!state.members.length) {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = 'Aucun médiateur';
+          els.phoneAssignedTo.appendChild(opt);
+          return;
+        }
+        state.members.forEach((name) => {
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          els.phoneAssignedTo.appendChild(opt);
+        });
+      }
+      function nextMissionStart() {
+        const missionItems = [...state.missions].sort((a, b) => compareTimes(a.start, b.start));
+        let baseStart = missionItems.length ? missionItems[missionItems.length - 1].end : currentServiceStart();
+        const pauseStart = els.pauseStart.value;
+        const pauseEnd = currentPauseEnd();
+        if (!pauseStart || !pauseEnd || !baseStart) return baseStart;
+        if (compareTimes(baseStart, pauseStart) < 0) return baseStart;
+        if (compareTimes(baseStart, pauseEnd) < 0) return pauseEnd;
+        return baseStart;
+      }
+      function refreshMissionActionButton() {
+        if (!els.addMissionBtn) return;
+        els.addMissionBtn.textContent = state.editingMissionId ? 'Valider' : 'Ajouter mission';
+      }
+      function resetMissionForm() {
+        state.editingMissionId = null;
+        state.selectedOtherMission = '';
+        els.missionStart.value = nextMissionStart();
+        els.missionEnd.value = '';
+        els.missionType.value = '';
+        els.cabotageMode.value = '';
+        els.cabotageSector.innerHTML = '';
+        els.missionPlace.value = '';
+        els.missionPlaceSelect.value = '';
+        els.missionPapSelect.value = '';
+        els.missionBoardingSelect.value = '';
+        if (els.otherMissionCustom) els.otherMissionCustom.value = '';
+        els.boardingSchool.checked = false;
+        els.missionPlace.readOnly = false;
+        els.missionLine.value = '';
+        els.busLineSelect.value = '';
+        if (els.busLineSelectSecondary) els.busLineSelectSecondary.value = '';
+        fillBusZoneOptions();
+        state.selectedMembers = [...state.members];
+        renderMemberSelector();
+        updateMissionFields();
+        renderOtherMissionSelector();
+        refreshMissionActionButton();
+      }
+      function itemStatus(item) {
+        const now = currentNowHHMM();
+        if (isTimeInRange(now, item.start, item.end)) return 'current';
+        if (isPast(now, item.end)) return 'past';
+        return 'future';
+      }
+      function getBusGuidedDetail(lineValue) {
+        const raw = String(lineValue || '').trim();
+        if (!raw) return '';
+        const parts = raw.split('·').map((v) => v.trim()).filter(Boolean);
+        if (parts.length < 2) return '';
+        const zone = parts[1];
+        const linePart = parts[0] || '';
+        const lines = linePart.split('+').map((v) => v.trim()).filter(Boolean);
+        const details = lines.map((line) => {
+          const label = BUS_ZONE_DETAIL_MAP[`${line}|${zone}`] || 'Aucune correspondance précise trouvée';
+          return `${line} → ${label}`;
+        });
+        return details.join('\n');
+      }
+
+      function hasBusInfoDetail(item) {
+        return !!item && item.type === 'Cabotage' && item.cabMode === 'bus' && !!String(item.line || '').trim();
+      }
+
+      function openBusInfoModal(item) {
+        if (!els.infoModal || !els.infoModalTitle || !els.infoModalBody) return;
+        const lineValue = String(item?.line || '').trim();
+        const detail = getBusGuidedDetail(lineValue) || 'Aucune information disponible pour cette zone.';
+        els.infoModalTitle.textContent = `Information zone · ${lineValue || 'BUS'}`;
+        els.infoModalBody.textContent = detail;
+        els.infoModal.classList.add('ps-active');
+      }
+
+      function closeBusInfoModal() {
+        if (!els.infoModal) return;
+        els.infoModal.classList.remove('ps-active');
+      }
+      function buildFollowTitle(item) {
+        if (item.isPause) return 'Pause';
+        if (item.type === 'RDS') return 'RDS';
+        if (item.type === 'Cabotage' && (item.cabMode === 'metroA' || item.cabMode === 'metroB')) {
+          return `${item.type} · ${item.place || '—'}`;
+        }
+        if (item.type === 'Cabotage' && item.cabMode === 'bus') {
+          return `${item.type} · ${item.line || '—'}`;
+        }
+        if (item.type === 'Embarquement' && item.place === 'Scolaire ( voir fiche mission )') {
+          return 'Embarquement scolaire';
+        }
+        return `${item.type} · ${item.place || item.line || '—'}`;
+      }
+      function buildFollowSub(item) {
+        const subParts = [];
+        if (!item.isPause && item.type === 'RDS' && item.members?.length) subParts.push(item.members.join(' · '));
+        if (!item.isPause && item.type !== 'Cabotage' && item.type !== 'RDS' && item.line) subParts.push(item.line);
+        if (!item.isPause && item.type !== 'RDS' && item.cabMode !== 'bus' && item.members?.length) subParts.push(item.members.join(' · '));
+        if (!item.isPause && item.type === 'Cabotage' && item.cabMode === 'bus' && item.members?.length) subParts.push(item.members.join(' · '));
+        if (item.isPause) subParts.push('Pause automatique de 20 minutes');
+        return subParts.join(' • ') || '—';
+      }
+      function getCabotageStationCount(item) {
+        if (!item || item.type !== 'Cabotage') return 0;
+        if (!(item.cabMode === 'metroA' || item.cabMode === 'metroB')) return 0;
+        const raw = String(item.place || '').trim();
+        if (!raw) return 0;
+
+        if (raw === 'CAB sud HFR : GCL - JCA') {
+          return 4;
+        }
+
+        const parts = raw.split(':');
+        const leftPart = (parts[0] || '').trim();
+        const rightPart = parts.length > 1 ? parts.slice(1).join(':').trim() : '';
+
+        const leftTokens = leftPart.split(/\s+/).map((v) => v.trim()).filter(Boolean);
+        const firstStation = leftTokens.length ? leftTokens[leftTokens.length - 1] : '';
+        const otherStations = rightPart
+          .split('-')
+          .map((v) => v.trim())
+          .filter(Boolean);
+
+        return (firstStation ? 1 : 0) + otherStations.length;
+      }
+      function canSendToCabotage(item) {
+        const count = getCabotageStationCount(item);
+        return !!item && item.type === 'Cabotage' && (item.cabMode === 'metroA' || item.cabMode === 'metroB') && count >= 2 && count <= 4;
+      }
+      function getFollowMissionClasses(item) {
+        const classes = ['ps-followMission'];
+        if (item.isPause) classes.push('ps-pauseMission');
+        if (item.type === 'RDS') classes.push('ps-rdsMission');
+        if (item.type === 'SNCF') classes.push('ps-sncfMission');
+        const status = itemStatus(item);
+        if (status === 'current') classes.push('ps-current');
+        if (status === 'past') classes.push('ps-past');
+        return classes.join(' ');
+      }
+      function getScheduleItems() {
+        const items = [...state.missions];
+        const pauseStart = els.pauseStart.value;
+        if (pauseStart) {
+          const pauseEnd = currentPauseEnd();
+          const serviceStart = currentServiceStart();
+          const serviceEnd = currentServiceEnd();
+          if (serviceStart && serviceEnd) {
+            const pauseStartsAfterService = compareTimes(pauseStart, serviceStart) >= 0;
+            const pauseEndsBeforeServiceEnd = serviceEnd === '00:00' ? true : compareTimes(pauseEnd, serviceEnd) <= 0;
+            if (pauseStartsAfterService && pauseEndsBeforeServiceEnd) {
+              items.push({ start: pauseStart, end: pauseEnd, type: 'Pause', place: '', line: '', members: [...state.members], isPause: true });
+            }
+          }
+        }
+        items.sort((a, b) => compareTimes(a.start, b.start));
+        return items;
+      }
+      function setQrStatus(message, type = 'success') {
+        if (!els.qrStatus) return;
+        els.qrStatus.textContent = message;
+        els.qrStatus.className = `ps-qrStatus show ${type}`;
+      }
+      function clearQrStatus() {
+        if (!els.qrStatus) return;
+        els.qrStatus.textContent = '';
+        els.qrStatus.className = 'ps-qrStatus';
+      }
+      function setLiveScanVisibility(isActive) {
+        if (els.liveScanWrap) els.liveScanWrap.classList.toggle('ps-active', !!isActive);
+        if (els.liveScanOverlay) els.liveScanOverlay.classList.toggle('ps-active', !!isActive);
+        if (els.scanQrBtn) els.scanQrBtn.classList.toggle('ps-hidden', !!isActive);
+        if (els.stopScanQrBtn) els.stopScanQrBtn.classList.toggle('ps-hidden', !isActive);
+      }
+      function stopLiveQrScan() {
+        if (state.qrScanInterval) {
+          clearInterval(state.qrScanInterval);
+          state.qrScanInterval = null;
+        }
+        if (state.qrStream) {
+          state.qrStream.getTracks().forEach((track) => track.stop());
+          state.qrStream = null;
+        }
+        if (els.liveScanVideo) {
+          try {
+            els.liveScanVideo.pause();
+          } catch (error) {
+          }
+          els.liveScanVideo.srcObject = null;
+        }
+        if (els.liveScanVideoOverlay) {
+          try {
+            els.liveScanVideoOverlay.pause();
+          } catch (error) {
+          }
+          els.liveScanVideoOverlay.srcObject = null;
+        }
+        setLiveScanVisibility(false);
+      }
+      async function openNativeCameraShortcut() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setQrStatus('Caméra en direct indisponible sur cet appareil.', 'error');
+          return;
+        }
+        stopLiveQrScan();
+        state.qrLastText = '';
+
+        const tryConstraints = async (constraints) => {
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          state.qrStream = stream;
+          if (els.liveScanVideo) {
+            els.liveScanVideo.srcObject = stream;
+          }
+          if (els.liveScanVideoOverlay) {
+            els.liveScanVideoOverlay.srcObject = stream;
+          }
+          if (els.liveScanVideo) await els.liveScanVideo.play();
+          if (els.liveScanVideoOverlay) await els.liveScanVideoOverlay.play();
+          setLiveScanVisibility(true);
+          setQrStatus('Caméra active. Recherche du QR en direct…', 'success');
+          state.qrScanInterval = window.setInterval(scanQrFromLiveVideo, 350);
+        };
+
+        try {
+          await tryConstraints({
+            video: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            },
+            audio: false
+          });
+          return;
+        } catch (firstError) {
+          stopLiveQrScan();
+          try {
+            await tryConstraints({ video: true, audio: false });
+            return;
+          } catch (secondError) {
+            stopLiveQrScan();
+            const err = secondError || firstError || {};
+            const errName = err.name ? String(err.name) : 'Erreur inconnue';
+            const errMessage = err.message ? String(err.message) : 'aucun détail fourni';
+            setQrStatus(`Impossible d’ouvrir la caméra en direct. ${errName} : ${errMessage}`, 'error');
+          }
+        }
+      }
+      async function ensureQrDetector() {
+        if (state.qrDetector) return state.qrDetector;
+        if (!('BarcodeDetector' in window)) return null;
+        try {
+          const supported = typeof BarcodeDetector.getSupportedFormats === 'function'
+            ? await BarcodeDetector.getSupportedFormats()
+            : ['qr_code'];
+          if (Array.isArray(supported) && !supported.includes('qr_code')) return null;
+          state.qrDetector = new BarcodeDetector({ formats: ['qr_code'] });
+          return state.qrDetector;
+        } catch (error) {
+          return null;
+        }
+      }
+      async function decodeQrFromFile(file) {
+        if (!file) throw new Error('Aucune image sélectionnée.');
+
+        const detector = await ensureQrDetector();
+        if (detector) {
+          let bitmap = null;
+          try {
+            bitmap = await createImageBitmap(file);
+            const codes = await detector.detect(bitmap);
+            const rawValue = Array.isArray(codes) && codes.length ? String(codes[0].rawValue || '').trim() : '';
+            if (rawValue) return rawValue;
+          } catch (error) {
+          } finally {
+            if (bitmap && typeof bitmap.close === 'function') bitmap.close();
+          }
+        }
+
+        const jsQRLib = typeof window.__amistarLoadJsQr === 'function' ? await window.__amistarLoadJsQr() : null;
+        if (!jsQRLib) {
+          throw new Error('Lecture QR indisponible sur cet appareil pour le moment.');
+        }
+
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = () => reject(new Error('Impossible de lire le fichier image.'));
+          reader.readAsDataURL(file);
+        });
+
+        const img = await new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error('Impossible de charger l’image du QR.'));
+          image.src = dataUrl;
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) throw new Error('Impossible de préparer la lecture de l’image.');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const result = jsQRLib(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+        const rawValue = result && result.data ? String(result.data).trim() : '';
+        if (!rawValue) throw new Error('Aucun QR code lisible trouvé sur l’image.');
+        return rawValue;
+      }
+      async function scanQrFromLiveVideo() {
+        if (!els.liveScanVideo || els.liveScanVideo.readyState < 2) return;
+        const video = els.liveScanVideo;
+        const width = video.videoWidth || 0;
+        const height = video.videoHeight || 0;
+        if (!width || !height) return;
+
+        const detector = await ensureQrDetector();
+        if (detector) {
+          try {
+            const codes = await detector.detect(video);
+            const rawValue = Array.isArray(codes) && codes.length ? String(codes[0].rawValue || '').trim() : '';
+            if (rawValue && rawValue !== state.qrLastText) {
+              state.qrLastText = rawValue;
+              if (els.qrText) els.qrText.value = rawValue;
+              saveAppState();
+              stopLiveQrScan();
+              setQrStatus('QR détecté et texte importé dans la zone.', 'success');
+              return;
+            }
+          } catch (error) {
+          }
+        }
+
+        const jsQRLib = typeof window.__amistarLoadJsQr === 'function' ? await window.__amistarLoadJsQr() : null;
+        if (!jsQRLib) return;
+        if (!state.qrCanvas) state.qrCanvas = document.createElement('canvas');
+        const canvas = state.qrCanvas;
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return;
+        ctx.drawImage(video, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const result = jsQRLib(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+        const rawValue = result && result.data ? String(result.data).trim() : '';
+        if (rawValue && rawValue !== state.qrLastText) {
+          state.qrLastText = rawValue;
+          if (els.qrText) els.qrText.value = rawValue;
+          saveAppState();
+          stopLiveQrScan();
+          setQrStatus('QR détecté et texte importé dans la zone.', 'success');
+        }
+      }
+      function parseQrImportText(rawText) {
+        const text = String(rawText || '').replace(/\r/g, '').trim();
+        if (!text) throw new Error('Le texte du QR est vide.');
+
+        const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+        const parsed = {
+          serviceDate: '',
+          serviceSlot: '',
+          specialStart: '',
+          specialEnd: '',
+          phoneNumber: '',
+          kizeoNumber: '',
+          phoneAssignedTo: '',
+          members: [],
+          pauseStart: '',
+          missions: [],
+          validatedComment: '',
+        };
+
+        let inMissions = false;
+        for (const line of lines) {
+          if (line === '===') continue;
+          if (line === 'Missions :') {
+            inMissions = true;
+            continue;
+          }
+          if (line === '-') continue;
+
+          if (!inMissions) {
+            if (line.startsWith('Date : ')) {
+              const rawDate = line.replace('Date : ', '').trim();
+              const dateParts = rawDate.split('/').map((v) => v.trim());
+              if (dateParts.length === 3) {
+                parsed.serviceDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+              }
+            } else if (line.startsWith('Horaire : ')) parsed.serviceSlot = line.replace('Horaire : ', '').trim();
+            else if (line.startsWith('Horaires spé : ')) {
+              const rawSpecial = line.replace('Horaires spé : ', '').trim();
+              const specialParts = rawSpecial.split('-').map((v) => v.trim()).filter(Boolean);
+              parsed.specialStart = specialParts[0] || '';
+              parsed.specialEnd = specialParts[1] || '';
+            }
+            else if (line.startsWith('Tel : ')) parsed.phoneNumber = line.replace('Tel : ', '').trim();
+            else if (line.startsWith('Kizeo : ')) parsed.kizeoNumber = line.replace('Kizeo : ', '').trim();
+            else if (line.startsWith('Téléphone attribué à : ')) parsed.phoneAssignedTo = line.replace('Téléphone attribué à : ', '').trim();
+            else if (line.startsWith('Nom des médiateurs : ')) {
+              parsed.members = line.replace('Nom des médiateurs : ', '').split(',').map((v) => v.trim()).filter(Boolean);
+            } else if (line.startsWith('Pause : ')) {
+              const pauseValue = line.replace('Pause : ', '').trim();
+              parsed.pauseStart = pauseValue.split('-')[0] ? pauseValue.split('-')[0].trim() : '';
+            }
+            continue;
+          }
+
+          if (line.startsWith('Commentaire : ')) {
+            parsed.validatedComment = line.replace('Commentaire : ', '').trim();
+            continue;
+          }
+
+          const parts = line.split(' / ').map((part) => part.trim()).filter(Boolean);
+          if (parts.length < 2) continue;
+
+          const timePart = parts[0];
+          const timeSplit = timePart.split('-').map((v) => v.trim());
+          const start = timeSplit[0] || '';
+          const end = timeSplit[1] || '';
+          const type = parts[1] || '';
+          if (!start || !end || !type || type === 'Pause') continue;
+
+          const mission = {
+            start,
+            end,
+            type,
+            place: '',
+            line: '',
+            members: [],
+            cabMode: '',
+          };
+
+          const otherParts = parts.slice(2);
+          for (const part of otherParts) {
+            if (part === 'métro A') {
+              mission.cabMode = 'metroA';
+              continue;
+            }
+            if (part === 'métro B') {
+              mission.cabMode = 'metroB';
+              continue;
+            }
+            if (part === 'Bus') {
+              mission.cabMode = 'bus';
+              continue;
+            }
+            if (part === 'Bus métropolitain') {
+              mission.cabMode = 'busMetro';
+              continue;
+            }
+            if (part.startsWith('Médiateurs : ')) {
+              mission.members = part.replace('Médiateurs : ', '').split(',').map((v) => v.trim()).filter(Boolean);
+              continue;
+            }
+            if (!mission.place && (mission.type === 'PAP' || mission.type === 'Pôle échange' || mission.type === 'SNCF' || mission.type === 'Embarquement' || mission.type === 'Autre')) {
+              mission.place = part;
+              continue;
+            }
+            if (mission.type === 'Cabotage') {
+              if ((mission.cabMode === 'metroA' || mission.cabMode === 'metroB') && !mission.place) {
+                mission.place = part;
+              } else if (!mission.line) {
+                mission.line = part;
+              }
+              continue;
+            }
+            if (!mission.line) mission.line = part;
+          }
+
+          if (!mission.members.length) mission.members = parsed.members.length ? [...parsed.members] : [getStoredMediator()];
+          parsed.missions.push(mission);
+        }
+
+        return parsed;
+      }
+      function applyParsedQrData(parsed) {
+        if (parsed.serviceDate) {
+          els.serviceDate.value = parsed.serviceDate;
+        }
+
+        const slotRaw = String(parsed.serviceSlot || '').trim();
+        const slotKey = slotRaw.includes('·') ? slotRaw.split('·')[0].trim() : slotRaw;
+        if (slotKey && SLOT_MAP[slotKey]) {
+          els.serviceSlot.value = slotKey;
+        }
+        if (slotKey === 'SPE') {
+          if (parsed.specialStart) els.specialStart.value = parsed.specialStart;
+          if (parsed.specialEnd) els.specialEnd.value = parsed.specialEnd;
+        }
+
+        const members = parsed.members.length ? parsed.members : [getStoredMediator()];
+        state.members = [...new Set(members)];
+        state.selectedMembers = [...state.members];
+        renderMembers();
+        renderMemberSelector();
+        fillPhoneAssigned();
+
+        if (parsed.phoneNumber && parsed.phoneNumber !== '--') els.phoneNumber.value = parsed.phoneNumber;
+        if (parsed.kizeoNumber && parsed.kizeoNumber !== '--') els.kizeoNumber.value = parsed.kizeoNumber;
+        if (parsed.pauseStart) els.pauseStart.value = parsed.pauseStart;
+
+        updateSpecialHoursVisibility();
+        setServiceTimes();
+
+        if (parsed.phoneAssignedTo && state.members.includes(parsed.phoneAssignedTo)) {
+          els.phoneAssignedTo.value = parsed.phoneAssignedTo;
+        } else if (state.members.length) {
+          els.phoneAssignedTo.value = state.members[0];
+        }
+
+        const sessionOwner = String(els.phoneAssignedTo.value || '').trim() || (state.members[0] || getStoredMediator());
+        const storage = safeLocalStorage();
+        if (storage && sessionOwner) {
+          storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, sessionOwner);
+        }
+        applyActiveMediator(sessionOwner);
+        if (els.phoneAssignedTo && state.members.includes(sessionOwner)) {
+          els.phoneAssignedTo.value = sessionOwner;
+        }
+
+        state.missions = parsed.missions.map((mission) => ({
+          id: mission.id || missionIdCounter++,
+          ...mission,
+          members: mission.members.length ? mission.members : [...state.members],
+        }));
+        state.validatedComment = parsed.validatedComment || '';
+        if (els.commentText) els.commentText.value = state.validatedComment || '';
+        if (els.commentEnabled) els.commentEnabled.checked = !!state.validatedComment;
+        updateCommentVisibility();
+        resetMissionForm();
+        updateMissionFields();
+        renderMissions();
+        saveAppState();
+      }
+      function buildServiceExportText() {
+        const dateFr = els.serviceDate.value ? frDate(new Date(els.serviceDate.value + 'T00:00:00')) : '--/--/----';
+        const slotLabel = els.serviceSlot.value || 'Choisir';
+        const lines = [];
+        const scheduleItems = getScheduleItems();
+        lines.push(`Date : ${dateFr}`);
+        lines.push(`Horaire : ${slotLabel}`);
+        if (els.serviceSlot.value === 'SPE' && els.specialStart.value && els.specialEnd.value) {
+          lines.push(`Horaires spé : ${els.specialStart.value}-${els.specialEnd.value}`);
+        }
+        lines.push(`Tel : ${els.phoneNumber.value || '--'}`);
+        lines.push(`Kizeo : ${els.kizeoNumber.value || '--'}`);
+        lines.push(`Téléphone attribué à : ${els.phoneAssignedTo.value || '--'}`);
+        lines.push(`Nom des médiateurs : ${state.members.join(', ') || '--'}`);
+        if (els.pauseStart.value) lines.push(`Pause : ${els.pauseStart.value}-${currentPauseEnd()}`);
+        lines.push('===');
+        lines.push('Missions :');
+        scheduleItems.forEach((item, index) => {
+          if (item.isPause) {
+            lines.push(`${item.start}-${item.end} / Pause`);
+          } else {
+            const parts = [`${item.start}-${item.end}`, item.type];
+            if (item.type === 'Cabotage') {
+              if (item.cabMode === 'metroA') parts.push('métro A');
+              if (item.cabMode === 'metroB') parts.push('métro B');
+              if (item.cabMode === 'bus') parts.push('Bus');
+              if (item.cabMode === 'busMetro') parts.push('Bus métropolitain');
+            }
+            if (item.place) parts.push(item.place);
+            if (item.line && item.type !== 'Cabotage') parts.push(item.line);
+            if (item.line && item.type === 'Cabotage' && (item.cabMode === 'bus' || item.cabMode === 'busMetro')) parts.push(item.line);
+            parts.push(`Médiateurs : ${item.members.join(', ')}`);
+            lines.push(parts.join(' / '));
+          }
+          if (index < scheduleItems.length - 1) lines.push('-');
+        });
+        if (state.validatedComment) {
+          if (scheduleItems.length) lines.push('-');
+          lines.push(`Commentaire : ${state.validatedComment}`);
+        }
+        return lines.join('\n');
+      }
+      function renderMissions() {
+        els.missionsWrap.innerHTML = '';
+        const slotText = !els.serviceSlot.value
+          ? 'Horaire à définir'
+          : els.serviceSlot.value === 'SPE'
+            ? (currentServiceStart() && currentServiceEnd() ? `Spé · ${currentServiceStart()}-${currentServiceEnd()}` : 'Spé · à définir')
+            : `${els.serviceSlot.value} · ${currentServiceStart()}-${currentServiceEnd()}`;
+        const phoneText = `Tél. ${els.phoneNumber.value || '--'}`;
+        const assignedText = `Attribué à ${els.phoneAssignedTo.value || '--'}`;
+        const kizeoText = `KIZEO ${els.kizeoNumber.value || '--'}`;
+        const pauseText = els.pauseStart.value ? `Pause ${els.pauseStart.value}-${currentPauseEnd()}` : 'Pause --';
+
+        els.statPhone.textContent = phoneText;
+        els.statPhoneAssigned.textContent = assignedText;
+        els.statKizeo.textContent = kizeoText;
+        els.statPause.textContent = pauseText;
+        els.followStatSlot.textContent = slotText;
+        els.followStatPhone.textContent = phoneText;
+        els.followStatPhoneAssigned.textContent = assignedText;
+        els.followStatKizeo.textContent = kizeoText;
+        els.followStatPause.textContent = pauseText;
+
+        const visible = getScheduleItems();
+
+        if (!visible.length) {
+          const empty = document.createElement('div');
+          empty.className = 'ps-emptyState';
+          empty.textContent = state.missions.length || els.pauseStart.value
+            ? 'Aucun élément visible pour le moment.'
+            : 'Aucune mission pour le moment. Ajoute la première mission du service.';
+          els.missionsWrap.appendChild(empty);
+        } else {
+          visible.forEach((item, visibleIndex) => {
+            const showCabBtn = canSendToCabotage(item);
+            const showBusInfoBtn = hasBusInfoDetail(item);
+            const stationCount = getCabotageStationCount(item);
+            const article = document.createElement('article');
+            article.className = getFollowMissionClasses(item);
+            article.innerHTML = `
+              <div class="ps-followRow">
+                <div class="ps-followTime">${item.start}<br>→ ${item.end}</div>
+                <div class="ps-followMain">
+                  <div class="ps-followTitle">${buildFollowTitle(item)}${showBusInfoBtn ? ` <button class="ps-btn ps-secondary ps-small ps-inlineAction" data-open-bus-info="1" aria-label="Afficher le détail de zone BUS" title="Afficher le détail de zone BUS">ℹ️</button>` : ''}</div>
+                  <div class="ps-followSub">${buildFollowSub(item)}${showCabBtn ? ` <button class="ps-btn ps-secondary ps-small ps-inlineAction" data-open-cabotage="1" aria-label="Ouvrir Cabotage calculator" title="Ouvrir Cabotage calculator">🕒</button>` : ''}</div>
+                  ${!item.isPause && state.editMode ? `<div class="ps-row" style="margin-top:6px; gap:6px;"><button class="ps-btn ps-secondary ps-small" data-edit-mission-id="${item.id || ''}">Modifier</button><button class="ps-btn ps-danger ps-small" data-delete-mission-id="${item.id || ''}">Supprimer</button></div>` : ''}
+                </div>
+              </div>
+            `;
+
+            if (showBusInfoBtn) {
+              const infoBtn = article.querySelector('[data-open-bus-info]');
+              if (infoBtn) {
+                infoBtn.onclick = () => openBusInfoModal(item);
+              }
+            }
+
+            if (showCabBtn) {
+              const openBtn = article.querySelector('[data-open-cabotage]');
+              if (openBtn) {
+                openBtn.onclick = () => {
+                  if (typeof window.openCabotageFromMission === 'function') {
+                    window.openCabotageFromMission({
+                      start: item.start,
+                      end: item.end,
+                      stationsCount: stationCount,
+                      includeTravel: false,
+                      returnTarget: 'priseServiceFollow'
+                    });
+                  }
+                };
+              }
+            }
+
+            els.missionsWrap.appendChild(article);
+          });
+        }
+
+        if (state.validatedComment) {
+          const commentCard = document.createElement('article');
+          commentCard.className = 'ps-followComment';
+          commentCard.innerHTML = `
+            <div class="ps-followCommentTitle">Commentaire</div>
+            <div class="ps-followCommentText">${state.validatedComment}</div>
+            ${state.editMode ? `<div class="ps-row" style="margin-top:8px; gap:6px;"><button class="ps-btn ps-secondary ps-small" data-edit-comment="1">Modifier</button><button class="ps-btn ps-danger ps-small" data-delete-comment="1">Supprimer</button></div>` : ''}
+          `;
+          els.missionsWrap.appendChild(commentCard);
+        }
+
+        els.missionsWrap.querySelectorAll('[data-delete-mission-id]').forEach((btn) => {
+          btn.onclick = () => {
+            const targetId = Number(btn.dataset.deleteMissionId);
+            const target = state.missions.find((m) => m.id === targetId);
+            if (!target) return;
+            state.missions = state.missions.filter((m) => m.id !== targetId);
+            resetMissionForm();
+            renderMissions();
+            saveAppState();
+          };
+        });
+
+        els.missionsWrap.querySelectorAll('[data-edit-mission-id]').forEach((btn) => {
+          btn.onclick = () => {
+            const targetId = Number(btn.dataset.editMissionId);
+            const target = state.missions.find((m) => m.id === targetId);
+            if (!target) return;
+            state.missions = state.missions.filter((m) => m.id !== targetId);
+            state.editingMissionId = targetId;
+            els.missionStart.value = target.start;
+            els.missionEnd.value = target.end;
+            const mainMissionTypes = ['Cabotage', 'Embarquement', 'PAP', 'Pôle échange', 'Médiation sociale'];
+            const isOtherMissionType = !mainMissionTypes.includes(target.type);
+            state.selectedOtherMission = isOtherMissionType ? target.type : '';
+            if (els.otherMissionCustom) {
+              const knownOther = ['RDS', 'TAC', 'STAR me guide', 'SNCF'];
+              els.otherMissionCustom.value = isOtherMissionType && !knownOther.includes(target.type) ? target.type : '';
+            }
+            els.missionType.value = isOtherMissionType ? 'Autre' : target.type;
+            els.missionPlace.value = target.place || '';
+            els.missionPlaceSelect.value = target.type === 'SNCF' ? (target.place || '') : '';
+            els.missionPapSelect.value = target.type === 'PAP' || target.type === 'Pôle échange' ? (target.place || '') : '';
+            els.missionBoardingSelect.value = target.type === 'Embarquement' && target.place !== 'Scolaire ( voir fiche mission )' ? (target.place || '') : '';
+            els.boardingSchool.checked = target.type === 'Embarquement' && target.place === 'Scolaire ( voir fiche mission )';
+            els.missionLine.value = target.line || '';
+            els.cabotageMode.value = target.cabMode || '';
+            state.selectedMembers = Array.isArray(target.members) ? [...target.members] : [];
+            fillCabotageSectorOptions();
+            if (target.cabMode === 'metroA' || target.cabMode === 'metroB') {
+              els.cabotageSector.value = target.place || '';
+            }
+            if (target.cabMode === 'bus') {
+              const lineParts = String(target.line || '').split(' · ');
+              const busPart = (lineParts[0] || '').trim();
+              const zonePart = (lineParts[1] || '').trim();
+              const busLines = busPart.split(' + ').map((v) => v.trim()).filter(Boolean);
+              els.busLineSelect.value = busLines[0] || '';
+              if (els.busLineSelectSecondary) els.busLineSelectSecondary.value = busLines[1] || '';
+              els.busZoneSelect.value = zonePart || '';
+            }
+            updateMissionFields();
+            renderOtherMissionSelector();
+            renderMemberSelector();
+            refreshMissionActionButton();
+            renderMissions();
+            stopLiveQrScan();
+            showToolScreen('form');
+            saveAppState();
+          };
+        });
+
+        els.missionsWrap.querySelectorAll('[data-edit-comment]').forEach((btn) => {
+          btn.onclick = () => {
+            if (els.commentEnabled) els.commentEnabled.checked = true;
+            updateCommentVisibility();
+            if (els.commentText) {
+              els.commentText.value = state.validatedComment || '';
+              els.commentText.focus();
+            }
+            state.validatedComment = '';
+            renderMissions();
+            stopLiveQrScan();
+        showToolScreen('form');
+            saveAppState();
+          };
+        });
+
+        els.missionsWrap.querySelectorAll('[data-delete-comment]').forEach((btn) => {
+          btn.onclick = () => {
+            state.validatedComment = '';
+            if (els.commentText) els.commentText.value = '';
+            if (els.commentEnabled) els.commentEnabled.checked = false;
+            updateCommentVisibility();
+            renderMissions();
+            saveAppState();
+          };
+        });
+
+        if (els.editModeNote) els.editModeNote.classList.toggle('ps-hidden', !state.editMode);
+        els.toggleEditBtn.textContent = state.editMode ? '✅ Terminer modification' : '✏️ Modifier';
+      }
+      function addMission() {
+        const start = els.missionStart.value;
+        const end = els.missionEnd.value;
+        const rawType = els.missionType.value;
+        const customOtherMission = String(els.otherMissionCustom?.value || '').trim();
+        const resolvedOtherMission = customOtherMission || state.selectedOtherMission;
+        const type = rawType === 'Autre' ? resolvedOtherMission : rawType;
+        const cabMode = els.cabotageMode.value;
+        let place = '';
+        if (type === 'SNCF') {
+          place = els.missionPlaceSelect.value;
+        } else if (type === 'PAP' || type === 'Pôle échange') {
+          place = els.missionPapSelect.value;
+        } else if (type === 'Embarquement') {
+          place = els.boardingSchool.checked ? 'Scolaire ( voir fiche mission )' : els.missionBoardingSelect.value;
+        } else {
+          place = els.missionPlace.value;
+        }
+        place = String(place || '').trim();
+        const line = els.missionLine.value.trim();
+        const members = [...new Set(state.selectedMembers)];
+        if (!start || !end) {
+          alert('Merci de renseigner un début et une fin de mission.');
+          return;
+        }
+        const isNextDayMidnight = end === '00:00' && compareTimes(start, '00:00') > 0;
+        if (compareTimes(end, start) <= 0 && !isNextDayMidnight) {
+          alert('La fin de mission doit être après le début. Pour une fin après minuit, utilise 00:00 qui sera traité comme le passage au jour suivant.');
+          return;
+        }
+        if (!members.length) {
+          alert('Sélectionne au moins un médiateur.');
+          return;
+        }
+        const pauseStart = els.pauseStart.value;
+        const pauseEnd = currentPauseEnd();
+        if (pauseStart && pauseEnd) {
+          const overlapsPause = compareTimes(start, pauseEnd) < 0 && compareTimes(end, pauseStart) > 0;
+          if (overlapsPause) {
+            alert(`Cette mission chevauche la pause (${pauseStart} → ${pauseEnd}).`);
+            return;
+          }
+        }
+        if (rawType === 'Autre' && !resolvedOtherMission) {
+          alert('Choisis ou saisis une mission dans la catégorie Autre.');
+          return;
+        }
+        if (type === 'Cabotage') {
+          if (!cabMode) {
+            alert('Choisis Métro A, Métro B, BUS ou Bus métropolitain pour le cabotage.');
+            return;
+          }
+          if ((cabMode === 'metroA' || cabMode === 'metroB') && !place) {
+            alert('Choisis un secteur de cabotage métro.');
+            return;
+          }
+          if (cabMode === 'bus' && (!els.busZoneSelect.value || !els.busLineSelect.value)) {
+            alert('Choisis une zone et une ligne pour le cabotage BUS.');
+            return;
+          }
+          if (cabMode === 'busMetro' && !line) {
+            alert('Renseigne la ligne pour le bus métropolitain.');
+            return;
+          }
+        }
+        if (type === 'SNCF' && !place) {
+          alert('Choisis un lieu SNCF.');
+          return;
+        }
+        if (type === 'PAP' && !place) {
+          alert('Choisis un lieu PAP.');
+          return;
+        }
+        if (type === 'Pôle échange' && !place) {
+          alert('Choisis un lieu pour le pôle échange.');
+          return;
+        }
+        if (type === 'Embarquement' && !els.boardingSchool.checked && !place) {
+          alert('Choisis un lieu pour l’embarquement.');
+          return;
+        }
+        const missionId = state.editingMissionId || missionIdCounter++;
+        state.missions.push({ id: missionId, start, end, type, place, line, members, cabMode });
+        state.missions.sort((a, b) => compareTimes(a.start, b.start));
+        resetMissionForm();
+        renderMissions();
+        saveAppState();
+        els.missionSuccessMessage.classList.remove('ps-hidden');
+        setTimeout(() => {
+          els.missionSuccessMessage.classList.add('ps-hidden');
+        }, 1800);
+      }
+      function applyDefaultState() {
+        const d = nowDate();
+        const activeMediator = getStoredMediator();
+        state.members = [activeMediator];
+        state.missions = [];
+        state.selectedMembers = [activeMediator];
+        state.serviceWindow = { start: '', end: '' };
+        state.mockNowHHMM = null;
+        state.editMode = false;
+        state.editingMissionId = null;
+        els.serviceDate.value = toIsoDate(d);
+        els.serviceSlot.value = '';
+        els.specialStart.value = '';
+        els.specialEnd.value = '';
+        els.phoneNumber.value = '';
+        els.kizeoNumber.value = '';
+        els.pauseStart.value = '';
+        if (els.commentEnabled) els.commentEnabled.checked = false;
+        if (els.commentText) els.commentText.value = '';
+        if (els.qrText) els.qrText.value = '';
+        state.validatedComment = '';
+        renderMembers();
+        renderMemberSelector();
+        fillPhoneAssigned();
+        els.phoneAssignedTo.value = activeMediator;
+        updateSpecialHoursVisibility();
+        updateCommentVisibility();
+        setServiceTimes();
+        resetMissionForm();
+        updateMissionFields();
+        renderMissions();
+        stopLiveQrScan();
+        showToolScreen('form');
+      }
+      function init() {
+        cleanupOldMediatorSessions();
+        applyDefaultState();
+        loadSavedState();
+        loadMediatorSession(getStoredMediator());
+        state.editMode = false;
+        renderMissions();
+        stopLiveQrScan();
+        showToolScreen('form');
+        updateClock();
+        setInterval(() => {
+          updateClock();
+        }, 1000);
+        setInterval(() => {
+          if (shouldResetForNewDay()) {
+            resetForNewDay();
+          }
+        }, 1000);
+      }
+
+      els.serviceSlot.onchange = () => {
+        updateSpecialHoursVisibility();
+        setServiceTimes();
+        resetMissionForm();
+        renderMissions();
+        saveAppState();
+      };
+      els.specialStart.oninput = () => {
+        if (els.serviceSlot.value === 'SPE') {
+          setServiceTimes();
+          resetMissionForm();
+          renderMissions();
+          saveAppState();
+        }
+      };
+      els.specialEnd.oninput = () => {
+        if (els.serviceSlot.value === 'SPE') {
+          setServiceTimes();
+          renderMissions();
+          saveAppState();
+        }
+      };
+      els.phoneNumber.oninput = () => { renderMissions(); saveAppState(); };
+      els.phoneAssignedTo.onchange = () => { renderMissions(); saveAppState(); };
+      els.kizeoNumber.onchange = () => { renderMissions(); saveAppState(); };
+      els.pauseStart.oninput = () => {
+        renderMissions();
+        if (!state.editingMissionId) {
+          const suggestedStart = nextMissionStart();
+          const currentStart = els.missionStart.value || '';
+          if (!currentStart || compareTimes(currentStart, suggestedStart) < 0 || compareTimes(currentStart, currentPauseEnd() || suggestedStart) < 0) {
+            els.missionStart.value = suggestedStart;
+          }
+        }
+        saveAppState();
+      };
+      els.commentEnabled.onchange = () => {
+        updateCommentVisibility();
+        if (!els.commentEnabled.checked) state.validatedComment = '';
+        renderMissions();
+        saveAppState();
+      };
+      els.commentText.oninput = () => { saveAppState(); };
+      els.validateCommentBtn.onclick = () => {
+        if (!els.commentEnabled.checked) {
+          state.validatedComment = '';
+        } else {
+          state.validatedComment = String(els.commentText.value || '').trim();
+        }
+        renderMissions();
+        saveAppState();
+        if (els.commentSuccessMessage && state.validatedComment) {
+          els.commentSuccessMessage.classList.remove('ps-hidden');
+          setTimeout(() => {
+            els.commentSuccessMessage.classList.add('ps-hidden');
+          }, 1800);
+        }
+      };
+      els.missionType.onchange = () => {
+        if (els.missionType.value !== 'Autre') {
+          state.selectedOtherMission = '';
+          if (els.otherMissionCustom) els.otherMissionCustom.value = '';
+        }
+        updateMissionFields();
+        renderOtherMissionSelector();
+        saveAppState();
+      };
+      els.missionStart.oninput = () => { saveAppState(); };
+      els.cabotageMode.onchange = () => {
+        fillCabotageSectorOptions();
+        els.cabotageSector.value = '';
+        els.missionPlace.value = '';
+        els.busLineSelect.value = '';
+        fillBusZoneOptions();
+        els.busZoneSelect.value = '';
+        els.missionLine.value = '';
+        updateMissionFields();
+        saveAppState();
+      };
+      els.busZoneSelect.onchange = () => {
+        const busLines = [els.busLineSelect.value, els.busLineSelectSecondary ? els.busLineSelectSecondary.value : ''].filter(Boolean).join(' + ');
+        els.missionLine.value = [busLines, els.busZoneSelect.value].filter(Boolean).join(' · ');
+        saveAppState();
+      };
+      els.busLineSelect.onchange = () => {
+        fillBusZoneOptions();
+        const busLines = [els.busLineSelect.value, els.busLineSelectSecondary ? els.busLineSelectSecondary.value : ''].filter(Boolean).join(' + ');
+        els.missionLine.value = [busLines, els.busZoneSelect.value].filter(Boolean).join(' · ');
+        saveAppState();
+      };
+      if (els.busLineSelectSecondary) {
+        els.busLineSelectSecondary.onchange = () => {
+          const busLines = [els.busLineSelect.value, els.busLineSelectSecondary.value].filter(Boolean).join(' + ');
+          els.missionLine.value = [busLines, els.busZoneSelect.value].filter(Boolean).join(' · ');
+          saveAppState();
+        };
+      }
+      els.cabotageSector.onchange = () => { els.missionPlace.value = els.cabotageSector.value; saveAppState(); };
+      els.missionPlaceSelect.onchange = () => { els.missionPlace.value = els.missionPlaceSelect.value; saveAppState(); };
+      els.missionPapSelect.onchange = () => { els.missionPlace.value = els.missionPapSelect.value; saveAppState(); };
+      els.missionBoardingSelect.onchange = () => { els.missionPlace.value = els.missionBoardingSelect.value; saveAppState(); };
+      els.boardingSchool.onchange = () => {
+        if (els.boardingSchool.checked) {
+          els.missionBoardingSelect.value = '';
+          els.missionPlace.value = 'Scolaire ( voir fiche mission )';
+          els.missionPlace.readOnly = true;
+        } else {
+          els.missionPlace.value = els.missionBoardingSelect.value;
+          els.missionPlace.readOnly = false;
+        }
+        updateMissionFields();
+        saveAppState();
+      };
+      els.addMemberBtn.onclick = () => {
+        addMember(els.memberInput.value);
+        els.memberInput.value = '';
+        els.memberInput.focus();
+      };
+      els.memberInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          els.addMemberBtn.click();
+        }
+      });
+      refreshMissionActionButton();
+      renderOtherMissionSelector();
+      if (els.otherMissionSelector) {
+        els.otherMissionSelector.querySelectorAll('[data-other-mission]').forEach((btn) => {
+          btn.onclick = () => {
+            state.selectedOtherMission = String(btn.dataset.otherMission || '');
+            if (els.otherMissionCustom) els.otherMissionCustom.value = '';
+            renderOtherMissionSelector();
+            updateMissionFields();
+            saveAppState();
+          };
+        });
+      }
+      if (els.otherMissionCustom) {
+        els.otherMissionCustom.oninput = () => {
+          const customValue = String(els.otherMissionCustom.value || '').trim();
+          state.selectedOtherMission = customValue;
+          renderOtherMissionSelector();
+          updateMissionFields();
+          saveAppState();
+        };
+      }
+      els.addMissionBtn.onclick = addMission;
+      els.resetMissionBtn.onclick = () => {
+        els.missionSuccessMessage.classList.add('ps-hidden');
+        resetMissionForm();
+      };
+      els.backToFormBtn.onclick = () => { stopLiveQrScan();
+        showToolScreen('form'); saveAppState(); };
+      els.tabFormBtn.onclick = () => { stopLiveQrScan();
+        showToolScreen('form'); saveAppState(); };
+      els.tabFollowBtn.onclick = () => { showToolScreen('follow'); saveAppState(); };
+      els.toggleEditBtn.onclick = () => { state.editMode = !state.editMode; renderMissions(); saveAppState(); };
+      els.qrBtn.onclick = () => {
+        clearQrStatus();
+        stopLiveQrScan();
+        showToolScreen('qr');
+      };
+      els.qrBackBtn.onclick = () => {
+        stopLiveQrScan();
+        clearQrStatus();
+        saveAppState();
+        showToolScreen('follow');
+      };
+      els.scanQrBtn.onclick = () => {
+        saveAppState();
+        setQrStatus('Ouverture de la caméra en direct…', 'success');
+        openNativeCameraShortcut();
+      };
+      if (els.nativeCameraInput) {
+        els.nativeCameraInput.onchange = async () => {
+          const hasFile = !!(els.nativeCameraInput.files && els.nativeCameraInput.files.length);
+          if (!hasFile) {
+            setQrStatus('Aucune image sélectionnée.', 'error');
+            return;
+          }
+          try {
+            setQrStatus('Lecture du QR en cours…', 'success');
+            const file = els.nativeCameraInput.files[0];
+            const rawText = await decodeQrFromFile(file);
+            if (els.qrText) {
+              els.qrText.value = rawText;
+              saveAppState();
+            }
+            setQrStatus('QR détecté et texte importé dans la zone.', 'success');
+          } catch (error) {
+            setQrStatus(error?.message || 'Impossible de lire le QR sur cette image.', 'error');
+          }
+        };
+      }
+      if (els.stopScanQrBtn) {
+        els.stopScanQrBtn.onclick = () => {
+          stopLiveQrScan();
+          setQrStatus('Scan en direct arrêté.', 'success');
+        };
+      }
+      if (els.overlayStopScanBtn) {
+        els.overlayStopScanBtn.onclick = () => {
+          stopLiveQrScan();
+          setQrStatus('Scan en direct arrêté.', 'success');
+        };
+      }
+      if (els.qrText) els.qrText.oninput = () => { saveAppState(); };
+      els.applyQrBtn.onclick = () => {
+        try {
+          const parsed = parseQrImportText(els.qrText.value);
+          applyParsedQrData(parsed);
+          setQrStatus('Le texte QR a bien été appliqué au suivi de mission.', 'success');
+        } catch (error) {
+          setQrStatus(error?.message || 'Format QR invalide.', 'error');
+        }
+      };
+
+      if (els.infoModalCloseBtn) els.infoModalCloseBtn.onclick = closeBusInfoModal;
+      if (els.infoModalOkBtn) els.infoModalOkBtn.onclick = closeBusInfoModal;
+      if (els.infoModal) {
+        els.infoModal.onclick = (event) => {
+          if (event.target === els.infoModal) closeBusInfoModal();
+        };
+      };
+
+      function runTests() {
+        clearSavedState();
+        applyDefaultState();
+        assert(SLOT_MAP.AM.start === '12:50', 'AM start');
+        assert(typeof loadSavedState === 'function', 'loadSavedState exists');
+        assert(typeof saveAppState === 'function', 'saveAppState exists');
+        assert(typeof updateClock === 'function', 'updateClock exists');
+        assert('SPE' in SLOT_MAP, 'SPE slot exists');
+        assert(minutesFromHHMM('07:00') === 420, 'minutes conversion');
+        assert(addMinutes('16:10', 20) === '16:30', 'pause +20 min');
+        assert(currentServiceStart() === '', 'default service start empty');
+
+        els.serviceSlot.value = 'SPE';
+        updateSpecialHoursVisibility();
+        els.specialStart.value = '08:10';
+        els.specialEnd.value = '16:40';
+        setServiceTimes();
+        assert(currentServiceStart() === '08:10', 'special start manual');
+        assert(currentServiceEnd() === '16:40', 'special end manual');
+        assert(!!els.specialHoursField, 'specialHoursField présent');
+        assert(!els.specialHoursField.classList.contains('ps-hidden'), 'special hours visible');
+
+        els.serviceSlot.value = 'AM';
+        updateSpecialHoursVisibility();
+        setServiceTimes();
+        assert(currentServiceStart() === '12:50', 'AM start after manual choice');
+        assert(state.members.length === 1 && state.members[0] === getStoredMediator(), 'default member = médiateur identifié');
+        saveAppState();
+        assert(!!safeLocalStorage()?.getItem(STORAGE_KEY), 'state saved locally');
+        assert(els.phoneAssignedTo.options.length === state.members.length, 'phone assigned list initialized');
+        els.kizeoNumber.value = '7';
+        renderMissions();
+        assert(els.statKizeo.textContent === 'KIZEO 7', 'kizeo stat updates');
+
+        addMember('Maxime');
+        assert(state.members.length === 2, 'second member added');
+        assert(els.phoneAssignedTo.options.length === state.members.length, 'phone assigned list updated');
+        removeMember('Maxime');
+        assert(state.members.length === 1 && state.members[0] === getStoredMediator(), 'remove member works');
+        assert(els.phoneAssignedTo.options.length === state.members.length, 'phone assigned list re-updated');
+
+        els.missionType.value = 'Autre';
+        state.selectedOtherMission = 'TAC';
+        updateMissionFields();
+        renderOtherMissionSelector();
+        assert(els.missionPlaceField.classList.contains('ps-hidden'), 'place hidden for TAC');
+        assert(els.missionLineField.classList.contains('ps-hidden'), 'line hidden for TAC');
+
+        els.missionType.value = 'Autre';
+        state.selectedOtherMission = 'STAR me guide';
+        updateMissionFields();
+        renderOtherMissionSelector();
+        assert(els.missionPlaceField.classList.contains('ps-hidden'), 'place hidden for STAR me guide');
+        assert(els.missionLineField.classList.contains('ps-hidden'), 'line hidden for STAR me guide');
+
+        els.missionType.value = 'Médiation sociale';
+        updateMissionFields();
+        renderOtherMissionSelector();
+        assert(els.missionPlaceField.classList.contains('ps-hidden'), 'place hidden for Médiation sociale');
+        assert(els.missionLineField.classList.contains('ps-hidden'), 'line hidden for Médiation sociale');
+
+        els.missionType.value = 'PAP';
+        updateMissionFields();
+        assert(!els.missionPlaceField.classList.contains('ps-hidden'), 'place visible for PAP');
+        assert(els.missionLineField.classList.contains('ps-hidden'), 'line hidden for PAP');
+        assert(!els.missionPapSelect.classList.contains('ps-hidden'), 'pap select visible');
+        els.missionPapSelect.value = 'REP';
+        els.missionPapSelect.onchange();
+        assert(els.missionPlace.value === 'REP', 'pap place selected');
+
+        els.missionType.value = 'Pôle échange';
+        updateMissionFields();
+        assert(!els.missionPlaceField.classList.contains('ps-hidden'), 'place visible for pôle échange');
+        assert(els.missionLineField.classList.contains('ps-hidden'), 'line hidden for pôle échange');
+        assert(!els.missionPapSelect.classList.contains('ps-hidden'), 'liste lieux pôle échange visible');
+        els.missionPapSelect.value = 'TRI';
+        els.missionPapSelect.onchange();
+        assert(els.missionPlace.value === 'TRI', 'pôle échange place selected');
+
+        els.missionType.value = 'Embarquement';
+        updateMissionFields();
+        assert(!els.missionPlaceField.classList.contains('ps-hidden'), 'place visible for embarquement');
+        assert(els.missionLineField.classList.contains('ps-hidden'), 'line hidden for embarquement');
+        assert(!els.missionBoardingSelect.classList.contains('ps-hidden'), 'liste lieux embarquement visible');
+        els.missionBoardingSelect.value = 'REP';
+        els.missionBoardingSelect.onchange();
+        assert(els.missionPlace.value === 'REP', 'embarquement place selected');
+        assert([...els.missionBoardingSelect.options].some((opt) => opt.value === 'STAa ( JFK )'), 'STAa JFK présent');
+        assert([...els.missionBoardingSelect.options].some((opt) => opt.value === 'STAb ( CVI )'), 'STAb CVI présent');
+        assert([...els.missionBoardingSelect.options].some((opt) => opt.value === 'GARa ( JFK )'), 'GARa JFK présent');
+        assert([...els.missionBoardingSelect.options].some((opt) => opt.value === 'GARb ( CVI )'), 'GARb CVI présent');
+        els.boardingSchool.checked = true;
+        els.boardingSchool.onchange();
+        assert(els.missionPlace.value === 'Scolaire ( voir fiche mission )', 'embarquement scolaire libellé exact');
+        els.boardingSchool.checked = false;
+        els.boardingSchool.onchange();
+
+        els.missionType.value = 'Autre';
+        state.selectedOtherMission = 'SNCF';
+        if (els.otherMissionCustom) els.otherMissionCustom.value = '';
+        updateMissionFields();
+        renderOtherMissionSelector();
+        assert(!els.missionPlaceField.classList.contains('ps-hidden'), 'place visible for SNCF');
+        assert(els.missionLineField.classList.contains('ps-hidden'), 'line hidden for SNCF');
+        assert(!els.missionPlaceSelect.classList.contains('ps-hidden'), 'sncf select visible');
+        els.missionPlaceSelect.value = 'Dinan';
+        els.missionPlaceSelect.onchange();
+        assert(els.missionPlace.value === 'Dinan', 'sncf place selected');
+
+        els.missionType.value = 'Autre';
+        state.selectedOtherMission = 'RDS';
+        if (els.otherMissionCustom) els.otherMissionCustom.value = '';
+        updateMissionFields();
+        renderOtherMissionSelector();
+        assert(els.missionPlaceField.classList.contains('ps-hidden'), 'place hidden for RDS');
+        if (els.otherMissionCustom) els.otherMissionCustom.value = 'Mission rare';
+        state.selectedOtherMission = 'Mission rare';
+        updateMissionFields();
+        renderOtherMissionSelector();
+        assert(els.missionPlaceField.classList.contains('ps-hidden'), 'place hidden for custom other mission');
+        assert(els.missionLineField.classList.contains('ps-hidden'), 'line hidden for RDS');
+
+        els.missionType.value = 'Cabotage';
+        els.cabotageMode.value = 'metroA';
+        fillCabotageSectorOptions();
+        updateMissionFields();
+        assert(!els.cabotageModeField.classList.contains('ps-hidden'), 'cabotage mode visible');
+        assert(!els.cabotageSectorField.classList.contains('ps-hidden'), 'metro sector visible');
+        assert(els.missionPlaceField.classList.contains('ps-hidden'), 'place field hidden for metro cabotage');
+        assert(els.missionLineField.classList.contains('ps-hidden'), 'line field hidden for metro cabotage');
+        els.cabotageSector.value = 'CAB centre STA : REP - CDG - GAR';
+        els.cabotageSector.onchange();
+        assert(els.missionPlace.value.includes('REP - CDG - GAR'), 'metro cabotage fills place');
+        assert(getCabotageStationCount({ type: 'Cabotage', cabMode: 'metroA', place: 'CAB centre STA : REP - CDG - GAR' }) === 4, 'count trigrammes = stations avec station de départ');
+        assert([...els.cabotageSector.options].some((opt) => opt.value === 'CAB nord ( spé ) JFK : PON - ANF'), 'metroA sector spécial 3 stations présent');
+        assert([...els.cabotageSector.options].some((opt) => opt.value === 'CAB centre ( spé ) GAR : CDG - REP'), 'metroA secteur CAB centre spé présent');
+        assert(getCabotageStationCount({ type: 'Cabotage', cabMode: 'metroA', place: 'CAB nord ( spé ) JFK : PON - ANF' }) === 3, 'JFK spé compte comme 3 stations');
+        assert(getCabotageStationCount({ type: 'Cabotage', cabMode: 'metroA', place: 'CAB sud HFR : GCL - JCA' }) === 4, 'Cab sud HFR revient à HFR donc 4 stations');
+        assert([...els.cabotageSector.options].some((opt) => opt.value === 'CAB Sud ( spé ) GCL : JCA - HFR'), 'metroA secteur CAB Sud spé présent');
+        assert(getCabotageStationCount({ type: 'Cabotage', cabMode: 'metroA', place: 'CAB Sud ( spé ) GCL : JCA - HFR' }) === 3, 'GCL spé compte comme 3 stations');
+
+        els.cabotageMode.value = 'metroB';
+        fillCabotageSectorOptions();
+        assert([...els.cabotageSector.options].some((opt) => opt.value === 'CAB sud MAB : CLE - LCO - SJG'), 'metroB sector renamed and ordered correctly');
+        assert([...els.cabotageSector.options].some((opt) => opt.value === 'CAB centre COL : GAR - SGE - STAb'), 'metroB secteur CAB centre COL présent');
+        assert(getCabotageStationCount({ type: 'Cabotage', cabMode: 'metroB', place: 'CAB centre COL : GAR - SGE - STAb' }) === 4, 'Cab centre COL compte comme 4 stations');
+        assert([...els.cabotageSector.options].some((opt) => opt.value === 'CAB nord ( spé ) CVI : ATA - BUN'), 'metroB sector spécial 3 stations présent');
+        assert(getCabotageStationCount({ type: 'Cabotage', cabMode: 'metroB', place: 'CAB nord ( spé ) CVI : ATA - BUN' }) === 3, 'CVI spé compte comme 3 stations');
+
+        els.cabotageMode.value = 'bus';
+        updateMissionFields();
+        assert(els.missionPlaceField.classList.contains('ps-hidden'), 'place hidden for bus cabotage');
+        assert(els.missionLineField.classList.contains('ps-hidden'), 'line hidden for bus cabotage guidé');
+        assert(!els.busZoneField.classList.contains('ps-hidden'), 'zone visible for bus cabotage guidé');
+        assert(!els.busLineField.classList.contains('ps-hidden'), 'ligne visible for bus cabotage guidé');
+        els.busLineSelect.value = 'C1';
+        els.busLineSelect.onchange();
+        els.busZoneSelect.value = 'Z1';
+        els.busZoneSelect.onchange();
+        assert(els.missionLine.value === 'C1 · Z1', 'bus guidé ligne + zone');
+        assert(getBusGuidedDetail('L13 · Z3') === 'L13 → Chantepie Cucé', 'détail zone bus guidé');
+        assert(getBusGuidedDetail('C3 + L13 · Z4') === 'C3 → Henri Fréville\nL13 → Bruz Porte de Ker Lann', 'double détail zone bus guidé');
+
+        els.cabotageMode.value = 'busMetro';
+        updateMissionFields();
+        assert(!els.missionLineField.classList.contains('ps-hidden'), 'line visible for bus métropolitain');
+
+        els.pauseStart.value = '16:10';
+        assert(currentPauseEnd() === '16:30', 'pause end auto');
+
+        state.selectedMembers = [getStoredMediator()];
+        els.missionStart.value = '12:50';
+        els.missionEnd.value = '14:00';
+        els.missionType.value = 'Cabotage';
+        els.cabotageMode.value = 'busMetro';
+        updateMissionFields();
+        els.missionLine.value = 'Ligne 13';
+        addMission();
+        assert(state.missions.length >= 1, 'mission added');
+        assert(state.missions[0].end === '14:00', 'mission end kept');
+
+        const items = getScheduleItems();
+        assert(items.some((item) => item.isPause && item.start === '16:10' && item.end === '16:30'), 'pause inserted in planning');
+        showToolScreen('follow');
+        assert(!!els.screenFollow, 'screenFollow présent');
+        assert(els.screenFollow.classList.contains('ps-active'), 'follow screen visible');
+        assert(!!els.tabFollowBtn, 'tabFollowBtn présent');
+        assert(els.tabFollowBtn.classList.contains('ps-active'), 'follow tab active');
+        stopLiveQrScan();
+        showToolScreen('form');
+        assert(!!els.screenForm, 'screenForm présent');
+        assert(els.screenForm.classList.contains('ps-active'), 'form screen visible');
+        state.editMode = true;
+        renderMissions();
+        assert(!!els.editModeNote, 'editModeNote présent');
+        assert(!els.editModeNote.classList.contains('ps-hidden'), 'edit mode note visible');
+        state.editMode = false;
+        renderMissions();
+        assert(!!els.tabFormBtn, 'tabFormBtn présent');
+        assert(els.tabFormBtn.classList.contains('ps-active'), 'form tab active');
+        assert(nextMissionStart() === '14:00', 'next mission stays on latest mission end when pause is later');
+
+        els.missionStart.value = '14:00';
+        els.missionEnd.value = '16:10';
+        els.missionType.value = 'Autre';
+        state.selectedOtherMission = 'RDS';
+        updateMissionFields();
+        renderOtherMissionSelector();
+        addMission();
+        assert(nextMissionStart() === '16:30', 'next mission starts after pause when pause is reached');
+
+        els.serviceSlot.value = 'M';
+        els.serviceSlot.onchange();
+        assert(currentServiceStart() === '07:00', 'service window updates on slot change');
+        assert(els.pauseStart.value === '', 'pause reset on slot change');
+        assert(els.missionStart.value === '07:00', 'first mission start follows service slot');
+        els.missionStart.value = '13:00';
+        assert(els.missionStart.value === '13:00', 'mission start remains manually editable');
+
+        els.pauseStart.value = '06:00';
+        assert(!getScheduleItems().some((item) => item.isPause), 'pause before service should be ignored');
+
+        els.serviceSlot.value = 'AM';
+        els.serviceSlot.onchange();
+        els.pauseStart.value = '16:10';
+        state.mockNowHHMM = '15:00';
+        renderMissions();
+        assert(getScheduleItems().some((item) => item.isPause), 'future pause exists in schedule');
+        assert([...els.missionsWrap.querySelectorAll('.ps-followTitle')].some((el) => el.textContent === 'Pause'), 'future pause visible in planning');
+
+        state.mockNowHHMM = '16:35';
+        renderMissions();
+        assert([...els.missionsWrap.querySelectorAll('.ps-followTitle')].some((el) => el.textContent === 'Pause'), 'past pause still visible in planning');
+        state.mockNowHHMM = null;
+
+        state.missions = [{
+          start: '12:50',
+          end: '13:50',
+          type: 'Cabotage',
+          place: 'Cab nord ANF : PON - VU - JFK',
+          line: '',
+          members: [getStoredMediator()],
+          cabMode: 'metroA'
+        }];
+        state.mockNowHHMM = '13:00';
+        renderMissions();
+        assert(getCabotageStationCount(state.missions[0]) === 4, 'ANF compte comme première station');
+        assert(!!els.missionsWrap.querySelector('[data-open-cabotage]'), 'bouton cabotage présent sur mission cabotage métro');
+        window.openCabotageFromMission({ start: '12:50', end: '13:50', stationsCount: 4, includeTravel: false, returnTarget: 'priseServiceFollow' });
+        const missionReturnBtn = document.getElementById('btnMissionReturn');
+        const menuBtn = document.getElementById('btnMenu');
+        assert(!!missionReturnBtn, 'bouton retour présent');
+        assert(!!menuBtn, 'bouton menu présent');
+        assert(!missionReturnBtn.classList.contains('hidden'), 'bouton retour visible depuis mission');
+        assert(menuBtn.classList.contains('hidden'), 'menu masqué depuis mission');
+        showMainScreen('screenMenu');
+        cabotageMissionReturnTarget = null;
+        state.mockNowHHMM = null;
+
+        state.editMode = true;
+        renderMissions();
+        assert(!!els.missionsWrap.querySelector('[data-edit-mission-id]'), 'bouton modifier visible en mode édition');
+        assert(!!els.missionsWrap.querySelector('[data-delete-mission-id]'), 'bouton supprimer visible en mode édition');
+        state.validatedComment = 'test commentaire';
+        renderMissions();
+        assert(!!els.missionsWrap.querySelector('[data-edit-comment]'), 'bouton reprendre commentaire visible en mode édition');
+        assert(!!els.missionsWrap.querySelector('[data-delete-comment]'), 'bouton supprimer commentaire visible en mode édition');
+        state.editMode = false;
+        assert(typeof openNativeCameraShortcut === 'function', 'openNativeCameraShortcut exists');
+        assert(openNativeCameraShortcut.constructor.name === 'AsyncFunction', 'openNativeCameraShortcut async');
+        assert(typeof stopLiveQrScan === 'function', 'stopLiveQrScan exists');
+        assert(typeof scanQrFromLiveVideo === 'function', 'scanQrFromLiveVideo exists');
+        assert(typeof decodeQrFromFile === 'function', 'decodeQrFromFile exists');
+        const parsedQrText = [
+          'Date : 29/03/2026',
+          'Horaire : SPE',
+          'Horaires spé : 08:10-16:40',
+          'Tel : 22',
+          'Kizeo : 7',
+          'Téléphone attribué à : Arnaud',
+          'Nom des médiateurs : Arnaud, Céline',
+          'Pause : 12:00-12:20',
+          '===',
+          'Missions :',
+          '08:10-09:10 / RDS / Médiateurs : Arnaud'
+        ].join('\n');
+        const parsedQr = parseQrImportText(parsedQrText);
+        assert(parsedQr.serviceDate === '2026-03-29', 'date QR importée');
+        assert(parsedQr.specialStart === '08:10', 'horaire spé début importé');
+        assert(parsedQr.specialEnd === '16:40', 'horaire spé fin importé');
+        assert(typeof window.__amistarLoadJsQr === 'function', 'jsQR loader exists');
+      }
+
+      init();
+      stopLiveQrScan();
+        showToolScreen('form');
+      state.editMode = false;
+      renderMissions();
+      showMainScreen('screenStart');
+    })();
+  </script>
+  <script>
+    window.__amistarLoadJsQr = async function __amistarLoadJsQr() {
+      if (window.jsQR) return window.jsQR;
+      const urls = [
+        'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
+        'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js'
+      ];
+      for (const url of urls) {
+        try {
+          await new Promise((resolve, reject) => {
+            const existing = document.querySelector(`script[data-jsqr-src="${url}"]`);
+            if (existing) {
+              if (window.jsQR) return resolve();
+              existing.addEventListener('load', () => resolve(), { once: true });
+              existing.addEventListener('error', () => reject(new Error('load failed')), { once: true });
+              return;
+            }
+            const script = document.createElement('script');
+            script.src = url;
+            script.async = true;
+            script.dataset.jsqrSrc = url;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('load failed'));
+            document.head.appendChild(script);
+          });
+          if (window.jsQR) return window.jsQR;
+        } catch (error) {
+        }
+      }
+      return null;
+    };
+  </script>
+</body>
+</html>
