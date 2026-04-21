@@ -2269,7 +2269,13 @@
 
   <script>
     (() => {
-      // Service worker désactivé pour éviter les problèmes de cache sur les données météo et les mises à jour de l'application.
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./service-worker.js').catch((error) => {
+            console.warn('Service worker non enregistré :', error);
+          });
+        });
+      }
 
       let startDate = null;
       let stationsCount = 4;
