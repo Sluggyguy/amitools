@@ -2769,6 +2769,7 @@
 
       const $ = (id) => document.getElementById(id);
       const ACTIVE_MEDIATOR_STORAGE_KEY = 'amistar-active-mediator-v1';
+      let currentMediatorSessionName = window.__amistarCurrentMediatorSessionName || '';
       let missionIdCounter = 1;
       const state = {
         members: [],
@@ -3074,7 +3075,7 @@
         const storage = safeLocalStorage();
         const raw = storage ? String(storage.getItem(ACTIVE_MEDIATOR_STORAGE_KEY) || '') : '';
         const clean = raw.trim().replace(/\s+/g, ' ');
-        return clean || '';
+        return clean || 'Médiateur';
       }
       function getCurrentMediatorSessionName() {
         return String(currentMediatorSessionName || getStoredMediator() || '').trim().split(' ').filter(Boolean).join(' ');
@@ -3098,6 +3099,8 @@
         await saveAppState();
       };
       window.setActiveMediator = async function(name) {
+        currentMediatorSessionName = String(name || '').trim().split(' ').filter(Boolean).join(' ') || 'Médiateur';
+        window.__amistarCurrentMediatorSessionName = currentMediatorSessionName;
         const nextName = String(name || '').trim().split(' ').filter(Boolean).join(' ') || 'Médiateur';
         const previousName = getCurrentMediatorSessionName();
         if (previousName && previousName !== 'Médiateur' && previousName !== nextName) {
@@ -3109,6 +3112,7 @@
         return await loadMediatorSession(nextName);
       };
       window.openQrImportShortcut = function() {
+        currentMediatorSessionName = window.__amistarCurrentMediatorSessionName || getStoredMediator() || 'Médiateur';
         clearQrStatus();
         stopLiveQrScan();
         showMainScreen('screenPriseService');
@@ -3265,7 +3269,7 @@
         cleanupOldMediatorSessions();
         clearSavedState();
         applyDefaultState();
-        const activeMediator = getStoredMediator();
+        const activeMediator = window.__amistarCurrentMediatorSessionName || getStoredMediator() || 'Médiateur';
         applyActiveMediator(activeMediator);
         renderMissions();
         stopLiveQrScan();
