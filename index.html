@@ -3603,6 +3603,43 @@
           els.phoneAssignedTo.appendChild(opt);
         });
       }
+      async function transferSessionOwnership(newName) {
+        const targetName = String(newName || '').trim();
+        if (!targetName) return;
+
+        const previousSession = getCurrentMediatorSessionName();
+        if (!previousSession || previousSession === targetName) {
+          currentMediatorSessionName = targetName;
+          window.__amistarCurrentMediatorSessionName = targetName;
+          const storage = safeLocalStorage();
+          if (storage) storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, targetName);
+          if (els.phoneAssignedTo) els.phoneAssignedTo.value = targetName;
+          await saveAppState();
+          return;
+        }
+
+        currentMediatorSessionName = targetName;
+        window.__amistarCurrentMediatorSessionName = targetName;
+
+        const storage = safeLocalStorage();
+        if (storage) storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, targetName);
+
+        if (!state.members.includes(targetName)) {
+          state.members = [...state.members, targetName];
+        }
+        if (!state.selectedMembers.includes(targetName)) {
+          state.selectedMembers.push(targetName);
+        }
+
+        renderMembers();
+        renderMemberSelector();
+        fillPhoneAssigned();
+        if (els.phoneAssignedTo) els.phoneAssignedTo.value = targetName;
+        renderMissions();
+
+        await saveAppState();
+        await deleteSessionRecord(previousSession);
+      }
       function nextMissionStart() {
         const missionItems = [...state.missions].sort((a, b) => compareTimes(a.start, b.start));
         let baseStart = missionItems.length ? missionItems[missionItems.length - 1].end : currentServiceStart();
@@ -4536,15 +4573,7 @@
 
         const previousSession = getCurrentMediatorSessionName();
         if (previousSession && previousSession !== selectedName) {
-          await saveAppState();
-          const storage = safeLocalStorage();
-          if (storage) storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, selectedName);
-          if (typeof window.setActiveMediator === 'function') {
-            await window.setActiveMediator(selectedName);
-          } else {
-            applyActiveMediator(selectedName);
-          }
-          renderMissions();
+          await transferSessionOwnership(selectedName);
           return;
         }
 
