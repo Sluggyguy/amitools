@@ -2285,7 +2285,8 @@
       const TRAVEL_SECONDS = 210;
       const CABOTAGE_STORAGE_KEY = 'amistar-cabotage-state-v1';
       const ACTIVE_MEDIATOR_STORAGE_KEY = 'amistar-active-mediator-v1';
-      let currentMediatorSessionName = '';
+      let currentMediatorSessionName = window.__amistarCurrentMediatorSessionName || '';
+      window.__amistarCurrentMediatorSessionName = currentMediatorSessionName;
 
       const $ = (id) => document.getElementById(id);
       const screens = {
@@ -2544,11 +2545,10 @@
       }, 'btnOpenMenu');
 
       wire(els.logoutBtn, () => {
+        const cleanName = String(els.startMediatorInput?.value || '').trim().replace(/ +/g, ' ');
         const storage = safeLocalStorage();
-        if (storage) {
-          storage.removeItem(CABOTAGE_STORAGE_KEY);
-          storage.removeItem('prise-service-app-state-v1');
-          storage.removeItem(ACTIVE_MEDIATOR_STORAGE_KEY);
+        if (typeof window.saveCurrentMediatorSession === 'function') {
+          window.saveCurrentMediatorSession();
         }
         startDate = null;
         stationsCount = 4;
@@ -2556,11 +2556,15 @@
         includeTravel = false;
         cabotageMissionReturnTarget = null;
         renderSetup();
+        currentMediatorSessionName = '';
+        window.__amistarCurrentMediatorSessionName = '';
+        if (storage) {
+          storage.removeItem(ACTIVE_MEDIATOR_STORAGE_KEY);
+        }
         if (els.startMediatorInput) {
           els.startMediatorInput.value = '';
           els.openMenuBtn.disabled = true;
         }
-        if (typeof window.resetPriseServiceState === 'function') window.resetPriseServiceState();
         show('start');
       }, 'btnLogout');
 
@@ -2637,6 +2641,7 @@
         const storage = safeLocalStorage();
         const rememberedMediator = storage ? String(storage.getItem(ACTIVE_MEDIATOR_STORAGE_KEY) || '').trim().split(' ').filter(Boolean).join(' ') : '';
         currentMediatorSessionName = rememberedMediator || 'Médiateur';
+        window.__amistarCurrentMediatorSessionName = currentMediatorSessionName;
         if (rememberedMediator) els.startMediatorInput.value = rememberedMediator;
         const refreshStartButton = () => {
           const clean = String(els.startMediatorInput.value || '').trim().replace(/ +/g, ' ');
@@ -2928,14 +2933,15 @@
         const storage = safeLocalStorage();
         const raw = storage ? String(storage.getItem(ACTIVE_MEDIATOR_STORAGE_KEY) || '') : '';
         const clean = raw.trim().replace(/\s+/g, ' ');
-        return clean || 'Médiateur';
+        return clean || '';
       }
       function getCurrentMediatorSessionName() {
-        return String(currentMediatorSessionName || getStoredMediator() || 'Médiateur').trim().split(' ').filter(Boolean).join(' ');
+        return String(currentMediatorSessionName || getStoredMediator() || '').trim().split(' ').filter(Boolean).join(' ');
       }
       function applyActiveMediator(name) {
         const clean = String(name || '').trim().split(' ').filter(Boolean).join(' ') || 'Médiateur';
         currentMediatorSessionName = clean;
+        window.__amistarCurrentMediatorSessionName = clean;
         const previousAssigned = els.phoneAssignedTo ? els.phoneAssignedTo.value : '';
         state.members = [clean, ...state.members.filter((member) => member !== clean)];
         state.selectedMembers = state.selectedMembers.filter((member) => state.members.includes(member));
@@ -2947,6 +2953,9 @@
           els.phoneAssignedTo.value = state.members.includes(previousAssigned) ? previousAssigned : clean;
         }
       }
+      window.saveCurrentMediatorSession = function() {
+        saveAppState();
+      };
       window.setActiveMediator = function(name) {
         const nextName = String(name || '').trim().split(' ').filter(Boolean).join(' ') || 'Médiateur';
         const previousName = getCurrentMediatorSessionName();
@@ -4308,7 +4317,10 @@
         cleanupOldMediatorSessions();
         applyDefaultState();
         loadSavedState();
-        loadMediatorSession(getStoredMediator());
+        const activeMediator = getStoredMediator();
+        if (activeMediator) {
+          loadMediatorSession(activeMediator);
+        }
         state.editMode = false;
         renderMissions();
         stopLiveQrScan();
@@ -4547,7 +4559,7 @@
         els.infoModal.onclick = (event) => {
           if (event.target === els.infoModal) closeBusInfoModal();
         };
-      };
+      }
 
       function runTests() {
         clearSavedState();
