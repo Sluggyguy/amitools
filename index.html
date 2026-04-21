@@ -2285,6 +2285,7 @@
       const TRAVEL_SECONDS = 210;
       const CABOTAGE_STORAGE_KEY = 'amistar-cabotage-state-v1';
       const ACTIVE_MEDIATOR_STORAGE_KEY = 'amistar-active-mediator-v1';
+      let currentMediatorSessionName = '';
 
       const $ = (id) => document.getElementById(id);
       const screens = {
@@ -2634,7 +2635,8 @@
 
       if (els.startMediatorInput) {
         const storage = safeLocalStorage();
-        const rememberedMediator = storage ? String(storage.getItem(ACTIVE_MEDIATOR_STORAGE_KEY) || '').trim().replace(/ +/g, ' ') : '';
+        const rememberedMediator = storage ? String(storage.getItem(ACTIVE_MEDIATOR_STORAGE_KEY) || '').trim().split(' ').filter(Boolean).join(' ') : '';
+        currentMediatorSessionName = rememberedMediator || 'Médiateur';
         if (rememberedMediator) els.startMediatorInput.value = rememberedMediator;
         const refreshStartButton = () => {
           const clean = String(els.startMediatorInput.value || '').trim().replace(/ +/g, ' ');
@@ -2928,8 +2930,12 @@
         const clean = raw.trim().replace(/\s+/g, ' ');
         return clean || 'Médiateur';
       }
+      function getCurrentMediatorSessionName() {
+        return String(currentMediatorSessionName || getStoredMediator() || 'Médiateur').trim().split(' ').filter(Boolean).join(' ');
+      }
       function applyActiveMediator(name) {
-        const clean = String(name || '').trim().replace(/\s+/g, ' ') || 'Médiateur';
+        const clean = String(name || '').trim().split(' ').filter(Boolean).join(' ') || 'Médiateur';
+        currentMediatorSessionName = clean;
         const previousAssigned = els.phoneAssignedTo ? els.phoneAssignedTo.value : '';
         state.members = [clean, ...state.members.filter((member) => member !== clean)];
         state.selectedMembers = state.selectedMembers.filter((member) => state.members.includes(member));
@@ -2942,8 +2948,15 @@
         }
       }
       window.setActiveMediator = function(name) {
-        applyActiveMediator(name);
-        loadMediatorSession(name);
+        const nextName = String(name || '').trim().split(' ').filter(Boolean).join(' ') || 'Médiateur';
+        const previousName = getCurrentMediatorSessionName();
+        if (previousName && previousName !== 'Médiateur' && previousName !== nextName) {
+          saveAppState();
+        }
+        const storage = safeLocalStorage();
+        if (storage) storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, nextName);
+        applyActiveMediator(nextName);
+        loadMediatorSession(nextName);
       };
       window.openQrImportShortcut = function() {
         clearQrStatus();
@@ -3033,7 +3046,7 @@
           qrText: els.qrText ? els.qrText.value : '',
         };
         storage.setItem(STORAGE_KEY, JSON.stringify(payload));
-        const activeMediator = getStoredMediator();
+        const activeMediator = getCurrentMediatorSessionName();
         if (activeMediator) {
           storage.setItem(getMediatorSessionStorageKey(activeMediator), JSON.stringify(payload));
         }
@@ -3163,6 +3176,7 @@
         }
       }
       function loadMediatorSession(name) {
+        currentMediatorSessionName = String(name || '').trim().split(' ').filter(Boolean).join(' ') || 'Médiateur';
         cleanupOldMediatorSessions();
         const storage = safeLocalStorage();
         if (!storage) return false;
