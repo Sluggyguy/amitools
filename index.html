@@ -71,23 +71,54 @@
 
     .hidden { display: none !important; }
 
+    .brandCard {
+      width: min(82vw, 320px);
+      padding: 18px 18px 16px;
+      border-radius: 28px;
+      background: linear-gradient(180deg,#ffffff 0%, #f3f6fb 100%);
+      border: 1px solid rgba(0,0,0,.06);
+      box-shadow: 0 14px 30px rgba(16,24,40,.10), inset 0 1px 0 rgba(255,255,255,.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
     .title {
       font-weight: 900;
       font-size: 22px;
       text-align: center;
       letter-spacing: .22em;
       color: #111;
+      width: 100%;
     }
 
     .title .calc {
       display: inline-block;
       margin-left: 8px;
       padding: 6px 14px;
-      border-radius: 8px;
+      border-radius: 12px;
       background: #000;
       color: #fff;
       font-size: 18px;
       letter-spacing: .18em;
+      box-shadow: 0 8px 18px rgba(0,0,0,.14);
+    }
+
+    .titleTaglineWrap {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .titleTagline {
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      line-height: 1.35;
+      color: #5f6b7a;
     }
 
     .centerBlock {
@@ -95,7 +126,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
+      gap: 18px;
     }
 
     .homeButton {
@@ -1544,9 +1575,14 @@
 
     <section class="screen active" id="screenStart">
       <div class="centerBlock">
-        <div class="title">AMISTAR<span class="calc">TOOLS</span></div>
+        <div class="brandCard">
+          <div class="title">AMISTAR<span class="calc">TOOLS</span></div>
+          <div class="titleTaglineWrap">
+            <div class="titleTagline">Créé par un AMISTAR pour les AMISTAR</div>
+          </div>
+        </div>
         <div class="field" style="width:min(82vw, 320px); gap:8px;">
-          <div class="label" style="text-align:left;">Veuillez entrer votre prénom</div>
+          <div class="label" style="text-align:center;">Veuillez entrer votre prénom</div>
           <input id="startMediatorName" type="text" placeholder="Ex : Arnaud" maxlength="40" />
         </div>
         <div class="startActions">
@@ -4077,7 +4113,8 @@
         if (storage && sessionOwner) {
           storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, sessionOwner);
         }
-        applyActiveMediator(sessionOwner);
+        currentMediatorSessionName = sessionOwner;
+        window.__amistarCurrentMediatorSessionName = sessionOwner;
         if (els.phoneAssignedTo && state.members.includes(sessionOwner)) {
           els.phoneAssignedTo.value = sessionOwner;
         }
@@ -4489,7 +4526,31 @@
         }
       };
       els.phoneNumber.oninput = () => { renderMissions(); saveAppState(); };
-      els.phoneAssignedTo.onchange = () => { renderMissions(); saveAppState(); };
+      els.phoneAssignedTo.onchange = async () => {
+        const selectedName = String(els.phoneAssignedTo.value || '').trim();
+        if (!selectedName) {
+          renderMissions();
+          await saveAppState();
+          return;
+        }
+
+        const previousSession = getCurrentMediatorSessionName();
+        if (previousSession && previousSession !== selectedName) {
+          await saveAppState();
+          const storage = safeLocalStorage();
+          if (storage) storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, selectedName);
+          if (typeof window.setActiveMediator === 'function') {
+            await window.setActiveMediator(selectedName);
+          } else {
+            applyActiveMediator(selectedName);
+          }
+          renderMissions();
+          return;
+        }
+
+        renderMissions();
+        await saveAppState();
+      };
       els.kizeoNumber.onchange = () => { renderMissions(); saveAppState(); };
       els.pauseStart.oninput = () => {
         renderMissions();
