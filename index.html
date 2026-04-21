@@ -2535,12 +2535,12 @@
         saveCabotageState();
       }
 
-      wire(els.openMenuBtn, () => {
+      wire(els.openMenuBtn, async () => {
         const cleanName = String(els.startMediatorInput?.value || '').trim().replace(/ +/g, ' ');
         if (!cleanName) return;
         const storage = safeLocalStorage();
         if (storage) storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, cleanName);
-        if (typeof window.setActiveMediator === 'function') window.setActiveMediator(cleanName);
+        if (typeof window.setActiveMediator === 'function') await window.setActiveMediator(cleanName);
         show('menu');
       }, 'btnOpenMenu');
 
@@ -2658,12 +2658,12 @@
       }
 
       if (els.startQrShortcutBtn) {
-        els.startQrShortcutBtn.onclick = () => {
+        els.startQrShortcutBtn.onclick = async () => {
           const cleanName = String(els.startMediatorInput?.value || '').trim().replace(/ +/g, ' ');
           const storage = safeLocalStorage();
           const mediatorName = cleanName || (storage ? String(storage.getItem(ACTIVE_MEDIATOR_STORAGE_KEY) || '').trim().replace(/ +/g, ' ') : '') || 'Médiateur';
           if (storage) storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, mediatorName);
-          if (typeof window.setActiveMediator === 'function') window.setActiveMediator(mediatorName);
+          if (typeof window.setActiveMediator === 'function') await window.setActiveMediator(mediatorName);
           if (typeof window.openQrImportShortcut === 'function') {
             window.openQrImportShortcut();
           } else {
@@ -2707,8 +2707,10 @@
         SPE: { start: '', end: '' },
       };
       const PAUSE_DURATION_MIN = 20;
-      const STORAGE_KEY = 'prise-service-app-state-v1';
+      const STORAGE_KEY = 'prise-service-app-state-v1'; // mémo léger uniquement, la vraie restauration passe par la session prénom/jour
       const PRISE_SERVICE_SESSION_PREFIX = 'prise-service-session-v2-';
+      const SESSION_DB_NAME = 'amistar-tools-db';
+      const SESSION_STORE_NAME = 'dailySessions';
       const CABOTAGE_MAP = {
         metroA: {
           'CAB nord ANF': 'PON - VU - JFK',
@@ -2919,15 +2921,155 @@
       function getMediatorSessionStorageKey(name) {
         return `${PRISE_SERVICE_SESSION_PREFIX}${currentDayKey()}-${normalizeMediatorSessionKey(name)}`;
       }
-      function cleanupOldMediatorSessions() {
-        const storage = safeLocalStorage();
-        if (!storage) return;
-        const todayPrefix = `${PRISE_SERVICE_SESSION_PREFIX}${currentDayKey()}-`;
-        Object.keys(storage).forEach((key) => {
-          if (key.startsWith(PRISE_SERVICE_SESSION_PREFIX) && !key.startsWith(todayPrefix)) {
-            storage.removeItem(key);
+      function openSessionDb() {
+        return new Promise((resolve, reject) => {
+          if (!('indexedDB' in window)) {
+            resolve(null);
+            return;
           }
+          const request = window.indexedDB.open(SESSION_DB_NAME, 1);
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(SESSION_STORE_NAME)) {
+              const store = db.createObjectStore(SESSION_STORE_NAME, { keyPath: 'key' });
+              store.createIndex('byDate', 'date', { unique: false });
+            }
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error || new Error('IndexedDB unavailable'));
         });
+      }
+      async function readSessionRecord(name) {
+        const key = getMediatorSessionStorageKey(name);
+        try {
+          const db = await openSessionDb();
+          if (!db) {
+            const storage = safeLocalStorage();
+            const raw = storage ? storage.getItem(key) : null;
+            return raw ? JSON.parse(raw) : null;
+          }
+          return await new Promise((resolve, reject) => {
+            const tx = db.transaction(SESSION_STORE_NAME, 'readonly');
+            const store = tx.objectStore(SESSION_STORE_NAME);
+            const request = store.get(key);
+            request.onsuccess = () => {
+              const result = request.result;
+              db.close();
+              resolve(result ? result.payload : null);
+            };
+            request.onerror = () => {
+              db.close();
+              reject(request.error || new Error('Read session failed'));
+            };
+          });
+        } catch {
+          const storage = safeLocalStorage();
+          const raw = storage ? storage.getItem(key) : null;
+          return raw ? JSON.parse(raw) : null;
+        }
+      }
+      async function writeSessionRecord(name, payload) {
+        const key = getMediatorSessionStorageKey(name);
+        const record = {
+          key,
+          date: payload.serviceDate || currentDayKey(),
+          mediator: normalizeMediatorSessionKey(name),
+          payload
+        };
+        try {
+          const db = await openSessionDb();
+          if (!db) {
+            const storage = safeLocalStorage();
+            if (storage) storage.setItem(key, JSON.stringify(payload));
+            return;
+          }
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(SESSION_STORE_NAME, 'readwrite');
+            const store = tx.objectStore(SESSION_STORE_NAME);
+            store.put(record);
+            tx.oncomplete = () => {
+              db.close();
+              resolve();
+            };
+            tx.onerror = () => {
+              db.close();
+              reject(tx.error || new Error('Write session failed'));
+            };
+          });
+        } catch {
+          const storage = safeLocalStorage();
+          if (storage) storage.setItem(key, JSON.stringify(payload));
+        }
+      }
+      async function deleteSessionRecord(name) {
+        const key = getMediatorSessionStorageKey(name);
+        try {
+          const db = await openSessionDb();
+          if (!db) {
+            const storage = safeLocalStorage();
+            if (storage) storage.removeItem(key);
+            return;
+          }
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(SESSION_STORE_NAME, 'readwrite');
+            tx.objectStore(SESSION_STORE_NAME).delete(key);
+            tx.oncomplete = () => {
+              db.close();
+              resolve();
+            };
+            tx.onerror = () => {
+              db.close();
+              reject(tx.error || new Error('Delete session failed'));
+            };
+          });
+        } catch {
+          const storage = safeLocalStorage();
+          if (storage) storage.removeItem(key);
+        }
+      }
+      async function deleteOldSessionRecords() {
+        const today = currentDayKey();
+        try {
+          const db = await openSessionDb();
+          if (!db) {
+            const storage = safeLocalStorage();
+            if (!storage) return;
+            const todayPrefix = `${PRISE_SERVICE_SESSION_PREFIX}${today}-`;
+            Object.keys(storage).forEach((key) => {
+              if (key.startsWith(PRISE_SERVICE_SESSION_PREFIX) && !key.startsWith(todayPrefix)) {
+                storage.removeItem(key);
+              }
+            });
+            return;
+          }
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(SESSION_STORE_NAME, 'readwrite');
+            const store = tx.objectStore(SESSION_STORE_NAME);
+            const request = store.openCursor();
+            request.onsuccess = () => {
+              const cursor = request.result;
+              if (!cursor) return;
+              const value = cursor.value;
+              if (value && value.date !== today) {
+                cursor.delete();
+              }
+              cursor.continue();
+            };
+            tx.oncomplete = () => {
+              db.close();
+              resolve();
+            };
+            tx.onerror = () => {
+              db.close();
+              reject(tx.error || new Error('Cleanup sessions failed'));
+            };
+          });
+        } catch (error) {
+          console.warn('Cleanup IndexedDB impossible :', error);
+        }
+      }
+      function cleanupOldMediatorSessions() {
+        void deleteOldSessionRecords();
       }
       function getStoredMediator() {
         const storage = safeLocalStorage();
@@ -3052,12 +3194,16 @@
           commentEnabled: !!(els.commentEnabled && els.commentEnabled.checked),
           commentText: els.commentText ? els.commentText.value : '',
           validatedComment: state.validatedComment || '',
-          qrText: els.qrText ? els.qrText.value : '',
+          qrText: '',
         };
-        storage.setItem(STORAGE_KEY, JSON.stringify(payload));
         const activeMediator = getCurrentMediatorSessionName();
         if (activeMediator) {
-          storage.setItem(getMediatorSessionStorageKey(activeMediator), JSON.stringify(payload));
+          storage.setItem(STORAGE_KEY, JSON.stringify({
+            serviceDate: payload.serviceDate,
+            activeMediator,
+            savedAt: Date.now()
+          }));
+          void writeSessionRecord(activeMediator, payload);
         }
       }
       function clearSavedState(name) {
@@ -3066,7 +3212,7 @@
         storage.removeItem(STORAGE_KEY);
         const mediatorName = name || getStoredMediator();
         if (mediatorName) {
-          storage.removeItem(getMediatorSessionStorageKey(mediatorName));
+          void deleteSessionRecord(mediatorName);
         }
       }
       function fillCabotageSectorOptions() {
@@ -3156,7 +3302,7 @@
         els.pauseStart.value = saved.pauseStart || '';
         if (els.commentEnabled) els.commentEnabled.checked = !!saved.commentEnabled;
         if (els.commentText) els.commentText.value = saved.commentText || '';
-        if (els.qrText) els.qrText.value = saved.qrText || '';
+        if (els.qrText) els.qrText.value = '';
         updateSpecialHoursVisibility();
         updateCommentVisibility();
         setServiceTimes();
@@ -3168,29 +3314,13 @@
         return true;
       }
       function loadSavedState() {
-        const storage = safeLocalStorage();
-        if (!storage) return false;
-        const raw = storage.getItem(STORAGE_KEY);
-        if (!raw) return false;
-        try {
-          const saved = JSON.parse(raw);
-          if (!hydrateAppState(saved)) {
-            clearSavedState();
-            return false;
-          }
-          return true;
-        } catch {
-          clearSavedState();
-          return false;
-        }
+        return false;
       }
-      function loadMediatorSession(name) {
+      async function loadMediatorSession(name) {
         currentMediatorSessionName = String(name || '').trim().split(' ').filter(Boolean).join(' ') || 'Médiateur';
-        cleanupOldMediatorSessions();
-        const storage = safeLocalStorage();
-        if (!storage) return false;
-        const raw = storage.getItem(getMediatorSessionStorageKey(name));
-        if (!raw) {
+        await deleteOldSessionRecords();
+        const saved = await readSessionRecord(name);
+        if (!saved) {
           applyDefaultState();
           applyActiveMediator(name);
           stopLiveQrScan();
@@ -3199,9 +3329,8 @@
           return false;
         }
         try {
-          const saved = JSON.parse(raw);
           if (!hydrateAppState(saved)) {
-            storage.removeItem(getMediatorSessionStorageKey(name));
+            await deleteSessionRecord(name);
             applyDefaultState();
             applyActiveMediator(name);
             stopLiveQrScan();
@@ -3213,7 +3342,7 @@
           saveAppState();
           return true;
         } catch {
-          storage.removeItem(getMediatorSessionStorageKey(name));
+          await deleteSessionRecord(name);
           applyDefaultState();
           applyActiveMediator(name);
           stopLiveQrScan();
@@ -3754,10 +3883,9 @@
             const codes = await detector.detect(video);
             const rawValue = Array.isArray(codes) && codes.length ? String(codes[0].rawValue || '').trim() : '';
             if (rawValue && rawValue !== state.qrLastText) {
-              state.qrLastText = rawValue;
-              if (els.qrText) els.qrText.value = rawValue;
-              saveAppState();
-              stopLiveQrScan();
+          state.qrLastText = rawValue;
+          if (els.qrText) els.qrText.value = rawValue;
+          stopLiveQrScan();
               setQrStatus('QR détecté et texte importé dans la zone.', 'success');
               return;
             }
@@ -3780,7 +3908,6 @@
         if (rawValue && rawValue !== state.qrLastText) {
           state.qrLastText = rawValue;
           if (els.qrText) els.qrText.value = rawValue;
-          saveAppState();
           stopLiveQrScan();
           setQrStatus('QR détecté et texte importé dans la zone.', 'success');
         }
@@ -4313,13 +4440,13 @@
         stopLiveQrScan();
         showToolScreen('form');
       }
-      function init() {
+      async function init() {
         cleanupOldMediatorSessions();
         applyDefaultState();
         loadSavedState();
         const activeMediator = getStoredMediator();
         if (activeMediator) {
-          loadMediatorSession(activeMediator);
+          await loadMediatorSession(activeMediator);
         }
         state.editMode = false;
         renderMissions();
@@ -4522,7 +4649,6 @@
             const rawText = await decodeQrFromFile(file);
             if (els.qrText) {
               els.qrText.value = rawText;
-              saveAppState();
             }
             setQrStatus('QR détecté et texte importé dans la zone.', 'success');
           } catch (error) {
@@ -4542,11 +4668,12 @@
           setQrStatus('Scan en direct arrêté.', 'success');
         };
       }
-      if (els.qrText) els.qrText.oninput = () => { saveAppState(); };
+      if (els.qrText) els.qrText.oninput = () => {};
       els.applyQrBtn.onclick = () => {
         try {
           const parsed = parseQrImportText(els.qrText.value);
           applyParsedQrData(parsed);
+          if (els.qrText) els.qrText.value = '';
           setQrStatus('Le texte QR a bien été appliqué au suivi de mission.', 'success');
         } catch (error) {
           setQrStatus(error?.message || 'Format QR invalide.', 'error');
