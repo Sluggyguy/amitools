@@ -2761,8 +2761,8 @@
           'CAB centre SGE': 'GARB - COL',
           'CAB centre COL': 'GAR - SGE - STAb',
           'CAB nord LGA': 'GCH - JFE - STAb',
-          'CAB nord CVI': 'ATA - BUN - IJC',
-          'CAB nord ( spé ) CVI': 'ATA - BUN',
+          'CAB nord CVI': 'ATA - BAU - IJC',
+          'CAB nord ( spé ) CVI': 'ATA - BAU',
         }
       };
       const BUS_ZONE_MAP = {
@@ -4927,8 +4927,8 @@
         assert([...els.cabotageSector.options].some((opt) => opt.value === 'CAB sud MAB : CLE - LCO - SJG'), 'metroB sector renamed and ordered correctly');
         assert([...els.cabotageSector.options].some((opt) => opt.value === 'CAB centre COL : GAR - SGE - STAb'), 'metroB secteur CAB centre COL présent');
         assert(getCabotageStationCount({ type: 'Cabotage', cabMode: 'metroB', place: 'CAB centre COL : GAR - SGE - STAb' }) === 4, 'Cab centre COL compte comme 4 stations');
-        assert([...els.cabotageSector.options].some((opt) => opt.value === 'CAB nord ( spé ) CVI : ATA - BUN'), 'metroB sector spécial 3 stations présent');
-        assert(getCabotageStationCount({ type: 'Cabotage', cabMode: 'metroB', place: 'CAB nord ( spé ) CVI : ATA - BUN' }) === 3, 'CVI spé compte comme 3 stations');
+        assert([...els.cabotageSector.options].some((opt) => opt.value === 'CAB nord ( spé ) CVI : ATA - BAU'), 'metroB sector spécial 3 stations présent');
+        assert(getCabotageStationCount({ type: 'Cabotage', cabMode: 'metroB', place: 'CAB nord ( spé ) CVI : ATA - BAU' }) === 3, 'CVI spé compte comme 3 stations');
 
         els.cabotageMode.value = 'bus';
         updateMissionFields();
