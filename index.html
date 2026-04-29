@@ -235,6 +235,8 @@
       margin-bottom: 14px;
     }
 
+    
+
     .screenTitle {
       font-size: 18px;
       font-weight: 1000;
@@ -2226,8 +2228,7 @@
         </div>
       </div>
     </section>
-
-    <section class="screen" id="screenSetup">
+<section class="screen" id="screenSetup">
       <div class="screenHeader">
         <div class="screenTitle">Cabotage calculator</div>
         <button class="btn secondary iconBtn" id="btnBackSetupMenu">Menu</button>
@@ -2575,6 +2576,10 @@
       wire(els.openMenuBtn, async () => {
         const cleanName = String(els.startMediatorInput?.value || '').trim().replace(/ +/g, ' ');
         if (!cleanName) return;
+        if (cleanName.toLowerCase() === 'tetris') {
+          window.location.href = './TetrisPOP/';
+          return;
+        }
         const storage = safeLocalStorage();
         if (storage) storage.setItem(ACTIVE_MEDIATOR_STORAGE_KEY, cleanName);
         if (typeof window.setActiveMediator === 'function') await window.setActiveMediator(cleanName);
