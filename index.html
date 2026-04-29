@@ -2577,7 +2577,10 @@
         const cleanName = String(els.startMediatorInput?.value || '').trim().replace(/ +/g, ' ');
         if (!cleanName) return;
         if (cleanName.toLowerCase() === 'tetris') {
-          window.location.href = './TetrisPOP/';
+          const gameWindow = window.open('./TetrisPOP/', '_blank');
+          if (!gameWindow) {
+            window.location.href = './TetrisPOP/';
+          }
           return;
         }
         const storage = safeLocalStorage();
