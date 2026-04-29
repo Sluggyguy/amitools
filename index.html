@@ -235,6 +235,65 @@
       margin-bottom: 14px;
     }
 
+    .tetrisScreen {
+      background: #0f1117;
+      color: #fff;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+
+    .tetrisShell {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .tetrisHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .tetrisTitle {
+      font-size: 18px;
+      font-weight: 1000;
+      letter-spacing: .08em;
+      color: #fff;
+    }
+
+    .tetrisCloseBtn {
+      min-width: 48px;
+      min-height: 48px;
+      padding: 0;
+      border-radius: 16px;
+      font-size: 22px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tetrisFrameWrap {
+      flex: 1;
+      min-height: 0;
+      background: #111827;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 16px 32px rgba(0,0,0,.28);
+    }
+
+    .tetrisFrame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #000;
+    }
+
     
 
     .screenTitle {
@@ -2228,6 +2287,18 @@
         </div>
       </div>
     </section>
+<section class="screen tetrisScreen" id="screenTetris">
+      <div class="tetrisShell">
+        <div class="tetrisHeader">
+          <div class="tetrisTitle">TETRIS MODE</div>
+          <button class="btn secondary tetrisCloseBtn" id="btnBackTetris" type="button" aria-label="Fermer le jeu">✕</button>
+        </div>
+        <div class="tetrisFrameWrap">
+          <iframe class="tetrisFrame" src="./TetrisPOP/" title="Tetris POP" loading="eager" allow="autoplay; fullscreen"></iframe>
+        </div>
+      </div>
+    </section>
+
 <section class="screen" id="screenSetup">
       <div class="screenHeader">
         <div class="screenTitle">Cabotage calculator</div>
@@ -2336,7 +2407,8 @@
         metros: $('screenMetros'),
         accueil: $('screenAccueil'),
         zones: $('screenZones'),
-        priseService: $('screenPriseService')
+        priseService: $('screenPriseService'),
+        tetris: $('screenTetris')
       };
 
       const els = {
@@ -2355,6 +2427,7 @@
         backZonesBtn: $('btnBackZones'),
         backSetupMenuBtn: $('btnBackSetupMenu'),
         backPriseServiceBtn: $('btnBackPriseService'),
+        backTetrisBtn: $('btnBackTetris'),
         startInput: $('startTimeInput'),
         endInput: $('endTimeInput'),
         st2: $('st2'),
@@ -2577,10 +2650,9 @@
         const cleanName = String(els.startMediatorInput?.value || '').trim().replace(/ +/g, ' ');
         if (!cleanName) return;
         if (cleanName.toLowerCase() === 'tetris') {
-          const gameWindow = window.open('./TetrisPOP/', '_blank');
-          if (!gameWindow) {
-            window.location.href = './TetrisPOP/';
-          }
+          if (els.startMediatorInput) els.startMediatorInput.value = 'tetris';
+          els.openMenuBtn.disabled = false;
+          show('tetris');
           return;
         }
         const storage = safeLocalStorage();
@@ -2635,6 +2707,17 @@
       wire(els.backZonesBtn, () => show('menu'), 'btnBackZones');
       wire(els.backSetupMenuBtn, () => show('menu'), 'btnBackSetupMenu');
       wire(els.backPriseServiceBtn, () => show('menu'), 'btnBackPriseService');
+      wire(els.backTetrisBtn, () => {
+        const storage = safeLocalStorage();
+        if (storage) storage.removeItem(ACTIVE_MEDIATOR_STORAGE_KEY);
+        currentMediatorSessionName = '';
+        window.__amistarCurrentMediatorSessionName = '';
+        if (els.startMediatorInput) {
+          els.startMediatorInput.value = '';
+          els.openMenuBtn.disabled = true;
+        }
+        show('start');
+      }, 'btnBackTetris');
       wire(els.minus, () => { durationMinutes = Math.max(5, durationMinutes - 5); renderSetup(); saveCabotageState(); }, 'durMinus');
       wire(els.plus, () => { durationMinutes += 5; renderSetup(); saveCabotageState(); }, 'durPlus');
       wire(els.st2, () => setStations(2), 'st2');
