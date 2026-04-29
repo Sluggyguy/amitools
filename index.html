@@ -236,54 +236,60 @@
     }
 
     .tetrisScreen {
-      background: #0f1117;
+      background: #000;
       color: #fff;
-      padding-bottom: max(20px, env(safe-area-inset-bottom));
+      padding: 0;
     }
 
     .tetrisShell {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 6px;
       width: 100%;
       height: 100%;
       min-height: 0;
+      padding: max(6px, env(safe-area-inset-top)) 6px max(6px, env(safe-area-inset-bottom)) 6px;
     }
 
     .tetrisHeader {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      justify-content: flex-end;
+      gap: 0;
+      min-height: 36px;
+      flex: 0 0 auto;
     }
 
     .tetrisTitle {
-      font-size: 18px;
-      font-weight: 1000;
-      letter-spacing: .08em;
-      color: #fff;
+      display: none;
     }
 
     .tetrisCloseBtn {
-      min-width: 48px;
-      min-height: 48px;
+      min-width: 34px;
+      min-height: 34px;
+      width: 34px;
+      height: 34px;
       padding: 0;
-      border-radius: 16px;
-      font-size: 22px;
+      border-radius: 999px;
+      font-size: 18px;
       line-height: 1;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      background: rgba(255,255,255,.92);
+      color: #111;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 6px 14px rgba(0,0,0,.18);
     }
 
     .tetrisFrameWrap {
       flex: 1;
       min-height: 0;
-      background: #111827;
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 22px;
+      background: #000;
+      border: 0;
+      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 16px 32px rgba(0,0,0,.28);
+      box-shadow: none;
     }
 
     .tetrisFrame {
@@ -2290,7 +2296,6 @@
 <section class="screen tetrisScreen" id="screenTetris">
       <div class="tetrisShell">
         <div class="tetrisHeader">
-          <div class="tetrisTitle">TETRIS MODE</div>
           <button class="btn secondary tetrisCloseBtn" id="btnBackTetris" type="button" aria-label="Fermer le jeu">✕</button>
         </div>
         <div class="tetrisFrameWrap">
