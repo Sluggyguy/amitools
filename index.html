@@ -2294,7 +2294,7 @@
           <button class="btn secondary tetrisCloseBtn" id="btnBackTetris" type="button" aria-label="Fermer le jeu">✕</button>
         </div>
         <div class="tetrisFrameWrap">
-          <iframe class="tetrisFrame" src="./TetrisPOP/" title="Tetris POP" loading="eager" allow="autoplay; fullscreen"></iframe>
+          <iframe class="tetrisFrame" id="tetrisFrame" src="./TetrisPOP/" title="Tetris POP" loading="eager" allow="autoplay; fullscreen"></iframe>
         </div>
       </div>
     </section>
@@ -2428,6 +2428,7 @@
         backSetupMenuBtn: $('btnBackSetupMenu'),
         backPriseServiceBtn: $('btnBackPriseService'),
         backTetrisBtn: $('btnBackTetris'),
+        tetrisFrame: $('tetrisFrame'),
         startInput: $('startTimeInput'),
         endInput: $('endTimeInput'),
         st2: $('st2'),
@@ -2708,6 +2709,9 @@
       wire(els.backSetupMenuBtn, () => show('menu'), 'btnBackSetupMenu');
       wire(els.backPriseServiceBtn, () => show('menu'), 'btnBackPriseService');
       wire(els.backTetrisBtn, () => {
+        if (els.tetrisFrame) {
+          els.tetrisFrame.src = 'about:blank';
+        }
         const storage = safeLocalStorage();
         if (storage) storage.removeItem(ACTIVE_MEDIATOR_STORAGE_KEY);
         currentMediatorSessionName = '';
@@ -2717,6 +2721,11 @@
           els.openMenuBtn.disabled = true;
         }
         show('start');
+        if (els.tetrisFrame) {
+          setTimeout(() => {
+            els.tetrisFrame.src = './TetrisPOP/';
+          }, 50);
+        }
       }, 'btnBackTetris');
       wire(els.minus, () => { durationMinutes = Math.max(5, durationMinutes - 5); renderSetup(); saveCabotageState(); }, 'durMinus');
       wire(els.plus, () => { durationMinutes += 5; renderSetup(); saveCabotageState(); }, 'durPlus');
