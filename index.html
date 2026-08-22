@@ -2842,7 +2842,8 @@
 
   <script>
     (() => {
-      let sharedNetworkMaps = window.AMIToolsData.derive(window.AMIToolsData.getCatalog());
+      let sharedCatalog = window.AMIToolsData.getCatalog();
+      let sharedNetworkMaps = window.AMIToolsData.derive(sharedCatalog);
       let SLOT_MAP = sharedNetworkMaps.slotMap;
       const PAUSE_DURATION_MIN = 20;
       const STORAGE_KEY = 'prise-service-app-state-v1'; // mémo léger uniquement, la vraie restauration passe par la session prénom/jour
@@ -2980,6 +2981,12 @@
         if (Array.from(select.options).some((option) => option.value === previous)) select.value = previous;
       }
 
+      function fillMissionPlaceOptions(type) {
+        const placeKey = type === 'Pôle échange' ? 'exchange' : 'pap';
+        const places = sharedCatalog.places && sharedCatalog.places[placeKey] || [];
+        replaceSharedOptions(els.missionPapSelect, places.map((value) => ({ value, label: value })), 'Choisir une station');
+      }
+
       function renderSharedNetworkViews(catalog) {
         const zoneWrap = document.querySelector('#screenZones .zonesWrap');
         if (zoneWrap) {
@@ -3033,6 +3040,7 @@
       }
 
       function applySharedCatalog(catalog) {
+        sharedCatalog = catalog;
         sharedNetworkMaps = window.AMIToolsData.derive(catalog);
         SLOT_MAP = sharedNetworkMaps.slotMap;
         CABOTAGE_MAP = sharedNetworkMaps.cabotageMap;
@@ -3043,7 +3051,7 @@
         replaceSharedOptions(els.serviceSlot, slots, 'Choisir');
         replaceSharedOptions(els.busLineSelect, busLines, 'Choisir');
         replaceSharedOptions(els.busLineSelectSecondary, busLines, 'Aucune');
-        replaceSharedOptions(els.missionPapSelect, (catalog.places && catalog.places.pap || []).map((x) => ({ value: x, label: x })), 'Choisir');
+        fillMissionPlaceOptions(els.missionType.value);
         replaceSharedOptions(els.missionBoardingSelect, (catalog.places && catalog.places.boarding || []).map((x) => ({ value: x, label: x })), 'Choisir');
         renderSharedNetworkViews(catalog);
         fillCabotageSectorOptions();
@@ -3660,6 +3668,7 @@
         if (isPap || isPoleEchange) {
           els.missionPlaceField.classList.remove('ps-hidden');
           els.missionPlace.classList.add('ps-hidden');
+          fillMissionPlaceOptions(rawType);
           els.missionPapSelect.classList.remove('ps-hidden');
           els.missionPlace.value = els.missionPapSelect.value;
           return;
