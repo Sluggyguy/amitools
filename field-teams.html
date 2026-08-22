@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Équipes sur le terrain · AMITOOLS</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/network-data.js"></script>
+  <script src="js/field-teams.js"></script>
+  <style>
+    :root {
+      --bg: #edf1f7;
+      --panel: #fff;
+      --ink: #111827;
+      --muted: #667085;
+      --line: #d8deea;
+      --blue: #3154d8;
+      --green: #18794e;
+      --orange: #b54708;
+      --red: #b42318;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: linear-gradient(180deg, #edf1f7, #e7edf6); color: var(--ink); }
+    button, input { font: inherit; }
+    .shell { width: min(1280px, 100%); margin: 0 auto; padding: 20px; }
+    .topbar, .panel, .teamCard { background: var(--panel); border: 1px solid var(--line); box-shadow: 0 16px 38px rgba(15, 23, 42, .07); }
+    .topbar { border-radius: 22px; padding: 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(25px, 3vw, 38px); letter-spacing: -.04em; }
+    .eyebrow { color: var(--blue); text-transform: uppercase; font-size: 12px; font-weight: 950; letter-spacing: .12em; margin-bottom: 5px; }
+    .subtitle, .muted { color: var(--muted); }
+    .subtitle { margin-top: 7px; line-height: 1.45; }
+    .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+    .btn { border: 1px solid #2443b7; border-radius: 12px; padding: 10px 14px; background: var(--blue); color: #fff; font-weight: 850; cursor: pointer; text-decoration: none; white-space: nowrap; }
+    .btn.secondary { color: var(--ink); background: #fff; border-color: var(--line); }
+    .btn:disabled { opacity: .55; cursor: default; }
+    .panel { border-radius: 18px; padding: 17px; margin-top: 14px; }
+    .hidden { display: none !important; }
+    .loginGrid { display: grid; grid-template-columns: minmax(190px, 1fr) minmax(190px, 1fr) auto; gap: 10px; align-items: end; margin-top: 14px; }
+    label { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 850; }
+    input { width: 100%; padding: 11px 12px; border: 1px solid #cfd7e6; border-radius: 12px; color: var(--ink); background: #fff; outline: none; }
+    input:focus { border-color: #6d85e6; box-shadow: 0 0 0 4px #edf0ff; }
+    .notice { margin-top: 12px; border-radius: 13px; padding: 11px 13px; background: #fff8e5; border: 1px solid #f5dea1; color: #755719; font-weight: 750; }
+    .notice.error { background: #fff0f2; border-color: #ffcbd2; color: #8b2635; }
+    .notice.success { background: #eaf9f3; border-color: #bdebd8; color: #176b50; }
+    .toolbar { display: flex; justify-content: space-between; align-items: end; gap: 12px; }
+    .toolbar label { width: min(240px, 100%); }
+    .livePill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 999px; background: #eaf9f3; color: var(--green); font-size: 12px; font-weight: 900; }
+    .liveDot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px rgba(24,121,78,.12); }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+    .stat { border-radius: 15px; background: #f7f9fc; border: 1px solid #e5e9f1; padding: 14px; }
+    .statValue { font-size: 28px; font-weight: 950; letter-spacing: -.04em; }
+    .statLabel { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .teamsGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+    .teamCard { border-radius: 20px; overflow: hidden; }
+    .cardHead { padding: 17px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 1px solid #e7eaf1; }
+    .teamName { font-size: 21px; font-weight: 950; }
+    .memberNames { margin-top: 5px; color: var(--muted); font-weight: 750; line-height: 1.4; }
+    .statusPill { border-radius: 999px; padding: 7px 10px; background: #f0f2f6; color: #475467; font-size: 12px; font-weight: 900; white-space: nowrap; }
+    .statusPill.current { background: #eaf9f3; color: var(--green); }
+    .statusPill.pause { background: #fff4e5; color: var(--orange); }
+    .cardBody { padding: 17px; }
+    .contactGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .contact { border-radius: 12px; padding: 10px; background: #f7f9fc; min-width: 0; }
+    .contactLabel { color: var(--muted); font-size: 11px; font-weight: 850; }
+    .contactValue { margin-top: 3px; font-weight: 900; overflow-wrap: anywhere; }
+    .focusMission { margin-top: 12px; padding: 14px; border-radius: 15px; background: linear-gradient(135deg, #263f99, #3154d8); color: #fff; }
+    .focusMission.pause { background: linear-gradient(135deg, #8b4513, #c66a1b); }
+    .focusLabel { opacity: .78; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+    .focusTitle { margin-top: 5px; font-size: 18px; font-weight: 950; }
+    .focusMeta { margin-top: 4px; opacity: .88; font-weight: 700; }
+    .nextMission { margin-top: 10px; color: #475467; font-size: 13px; font-weight: 750; }
+    .timeline { margin-top: 15px; display: grid; gap: 8px; }
+    .timelineTitle { font-size: 12px; color: var(--muted); font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+    .timelineItem { display: grid; grid-template-columns: 95px 11px 1fr; align-items: start; gap: 9px; color: #475467; }
+    .timelineItem.active { color: var(--ink); }
+    .time { font-size: 12px; font-weight: 900; }
+    .marker { width: 9px; height: 9px; margin-top: 4px; border-radius: 50%; background: #cfd6e4; box-shadow: 0 0 0 3px #f0f3f8; }
+    .active .marker { background: var(--green); box-shadow: 0 0 0 3px #d9f2e8; }
+    .missionText { font-size: 13px; font-weight: 800; line-height: 1.35; }
+    .comment { margin-top: 13px; border-left: 4px solid #d9dfea; padding: 8px 10px; color: #475467; font-size: 13px; line-height: 1.4; }
+    .updated { margin-top: 13px; color: var(--muted); font-size: 11px; font-weight: 750; }
+    .empty { margin-top: 14px; border: 2px dashed #cbd3e1; border-radius: 20px; padding: 42px 18px; text-align: center; color: var(--muted); background: rgba(255,255,255,.55); }
+    .empty h2 { color: var(--ink); margin-bottom: 7px; }
+    @media (max-width: 850px) { .teamsGrid { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) {
+      .shell { padding: 12px; }
+      .topbar, .toolbar { align-items: stretch; flex-direction: column; }
+      .actions { width: 100%; }
+      .actions .btn { flex: 1; text-align: center; }
+      .loginGrid, .stats { grid-template-columns: 1fr; }
+      .contactGrid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Centre de contrôle</div>
+        <h1>Équipes sur le terrain</h1>
+        <p class="subtitle">Suivez les équipes, leurs contacts et leurs missions en cours au même endroit.</p>
+      </div>
+      <div class="actions">
+        <a class="btn secondary" href="referent.html">Retour à la préparation</a>
+        <button class="btn secondary hidden" id="logoutBtn" type="button">Se déconnecter</button>
+      </div>
+    </header>
+
+    <section class="panel" id="loginPanel">
+      <h2>Connexion référent</h2>
+      <p class="subtitle">Les informations du terrain sont protégées et réservées aux comptes autorisés.</p>
+      <form class="loginGrid" id="loginForm">
+        <label>Adresse e-mail<input id="email" type="email" autocomplete="username" required /></label>
+        <label>Mot de passe<input id="password" type="password" autocomplete="current-password" required /></label>
+        <button class="btn" type="submit">Se connecter</button>
+      </form>
+      <div class="notice hidden" id="loginMessage" role="status"></div>
+    </section>
+
+    <section class="panel hidden" id="controlPanel">
+      <div class="toolbar">
+        <label>Date suivie<input id="serviceDate" type="date" /></label>
+        <div class="actions">
+          <span class="livePill" id="liveStatus"><span class="liveDot"></span><span>Connexion en cours…</span></span>
+          <button class="btn secondary" id="refreshBtn" type="button">Actualiser</button>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="statValue" id="teamCount">0</div><div class="statLabel">équipes actives</div></div>
+        <div class="stat"><div class="statValue" id="memberCount">0</div><div class="statLabel">médiateurs mobilisés</div></div>
+        <div class="stat"><div class="statValue" id="currentCount">0</div><div class="statLabel">missions en cours</div></div>
+      </div>
+      <div class="notice hidden" id="controlMessage" role="status"></div>
+    </section>
+
+    <section class="teamsGrid hidden" id="teamsGrid"></section>
+    <section class="empty hidden" id="emptyState">
+      <h2>Aucune équipe partagée pour cette date</h2>
+      <p>Préparez une équipe depuis la page référent, puis faites scanner son QR sur le téléphone.</p>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+      var state = { user: null, rows: [], reloadTimer: null };
+      var $ = function (id) { return document.getElementById(id); };
+      var els = {
+        loginPanel: $('loginPanel'), loginForm: $('loginForm'), email: $('email'), password: $('password'), loginMessage: $('loginMessage'), logoutBtn: $('logoutBtn'),
+        controlPanel: $('controlPanel'), serviceDate: $('serviceDate'), refreshBtn: $('refreshBtn'), liveStatus: $('liveStatus'), controlMessage: $('controlMessage'),
+        teamsGrid: $('teamsGrid'), emptyState: $('emptyState'), teamCount: $('teamCount'), memberCount: $('memberCount'), currentCount: $('currentCount')
+      };
+
+      function pad(value) { return String(value).padStart(2, '0'); }
+      function todayIso() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+      function escapeHtml(value) { return String(value == null ? '' : value).replace(/[&<>'"]/g, function (char) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]; }); }
+      function minutes(value) { var parts = String(value || '').split(':'); return parts.length === 2 ? Number(parts[0]) * 60 + Number(parts[1]) : -1; }
+      function addMinutes(value, amount) { var total = Math.max(0, minutes(value)) + amount; return pad(Math.floor(total / 60) % 24) + ':' + pad(total % 60); }
+      function nowMinutes() { var d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
+      function missionTitle(mission) {
+        var details = [mission.type || 'Mission'];
+        if (mission.cabMode === 'metroA') details.push('métro A');
+        if (mission.cabMode === 'metroB') details.push('métro B');
+        if (mission.cabMode === 'bus') details.push('bus');
+        if (mission.cabMode === 'busMetro') details.push('bus métropolitain');
+        if (mission.place) details.push(mission.place);
+        if (mission.line) details.push(mission.line);
+        return details.join(' · ');
+      }
+      function scheduleFor(data) {
+        var items = (Array.isArray(data.missions) ? data.missions : []).map(function (mission) { return Object.assign({ kind: 'mission' }, mission); });
+        if (data.pauseStart) items.push({ kind: 'pause', type: 'Pause', start: data.pauseStart, end: addMinutes(data.pauseStart, 20), members: [] });
+        return items.sort(function (a, b) { return minutes(a.start) - minutes(b.start); });
+      }
+      function isCurrent(item, current) {
+        var start = minutes(item.start), end = minutes(item.end);
+        if (start < 0 || end < 0) return false;
+        if (end <= start) end += 1440;
+        return current >= start && current < end;
+      }
+      function currentAndNext(items) {
+        if (els.serviceDate.value > todayIso()) return { current: null, next: items[0] || null };
+        if (els.serviceDate.value < todayIso()) return { current: null, next: null };
+        var currentMinute = nowMinutes();
+        var current = items.find(function (item) { return isCurrent(item, currentMinute); }) || null;
+        var next = items.find(function (item) { return minutes(item.start) > currentMinute; }) || null;
+        return { current: current, next: next };
+      }
+      function formatUpdated(value) {
+        var date = new Date(value);
+        if (Number.isNaN(date.getTime())) return 'Mise à jour inconnue';
+        return 'Dernière mise à jour à ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+      }
+      function setNotice(element, message, type) {
+        element.textContent = message || '';
+        element.className = 'notice' + (type ? ' ' + type : '') + (message ? '' : ' hidden');
+      }
+      function setLive(text, connected) {
+        els.liveStatus.innerHTML = '<span class="liveDot"></span><span>' + escapeHtml(text) + '</span>';
+        els.liveStatus.style.background = connected ? '#eaf9f3' : '#fff4e5';
+        els.liveStatus.style.color = connected ? '#18794e' : '#b54708';
+      }
+      function renderLogin() {
+        var logged = !!state.user;
+        els.loginPanel.classList.toggle('hidden', logged);
+        els.controlPanel.classList.toggle('hidden', !logged);
+        els.logoutBtn.classList.toggle('hidden', !logged);
+        if (!logged) {
+          els.teamsGrid.classList.add('hidden');
+          els.emptyState.classList.add('hidden');
+        }
+      }
+      function renderRows() {
+        var totalMembers = 0, totalCurrent = 0;
+        els.teamsGrid.innerHTML = '';
+        state.rows.forEach(function (row) {
+          var data = row.data || {};
+          var members = Array.isArray(data.members) ? data.members : [];
+          var items = scheduleFor(data);
+          var timing = currentAndNext(items);
+          if (timing.current && timing.current.kind === 'mission') totalCurrent += 1;
+          totalMembers += members.length;
+          var statusText = timing.current ? (timing.current.kind === 'pause' ? 'En pause' : 'En mission') : (timing.next ? 'Planifiée' : 'Service terminé');
+          var statusClass = timing.current ? (timing.current.kind === 'pause' ? ' pause' : ' current') : '';
+          var focus = timing.current || timing.next;
+          var timelineHtml = items.map(function (item) {
+            var active = timing.current === item;
+            return '<div class="timelineItem' + (active ? ' active' : '') + '">' +
+              '<div class="time">' + escapeHtml(item.start || '--') + '–' + escapeHtml(item.end || '--') + '</div>' +
+              '<div class="marker"></div>' +
+              '<div class="missionText">' + escapeHtml(item.kind === 'pause' ? 'Pause' : missionTitle(item)) + '</div></div>';
+          }).join('');
+          var focusHtml = focus ? '<div class="focusMission' + (focus.kind === 'pause' ? ' pause' : '') + '">' +
+            '<div class="focusLabel">' + (timing.current ? 'Maintenant' : 'Prochaine mission') + '</div>' +
+            '<div class="focusTitle">' + escapeHtml(focus.kind === 'pause' ? 'Pause' : missionTitle(focus)) + '</div>' +
+            '<div class="focusMeta">' + escapeHtml(focus.start || '--') + ' – ' + escapeHtml(focus.end || '--') + (focus.members && focus.members.length ? ' · ' + escapeHtml(focus.members.join(', ')) : '') + '</div></div>' :
+            '<div class="focusMission"><div class="focusLabel">Planning</div><div class="focusTitle">Aucune mission renseignée</div></div>';
+          var nextHtml = timing.current && timing.next ? '<div class="nextMission">Ensuite à ' + escapeHtml(timing.next.start) + ' : ' + escapeHtml(timing.next.kind === 'pause' ? 'Pause' : missionTitle(timing.next)) + '</div>' : '';
+          var article = document.createElement('article');
+          article.className = 'teamCard';
+          article.innerHTML = '<div class="cardHead"><div><div class="teamName">' + escapeHtml(row.team_label) + '</div><div class="memberNames">' + escapeHtml(members.join(' · ') || 'Médiateurs non renseignés') + '</div></div><span class="statusPill' + statusClass + '">' + escapeHtml(statusText) + '</span></div>' +
+            '<div class="cardBody"><div class="contactGrid">' +
+            '<div class="contact"><div class="contactLabel">Téléphone</div><div class="contactValue">' + escapeHtml(data.phoneNumber || '—') + '</div></div>' +
+            '<div class="contact"><div class="contactLabel">Attribué à</div><div class="contactValue">' + escapeHtml(data.phoneAssignedTo || '—') + '</div></div>' +
+            '<div class="contact"><div class="contactLabel">Service</div><div class="contactValue">' + escapeHtml(data.serviceSlot || '—') + '</div></div></div>' +
+            focusHtml + nextHtml +
+            '<div class="timeline"><div class="timelineTitle">Planning complet</div>' + (timelineHtml || '<div class="muted">Aucun horaire.</div>') + '</div>' +
+            (data.comment ? '<div class="comment"><strong>Commentaire :</strong> ' + escapeHtml(data.comment) + '</div>' : '') +
+            '<div class="updated">' + escapeHtml(formatUpdated(row.updated_at)) + (data.source === 'mobile' ? ' · actualisé par le téléphone' : ' · préparé par le référent') + '</div></div>';
+          els.teamsGrid.appendChild(article);
+        });
+        els.teamCount.textContent = String(state.rows.length);
+        els.memberCount.textContent = String(totalMembers);
+        els.currentCount.textContent = String(totalCurrent);
+        els.teamsGrid.classList.toggle('hidden', !state.rows.length || !state.user);
+        els.emptyState.classList.toggle('hidden', !!state.rows.length || !state.user);
+      }
+      async function loadRows() {
+        if (!state.user) return;
+        els.refreshBtn.disabled = true;
+        setNotice(els.controlMessage, 'Actualisation des équipes…');
+        try {
+          state.rows = await window.AMIToolsFieldTeams.listTeams(els.serviceDate.value);
+          renderRows();
+          setNotice(els.controlMessage, '');
+        } catch (error) {
+          state.rows = [];
+          renderRows();
+          setNotice(els.controlMessage, error.message || 'Impossible de charger les équipes.', 'error');
+        } finally {
+          els.refreshBtn.disabled = false;
+        }
+      }
+      function scheduleReload() {
+        window.clearTimeout(state.reloadTimer);
+        state.reloadTimer = window.setTimeout(loadRows, 180);
+      }
+      async function startControl() {
+        await loadRows();
+        await window.AMIToolsFieldTeams.subscribe(els.serviceDate.value, scheduleReload, function (status) {
+          setLive(status === 'SUBSCRIBED' ? 'Actualisation en direct' : 'Reconnexion…', status === 'SUBSCRIBED');
+        });
+      }
+
+      els.loginForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        setNotice(els.loginMessage, 'Connexion en cours…');
+        try {
+          await window.AMIToolsData.signIn(els.email.value.trim(), els.password.value);
+          state.user = await window.AMIToolsData.getUser();
+          if (!await window.AMIToolsFieldTeams.isAdmin()) {
+            await window.AMIToolsData.signOut();
+            state.user = null;
+            throw new Error('Ce compte n’est pas autorisé à consulter les équipes.');
+          }
+          els.password.value = '';
+          setNotice(els.loginMessage, '');
+          renderLogin();
+          await startControl();
+        } catch (error) {
+          setNotice(els.loginMessage, error.message || 'Connexion impossible.', 'error');
+        }
+      });
+      els.logoutBtn.addEventListener('click', async function () {
+        await window.AMIToolsFieldTeams.unsubscribe();
+        await window.AMIToolsData.signOut();
+        state.user = null;
+        state.rows = [];
+        renderRows();
+        renderLogin();
+      });
+      els.refreshBtn.addEventListener('click', loadRows);
+      els.serviceDate.addEventListener('change', startControl);
+      window.setInterval(function () { if (state.user) renderRows(); }, 30000);
+
+      els.serviceDate.value = todayIso();
+      renderLogin();
+      window.AMIToolsData.ready.then(async function () {
+        state.user = await window.AMIToolsData.getUser();
+        if (state.user && !await window.AMIToolsFieldTeams.isAdmin()) {
+          await window.AMIToolsData.signOut();
+          state.user = null;
+          setNotice(els.loginMessage, 'Ce compte n’est pas autorisé à consulter les équipes.', 'error');
+        }
+        renderLogin();
+        if (state.user) await startControl();
+      }).catch(function (error) { setNotice(els.loginMessage, error.message || 'Base en ligne indisponible.', 'error'); });
+    })();
+  </script>
+</body>
+</html>

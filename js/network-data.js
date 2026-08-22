@@ -300,6 +300,7 @@
     signIn: signIn,
     signOut: signOut,
     getUser: getUser,
+    getClient: function () { return client; },
     isConfigured: function () { var config = getConfig(); return !!(config.url && config.key); }
   };
 

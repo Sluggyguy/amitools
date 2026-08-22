@@ -65,3 +65,7 @@ for each row execute function public.bump_network_catalog_revision();
 -- Activer Realtime pour cette table depuis Database > Replication,
 -- ou executer la commande suivante si elle n'est pas deja publiee :
 -- alter publication supabase_realtime add table public.network_catalog;
+
+-- Centre de controle des equipes terrain.
+-- Le script est separe pour pouvoir etre applique facilement aux projets existants.
+-- Executer ensuite le contenu de : supabase/field-teams.sql

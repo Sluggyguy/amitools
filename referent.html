@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="js/network-data.js"></script>
+  <script src="js/field-teams.js"></script>
   <style>
     :root {
       --bg: #edf1f7;
@@ -104,6 +105,24 @@
       justify-content: center;
       text-decoration: none;
     }
+
+    .btn.fieldTeamsLinkBtn {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    .syncStatus {
+      width: 100%;
+      min-height: 18px;
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .syncStatus.saved { color: #18794e; }
+    .syncStatus.error { color: #b42318; }
 
     .heroAddBtn {
       display: inline-flex;
@@ -618,12 +637,14 @@
         <div class="small">Export TXT + QR multi-équipe</div>
         <div class="heroBadgeActions">
           <a class="btn secondary adminLinkBtn" href="admin.html">Gérer la base réseau</a>
+          <a class="btn adminLinkBtn fieldTeamsLinkBtn" href="field-teams.html">Équipes sur le terrain</a>
           <div class="hidden" id="heroAddTeamWrap">
             <button class="btn heroAddBtn" id="heroAddTeamBtn" type="button">
               <span class="plus">+</span>
               <span>Ajouter une équipe</span>
             </button>
           </div>
+          <div class="syncStatus" id="fieldSyncStatus">Les équipes créées ici seront partagées en ligne.</div>
         </div>
       </div>
     </div>
@@ -913,6 +934,7 @@
         return {
           id: 'team-' + index,
           label: 'Equipe ' + index,
+          shareKey: window.AMIToolsFieldTeams.createShareKey(),
           serviceDate: '',
           serviceSlot: '',
           specialStart: '',
@@ -945,8 +967,23 @@
         importArea: $('importArea'), importBtn: $('importBtn'), generateQrBtn: $('generateQrBtn'), serviceBadge: $('serviceBadge'),
         clearAllBtn: $('clearAllBtn'), resetGeneralBtn: $('resetGeneralBtn'), toastMsg: $('toastMsg'), printScreen: $('printScreen'),
         backFromPrintBtn: $('backFromPrintBtn'), printBtn: $('printBtn'), addTeamBtn: $('addTeamBtn'), heroAddTeamWrap: $('heroAddTeamWrap'), heroAddTeamBtn: $('heroAddTeamBtn'), teamTabs: $('teamTabs'),
-        teamHint: $('teamHint'), qrGridSheet: $('qrGridSheet')
+        teamHint: $('teamHint'), qrGridSheet: $('qrGridSheet'), fieldSyncStatus: $('fieldSyncStatus')
       };
+
+      function updateFieldSyncStatus(status, detail) {
+        if (!els.fieldSyncStatus) return;
+        els.fieldSyncStatus.classList.remove('saved', 'error');
+        els.fieldSyncStatus.removeAttribute('title');
+        if (status === 'pending') els.fieldSyncStatus.textContent = 'Enregistrement de l’équipe…';
+        else if (status === 'saved') {
+          els.fieldSyncStatus.textContent = 'Équipe enregistrée en ligne';
+          els.fieldSyncStatus.classList.add('saved');
+        } else if (status === 'error') {
+          els.fieldSyncStatus.textContent = 'Hors ligne : la fiche reste utilisable, mais elle n’est pas encore partagée.';
+          els.fieldSyncStatus.classList.add('error');
+          if (detail && detail.message) els.fieldSyncStatus.title = detail.message;
+        }
+      }
 
       function replaceOptions(select, items, emptyLabel) {
         if (!select) return;
@@ -1389,6 +1426,8 @@
 
       function removeTeam(index) {
         if (index < 0 || index >= state.teams.length) return;
+        var removedTeam = state.teams[index];
+        window.AMIToolsFieldTeams.archiveTeam(removedTeam).catch(function () { updateFieldSyncStatus('error'); });
         state.teams.splice(index, 1);
         state.teams.forEach(function (team, i) { team.label = 'Equipe ' + (i + 1); team.id = 'team-' + (i + 1); });
         if (!state.teams.length) {
@@ -1401,6 +1440,7 @@
           state.activeTeamIndex = Math.max(0, state.activeTeamIndex - 1);
         }
         loadTeamToForm();
+        state.teams.forEach(function (team) { window.AMIToolsFieldTeams.schedulePublish(team, 'referent', updateFieldSyncStatus); });
         showToast('Equipe supprimée');
       }
 
@@ -1591,6 +1631,7 @@
         var active = team || getActiveTeam();
         var dateFr, slot, range, lines, exportedItems;
         if (!active) return '';
+        window.AMIToolsFieldTeams.ensureShareKey(active);
         dateFr = frDateFromIso(active.serviceDate || '');
         slot = active.serviceSlot ? (active.serviceSlot !== 'SPE' ? active.serviceSlot : 'SPE') : 'Choisir';
         range = active.serviceSlot === 'SPE' ? { start: active.specialStart || '', end: active.specialEnd || '' } : (SLOT_MAP[active.serviceSlot] || { start: '', end: '' });
@@ -1598,6 +1639,8 @@
         exportedItems = active.missions.map(function (mission) {
           return { start: mission.start, text: mission.start + '-' + mission.end + ' / ' + missionSummary(mission) + ' / Médiateurs : ' + (mission.members.join(', ') || '--') };
         });
+        lines.push('Equipe : ' + active.label);
+        lines.push('Clé équipe : ' + active.shareKey);
         lines.push('Date : ' + dateFr);
         lines.push('Horaire : ' + slot);
         if (slot === 'SPE' && range.start && range.end) lines.push('Horaires spé : ' + range.start + '-' + range.end);
@@ -1621,6 +1664,8 @@
       function buildExport() {
         var text = buildExportText();
         els.exportPreview.textContent = text || 'Sélectionne ou crée une équipe.';
+        var team = getActiveTeam();
+        if (team) window.AMIToolsFieldTeams.schedulePublish(team, 'referent', updateFieldSyncStatus);
         return text;
       }
 
@@ -1679,12 +1724,14 @@
       function importFromText() {
         var team = getActiveTeam();
         var raw = els.importArea.value.trim();
-        var lines, dateLine, slotLine, speLine, telLine, kizeoLine, phoneAssignedLine, membersLine, pauseLine, commentLine;
-        var frDate, slot, tel, kizeo, phoneAssigned, members, missionIndex, i, comment;
+        var lines, teamLine, shareKeyLine, dateLine, slotLine, speLine, telLine, kizeoLine, phoneAssignedLine, membersLine, pauseLine, commentLine;
+        var frDate, slot, tel, kizeo, phoneAssigned, members, missionIndex, i, comment, importedKey;
         if (!team) { showToast('Ajoute une équipe'); return; }
         if (!raw) return;
 
         lines = raw.split(/\r?\n/).map(function (v) { return v.trim(); }).filter(function (v) { return v !== '-'; });
+        teamLine = lines.find(function (l) { return l.indexOf('Equipe :') === 0; }) || '';
+        shareKeyLine = lines.find(function (l) { return l.indexOf('Clé équipe :') === 0; }) || '';
         dateLine = lines.find(function (l) { return l.indexOf('Date :') === 0; }) || '';
         slotLine = lines.find(function (l) { return l.indexOf('Horaire :') === 0; }) || '';
         speLine = lines.find(function (l) { return l.indexOf('Horaires spé :') === 0; }) || '';
@@ -1702,7 +1749,13 @@
         phoneAssigned = phoneAssignedLine.split(':').slice(1).join(':').trim();
         members = membersLine.split(':').slice(1).join(':').split(',').map(normalize).filter(Boolean);
         comment = commentLine.split(':').slice(1).join(':').trim();
+        importedKey = shareKeyLine.split(':').slice(1).join(':').trim();
 
+        if (/^[0-9a-f]{64}$/.test(importedKey) && importedKey !== team.shareKey) {
+          window.AMIToolsFieldTeams.archiveTeam({ shareKey: team.shareKey }).catch(function () {});
+          team.shareKey = importedKey;
+        }
+        if (teamLine) team.label = teamLine.split(':').slice(1).join(':').trim().slice(0, 80) || team.label;
         team.serviceDate = frDate ? isoFromFrDate(frDate) : team.serviceDate;
         team.serviceSlot = slot === 'Choisir' ? '' : slot;
         if (speLine) {

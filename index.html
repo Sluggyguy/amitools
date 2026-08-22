@@ -10,6 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="js/network-data.js"></script>
+  <script src="js/field-teams.js"></script>
   <style>
     :root {
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -2845,6 +2846,8 @@
       let currentMediatorSessionName = window.__amistarCurrentMediatorSessionName || '';
       let missionIdCounter = 1;
       const state = {
+        shareKey: '',
+        teamLabel: '',
         members: [],
         missions: [],
         selectedMembers: [],
@@ -3423,6 +3426,8 @@
       };
       window.resetPriseServiceState = function() {
         clearSavedState();
+        state.shareKey = '';
+        state.teamLabel = '';
         state.members = [];
         state.missions = [];
         state.selectedMembers = [];
@@ -3483,6 +3488,8 @@
         const storage = safeLocalStorage();
         if (!storage) return;
         const payload = {
+          shareKey: state.shareKey || '',
+          teamLabel: state.teamLabel || '',
           serviceDate: els.serviceDate.value || toIsoDate(nowDate()),
           serviceSlot: els.serviceSlot.value,
           specialStart: els.specialStart.value,
@@ -3509,6 +3516,13 @@
             savedAt: Date.now()
           }));
           await writeSessionRecord(activeMediator, payload);
+        }
+        if (payload.shareKey) {
+          window.AMIToolsFieldTeams.schedulePublish({
+            ...payload,
+            label: payload.teamLabel || 'Equipe terrain',
+            comment: payload.validatedComment || payload.commentText || ''
+          }, 'mobile');
         }
       }
       function clearSavedState(name) {
@@ -3583,6 +3597,8 @@
           return false;
         }
         els.serviceDate.value = saved.serviceDate || today;
+        state.shareKey = /^[0-9a-f]{64}$/.test(String(saved.shareKey || '')) ? saved.shareKey : '';
+        state.teamLabel = String(saved.teamLabel || '').trim();
         els.serviceSlot.value = saved.serviceSlot || '';
         els.specialStart.value = saved.specialStart || '';
         els.specialEnd.value = saved.specialEnd || '';
@@ -4261,6 +4277,8 @@
 
         const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
         const parsed = {
+          shareKey: '',
+          teamLabel: '',
           serviceDate: '',
           serviceSlot: '',
           specialStart: '',
@@ -4284,7 +4302,9 @@
           if (line === '-') continue;
 
           if (!inMissions) {
-            if (line.startsWith('Date : ')) {
+            if (line.startsWith('Equipe : ')) parsed.teamLabel = line.replace('Equipe : ', '').trim();
+            else if (line.startsWith('Clé équipe : ')) parsed.shareKey = line.replace('Clé équipe : ', '').trim();
+            else if (line.startsWith('Date : ')) {
               const rawDate = line.replace('Date : ', '').trim();
               const dateParts = rawDate.split('/').map((v) => v.trim());
               if (dateParts.length === 3) {
@@ -4378,6 +4398,8 @@
         return parsed;
       }
       async function applyParsedQrData(parsed) {
+        state.shareKey = /^[0-9a-f]{64}$/.test(String(parsed.shareKey || '')) ? parsed.shareKey : '';
+        state.teamLabel = String(parsed.teamLabel || '').trim();
         if (parsed.serviceDate) {
           els.serviceDate.value = parsed.serviceDate;
         }
@@ -4442,6 +4464,8 @@
         const slotLabel = els.serviceSlot.value || 'Choisir';
         const lines = [];
         const scheduleItems = getScheduleItems();
+        if (state.teamLabel) lines.push(`Equipe : ${state.teamLabel}`);
+        if (state.shareKey) lines.push(`Clé équipe : ${state.shareKey}`);
         lines.push(`Date : ${dateFr}`);
         lines.push(`Horaire : ${slotLabel}`);
         if (els.serviceSlot.value === 'SPE' && els.specialStart.value && els.specialEnd.value) {
@@ -4753,6 +4777,8 @@
       function applyDefaultState() {
         const d = nowDate();
         const activeMediator = getStoredMediator();
+        state.shareKey = '';
+        state.teamLabel = '';
         state.members = [activeMediator];
         state.missions = [];
         state.selectedMembers = [activeMediator];

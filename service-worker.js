@@ -1,12 +1,14 @@
-const CACHE_NAME = 'amitools-shell-v6';
+const CACHE_NAME = 'amitools-shell-v7';
 const APP_SHELL = [
   './',
   './index.html',
   './referent.html',
   './admin.html',
   './tiles-admin.html',
+  './field-teams.html',
   './config.js',
   './js/network-data.js',
+  './js/field-teams.js',
   './manifest.webmanifest',
   './icons/Amicon192.png',
   './icons/Amicon512.png'
