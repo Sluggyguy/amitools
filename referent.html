@@ -1,0 +1,1964 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Préparation fiches mission</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/network-data.js"></script>
+  <style>
+    :root {
+      --bg: #edf1f7;
+      --panel: #ffffff;
+      --panel2: #f6f8fc;
+      --text: #111827;
+      --muted: #667085;
+      --line: #d8deea;
+      --shadow: 0 18px 40px rgba(15, 23, 42, .08);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #edf1f7 0%, #e8edf5 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .app.hiddenView { display: none; }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .heroCard,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .heroCard {
+      flex: 1;
+      padding: 18px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 27px;
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-weight: 700;
+      line-height: 1.35;
+      font-size: 13px;
+    }
+
+    .heroBadge {
+      min-width: 220px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .heroBadge .big {
+      font-size: 24px;
+      font-weight: 1000;
+      line-height: 1;
+    }
+
+    .heroBadge .small {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .heroBadgeActions {
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .heroAddBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 1000;
+    }
+
+    .heroAddBtn .plus {
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 1000;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.06fr .94fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel { padding: 14px; }
+
+    .sectionTitle {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 1000;
+      letter-spacing: .02em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label.small {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 900;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 13px;
+      padding: 10px 11px;
+      font-size: 13px;
+      font-weight: 800;
+      font-family: inherit;
+      outline: none;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: linear-gradient(180deg, #111111 0%, #1c1d21 100%);
+      color: #fff;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 10px 22px rgba(0,0,0,.14);
+    }
+
+    .btn.secondary {
+      background: linear-gradient(180deg, #ffffff 0%, #f2f5fb 100%);
+      color: var(--text);
+      box-shadow: 0 8px 16px rgba(15,23,42,.06);
+    }
+
+    .btn.danger {
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 9px;
+      border-radius: 999px;
+      background: #f4f7fc;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .chip button {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 1000;
+      cursor: pointer;
+    }
+
+    .memberToggle {
+      border-radius: 12px;
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+
+    .tabsWrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .teamTab {
+      position: relative;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 28px 8px 12px;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .teamTabLabel {
+      pointer-events: none;
+    }
+
+    .teamTabClose {
+      position: absolute;
+      right: 8px;
+      bottom: 4px;
+      width: 14px;
+      height: 14px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font-size: 12px;
+      font-weight: 1000;
+      line-height: 1;
+      padding: 0;
+      cursor: pointer;
+      opacity: .8;
+    }
+
+    .teamTabClose:hover {
+      opacity: 1;
+    }
+
+    .teamTab.active {
+      background: linear-gradient(180deg, #111111 0%, #1c1d21 100%);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .missionCard {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #f6f8fc 100%);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .missionTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .missionTitle {
+      font-size: 13px;
+      font-weight: 1000;
+      line-height: 1.2;
+    }
+
+    .missionSub {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .missionActions {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .missionActions .btn {
+      padding: 7px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .actionsGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .actionsGrid .btn {
+      width: 100%;
+      text-align: center;
+    }
+
+    .exportBox {
+      position: relative;
+      background: var(--panel2);
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      padding: 10px;
+    }
+
+    .previewCopyBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff 0%, #f2f5fb 100%);
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(15,23,42,.06);
+    }
+
+    .previewCopyBtn:hover { transform: translateY(-1px); }
+
+    .copyGlyph {
+      position: relative;
+      width: 16px;
+      height: 16px;
+    }
+
+    .copyGlyph::before,
+    .copyGlyph::after {
+      content: '';
+      position: absolute;
+      width: 11px;
+      height: 11px;
+      border: 2px solid #111827;
+      border-radius: 4px;
+      background: #fff;
+    }
+
+    .copyGlyph::before {
+      top: 3px;
+      left: 1px;
+    }
+
+    .copyGlyph::after {
+      top: 0;
+      left: 5px;
+    }
+
+    .codePreview {
+      min-height: 180px;
+      white-space: pre-wrap;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      padding-top: 52px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      overflow: auto;
+    }
+
+    .printScreen {
+      display: none;
+      min-height: 100vh;
+      padding: 20px;
+      background: #eef2f7;
+    }
+
+    .printScreen.active { display: block; }
+
+    .printTopBar {
+      max-width: 900px;
+      margin: 0 auto 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .printActions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .a4Sheet {
+      width: 210mm;
+      height: 297mm;
+      max-width: 100%;
+      margin: 0 auto;
+      background: #fff;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, .14);
+      padding: 10mm;
+      color: #111;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 8mm;
+    }
+
+    .qrCell {
+      border: 1px solid #dfe5ef;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 6mm 4mm;
+      overflow: hidden;
+      text-align: center;
+      gap: 4px;
+    }
+
+    .qrCellTop {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .qrCell.empty {
+      visibility: hidden;
+    }
+
+    .qrCellTitle {
+      font-size: 17px;
+      font-weight: 1000;
+      line-height: 1.15;
+      margin: 0;
+    }
+
+    .qrCellService {
+      margin-top: 0;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    .qrCellNames {
+      margin-top: 0;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.25;
+      min-height: 0;
+      max-width: 100%;
+      white-space: nowrap;
+    }
+
+    .qrCellCanvas {
+      width: 68mm;
+      height: 68mm;
+      max-width: 100%;
+      object-fit: contain;
+      display: block;
+      background: #fff;
+      margin-top: 12mm;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .hidden { display: none !important; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%) translateY(12px);
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(17,17,17,.94);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 0 12px 24px rgba(0,0,0,.18);
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 9999;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    @media print {
+      html, body {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        overflow: hidden;
+      }
+      .app, .toast, .printTopBar {
+        display: none !important;
+      }
+      .printScreen {
+        display: block !important;
+        padding: 0;
+        margin: 0;
+        background: #fff;
+        width: 210mm;
+        height: 297mm;
+        overflow: hidden;
+      }
+      .a4Sheet {
+        width: 210mm;
+        height: 297mm;
+        box-shadow: none;
+        margin: 0;
+        padding: 10mm;
+        overflow: hidden;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .app { padding: 12px; }
+      .hero { flex-direction: column; }
+      .heroBadge { min-width: 0; width: 100%; }
+      .grid, .actionsGrid { grid-template-columns: 1fr; }
+      .printTopBar { flex-direction: column; align-items: stretch; }
+      .printActions { width: 100%; }
+      .a4Sheet { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="hero">
+      <div class="heroCard">
+        <h1>Préparation fiches mission</h1>
+        <p>Version web dédiée aux référents pour préparer jusqu’à 4 équipes, exporter chaque fiche séparément, l’importer à nouveau et générer une page QR 2 × 2 prête à imprimer.</p>
+      </div>
+      <div class="heroCard heroBadge">
+        <div class="big" id="serviceBadge">Aucune équipe</div>
+        <div class="small">Export TXT + QR multi-équipe</div>
+        <a class="btn secondary" href="admin.html" style="margin-top:12px; text-decoration:none; text-align:center;">Gérer la base réseau</a>
+        <div class="heroBadgeActions hidden" id="heroAddTeamWrap">
+          <button class="btn heroAddBtn" id="heroAddTeamBtn" type="button">
+            <span class="plus">+</span>
+            <span>Ajouter une équipe</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="stack">
+        <section class="panel">
+          <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h2 class="sectionTitle" style="margin:0;">Général</h2>
+            <button class="btn secondary" id="resetGeneralBtn" type="button">Reset</button>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label class="small" for="serviceDate">Date</label>
+              <input id="serviceDate" type="date" />
+            </div>
+            <div class="field">
+              <label class="small" for="serviceSlot">Horaire</label>
+              <select id="serviceSlot">
+                <option value="">Choisir</option>
+                <option value="M">M · 7h - 14h</option>
+                <option value="J">J · 10h - 17h</option>
+                <option value="AM">AM · 12h50 - 19h50</option>
+                <option value="S01">S01 · 15h30 - 22h30</option>
+                <option value="S05">S05 · 17h - 0h00</option>
+                <option value="SPE">Spé · horaires libres</option>
+              </select>
+            </div>
+            <div class="field hidden" id="specialStartField">
+              <label class="small" for="specialStart">Début Spé</label>
+              <input id="specialStart" type="time" />
+            </div>
+            <div class="field hidden" id="specialEndField">
+              <label class="small" for="specialEnd">Fin Spé</label>
+              <input id="specialEnd" type="time" />
+            </div>
+            <div class="field">
+              <label class="small" for="phoneNumber">Téléphone</label>
+              <input id="phoneNumber" type="text" placeholder="Ex : 23" />
+            </div>
+            <div class="field">
+              <label class="small" for="kizeoNumber">Kizeo</label>
+              <select id="kizeoNumber">
+                <option value="">Choisir</option>
+                <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+                <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+                <option>11</option><option>12</option><option>13</option><option>14</option><option>15</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label class="small">Médiateurs du planning</label>
+              <div class="row">
+                <input id="memberInput" type="text" placeholder="Ajouter un médiateur" />
+                <button class="btn" id="addMemberBtn" type="button">Ajouter</button>
+              </div>
+              <div class="chips" id="membersList"></div>
+            </div>
+            <div class="field">
+              <label class="small" for="phoneAssignedTo">Téléphone attribué à</label>
+              <select id="phoneAssignedTo"></select>
+            </div>
+            <div class="field">
+              <label class="small" for="pauseStart">Pause</label>
+              <input id="pauseStart" type="time" />
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 class="sectionTitle">Nouvelle mission</h2>
+          <div class="grid">
+            <div class="field">
+              <label class="small" for="missionStart">Début</label>
+              <input id="missionStart" type="time" />
+            </div>
+            <div class="field">
+              <label class="small" for="missionEnd">Fin</label>
+              <input id="missionEnd" type="time" />
+            </div>
+            <div class="field" id="missionTypeField">
+              <label class="small" for="missionType">Type</label>
+              <div class="row" style="align-items:center; gap:10px; flex-wrap:nowrap;">
+                <select id="missionType" style="flex:1 1 auto; min-width:0;">
+                  <option value="">Choisir</option>
+                  <option>Cabotage</option>
+                  <option>Embarquement</option>
+                  <option>PAP</option>
+                  <option>Pôle échange</option>
+                  <option>Médiation sociale</option>
+                  <option>Autre</option>
+                </select>
+                <label id="boardingSchoolInline" class="hidden" style="display:flex; align-items:center; gap:6px; white-space:nowrap; font-size:12px; font-weight:900; color:var(--text);">
+                  <input id="boardingSchoolToggle" type="checkbox" style="width:auto; margin:0;" />
+                  Scolaire
+                </label>
+              </div>
+            </div>
+            <div class="field hidden" id="otherMissionField">
+              <label class="small" for="otherMissionSelect">Autres missions</label>
+              <select id="otherMissionSelect">
+                <option value="">Choisir</option>
+                <option>RDS</option>
+                <option>TAC</option>
+                <option>STAR me guide</option>
+                <option>SNCF</option>
+                <option>Ajouter une mission</option>
+              </select>
+              <input id="otherMissionCustom" class="hidden" type="text" placeholder="Nom de la mission" />
+            </div>
+            <div class="field hidden" id="cabotageModeField">
+              <label class="small" for="cabotageMode">Cabotage</label>
+              <select id="cabotageMode">
+                <option value="">Choisir</option>
+                <option value="metroA">Métro A</option>
+                <option value="metroB">Métro B</option>
+                <option value="bus">BUS</option>
+                <option value="busMetro">Bus métropolitain</option>
+              </select>
+            </div>
+            <div class="field full hidden" id="cabotageSectorField">
+              <label class="small" for="cabotageSector">Secteur cabotage</label>
+              <select id="cabotageSector"></select>
+            </div>
+            <div class="field full hidden" id="missionPlaceField">
+              <label class="small" for="missionPlace">Lieu</label>
+              <input id="missionPlace" type="text" placeholder="Ex : République" />
+              <select id="missionPapSelect" class="hidden">
+                <option value="">Choisir</option>
+                <option>REP</option><option>POT</option><option>TRI</option><option>VU</option><option>HFR</option>
+                <option>GAR</option><option>STAa</option><option>STAb</option><option>IJC</option><option>CLE</option><option>SGE</option>
+              </select>
+              <select id="missionBoardingSelect" class="hidden">
+                <option value="">Choisir</option>
+                <option>SJG</option><option>REP</option><option>STAa ( JFK )</option><option>STAb ( CVI )</option><option>GARa ( JFK )</option><option>GARb ( CVI )</option><option>Navette Stade</option>
+              </select>
+              <select id="missionPlaceSelect" class="hidden">
+                <option value="">Choisir</option>
+                <option>Dinan</option><option>Messac</option><option>Vitré</option>
+              </select>
+            </div>
+            <div class="field full hidden" id="missionLineField">
+              <label class="small" for="missionLine">Ligne / précision</label>
+              <input id="missionLine" type="text" placeholder="Ex : C4 · Z1 ou Ligne 13" />
+            </div>
+            <div class="field hidden" id="busLineField">
+              <label class="small" for="busLineSelect">Ligne de bus</label>
+              <select id="busLineSelect">
+                <option value="">Choisir</option>
+                <option value="C1">C1</option><option value="C2">C2</option><option value="C3">C3</option>
+                <option value="C4">C4</option><option value="C5">C5</option><option value="C6">C6</option>
+                <option value="L10">L10</option><option value="L11">L11</option><option value="L12">L12</option>
+                <option value="L13">L13</option><option value="L14">L14</option>
+              </select>
+            </div>
+            <div class="field hidden" id="busLine2Field">
+              <label class="small" for="busLine2Select">Ligne de bus additionnelle</label>
+              <select id="busLine2Select">
+                <option value="">Aucune</option>
+                <option value="C1">C1</option><option value="C2">C2</option><option value="C3">C3</option>
+                <option value="C4">C4</option><option value="C5">C5</option><option value="C6">C6</option>
+                <option value="L10">L10</option><option value="L11">L11</option><option value="L12">L12</option>
+                <option value="L13">L13</option><option value="L14">L14</option>
+              </select>
+            </div>
+            <div class="field hidden" id="busZoneField">
+              <label class="small" for="busZoneSelect">Zone</label>
+              <select id="busZoneSelect"><option value="">Choisir</option></select>
+            </div>
+            <div class="field full">
+              <label class="small">Médiateurs affectés</label>
+              <div class="chips" id="memberSelector"></div>
+            </div>
+          </div>
+          <div style="height:10px"></div>
+          <div class="row">
+            <button class="btn" id="addMissionBtn" type="button">Ajouter mission</button>
+            <button class="btn secondary" id="resetMissionBtn" type="button">Réinitialiser</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 class="sectionTitle">Commentaire</h2>
+          <div class="field full">
+            <label class="small" style="display:flex; align-items:center; gap:8px; text-transform:none; letter-spacing:0; font-size:12px;">
+              <input id="commentToggle" type="checkbox" style="width:auto; margin:0;" />
+              Ajouter un commentaire
+            </label>
+          </div>
+          <div class="field full hidden" id="commentField" style="margin-top:10px;">
+            <label class="small" for="teamComment">Commentaire</label>
+            <textarea id="teamComment"></textarea>
+          </div>
+          <div style="height:10px"></div>
+          <div class="row">
+            <button class="btn secondary" id="saveCommentBtn" type="button">Valider commentaire</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="panel">
+          <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h2 class="sectionTitle" style="margin:0;">Missions préparées</h2>
+            <div class="row">
+              <button class="btn secondary" id="addTeamBtn" type="button">Ajouter une équipe</button>
+              <button class="btn secondary" id="clearAllBtn" type="button">Vider missions</button>
+            </div>
+          </div>
+          <div class="tabsWrap" id="teamTabs"></div>
+          <div class="muted" id="teamHint" style="margin-bottom:10px;">Ajoute une équipe pour commencer.</div>
+          <div class="stack" id="missionsWrap"></div>
+        </section>
+
+        <section class="panel">
+          <h2 class="sectionTitle">Actions</h2>
+          <div class="actionsGrid">
+            <button class="btn secondary" id="downloadTxtBtn" type="button">Télécharger TXT</button>
+            <button class="btn" id="generateQrBtn" type="button">Générer les QR</button>
+          </div>
+          <div style="height:10px"></div>
+          <div class="exportBox">
+            <button class="previewCopyBtn" id="previewCopyBtn" type="button" aria-label="Copier le texte" title="Copier le texte">
+              <span class="copyGlyph" aria-hidden="true"></span>
+            </button>
+            <div class="codePreview" id="exportPreview"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 class="sectionTitle">Import texte</h2>
+          <div class="field full">
+            <label class="small" for="importArea">Importer la fiche de l’équipe active</label>
+            <textarea id="importArea" placeholder="Colle ici une fiche mission exportée pour recharger l’équipe sélectionnée."></textarea>
+          </div>
+          <div style="height:10px"></div>
+          <div class="row">
+            <button class="btn" id="importBtn" type="button">Importer</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <section class="printScreen" id="printScreen">
+    <div class="printTopBar">
+      <div class="muted">Aperçu PDF / impression</div>
+      <div class="printActions">
+        <button class="btn secondary" id="backFromPrintBtn" type="button">Retour</button>
+        <button class="btn" id="printBtn" type="button">Imprimer</button>
+      </div>
+    </div>
+    <div class="a4Sheet" id="qrGridSheet">
+      <div class="qrCell" data-cell="0">
+        <div class="qrCellTop"><h2 class="qrCellTitle" data-role="title">Equipe 1</h2><div class="qrCellService" data-role="service">Service : —</div><div class="qrCellNames" data-role="names">—</div></div>
+        <img class="qrCellCanvas" data-role="img" alt="QR équipe 1" />
+      </div>
+      <div class="qrCell" data-cell="1">
+        <div class="qrCellTop"><h2 class="qrCellTitle" data-role="title">Equipe 2</h2><div class="qrCellService" data-role="service">Service : —</div><div class="qrCellNames" data-role="names">—</div></div>
+        <img class="qrCellCanvas" data-role="img" alt="QR équipe 2" />
+      </div>
+      <div class="qrCell" data-cell="2">
+        <div class="qrCellTop"><h2 class="qrCellTitle" data-role="title">Equipe 3</h2><div class="qrCellService" data-role="service">Service : —</div><div class="qrCellNames" data-role="names">—</div></div>
+        <img class="qrCellCanvas" data-role="img" alt="QR équipe 3" />
+      </div>
+      <div class="qrCell" data-cell="3">
+        <div class="qrCellTop"><h2 class="qrCellTitle" data-role="title">Equipe 4</h2><div class="qrCellService" data-role="service">Service : —</div><div class="qrCellNames" data-role="names">—</div></div>
+        <img class="qrCellCanvas" data-role="img" alt="QR équipe 4" />
+      </div>
+    </div>
+  </section>
+
+  <div class="toast" id="toastMsg">Texte copié</div>
+
+  <script>
+    (function () {
+      var sharedNetworkMaps = window.AMIToolsData.derive(window.AMIToolsData.getCatalog());
+      var SLOT_MAP = sharedNetworkMaps.slotMap;
+      var CABOTAGE_MAP = sharedNetworkMaps.cabotageMap;
+      var BUS_ZONE_MAP = sharedNetworkMaps.busZoneMap;
+
+      function $(id) { return document.getElementById(id); }
+      function pad(n) { return String(n).padStart(2, '0'); }
+      function normalize(v) { return String(v || '').trim().replace(/\s+/g, ' '); }
+
+      function createEmptyTeam(index) {
+        return {
+          id: 'team-' + index,
+          label: 'Equipe ' + index,
+          serviceDate: '',
+          serviceSlot: '',
+          specialStart: '',
+          specialEnd: '',
+          phoneNumber: '',
+          kizeoNumber: '',
+          phoneAssignedTo: '',
+          pauseStart: '',
+          comment: '',
+          members: [],
+          missions: []
+        };
+      }
+
+      var state = { teams: [], activeTeamIndex: -1, selectedMembers: [], editIndex: -1 };
+
+      var els = {
+        serviceDate: $('serviceDate'), serviceSlot: $('serviceSlot'), specialStartField: $('specialStartField'), specialEndField: $('specialEndField'),
+        specialStart: $('specialStart'), specialEnd: $('specialEnd'), phoneNumber: $('phoneNumber'), kizeoNumber: $('kizeoNumber'),
+        phoneAssignedTo: $('phoneAssignedTo'), pauseStart: $('pauseStart'), memberInput: $('memberInput'), addMemberBtn: $('addMemberBtn'),
+        membersList: $('membersList'), memberSelector: $('memberSelector'), missionStart: $('missionStart'), missionEnd: $('missionEnd'),
+        missionType: $('missionType'), otherMissionField: $('otherMissionField'), otherMissionSelect: $('otherMissionSelect'), otherMissionCustom: $('otherMissionCustom'), cabotageModeField: $('cabotageModeField'), cabotageMode: $('cabotageMode'),
+        cabotageSectorField: $('cabotageSectorField'), cabotageSector: $('cabotageSector'), missionPlaceField: $('missionPlaceField'),
+        missionPlace: $('missionPlace'), missionPapSelect: $('missionPapSelect'), missionBoardingSelect: $('missionBoardingSelect'),
+        boardingSchoolInline: $('boardingSchoolInline'), boardingSchoolToggle: $('boardingSchoolToggle'), missionPlaceSelect: $('missionPlaceSelect'),
+        missionLineField: $('missionLineField'), missionLine: $('missionLine'), busLineField: $('busLineField'), busLineSelect: $('busLineSelect'),
+        busLine2Field: $('busLine2Field'), busLine2Select: $('busLine2Select'), busZoneField: $('busZoneField'), busZoneSelect: $('busZoneSelect'), commentToggle: $('commentToggle'), commentField: $('commentField'),
+        teamComment: $('teamComment'), addMissionBtn: $('addMissionBtn'), saveCommentBtn: $('saveCommentBtn'), resetMissionBtn: $('resetMissionBtn'),
+        missionsWrap: $('missionsWrap'), exportPreview: $('exportPreview'), downloadTxtBtn: $('downloadTxtBtn'), previewCopyBtn: $('previewCopyBtn'),
+        importArea: $('importArea'), importBtn: $('importBtn'), generateQrBtn: $('generateQrBtn'), serviceBadge: $('serviceBadge'),
+        clearAllBtn: $('clearAllBtn'), resetGeneralBtn: $('resetGeneralBtn'), toastMsg: $('toastMsg'), printScreen: $('printScreen'),
+        backFromPrintBtn: $('backFromPrintBtn'), printBtn: $('printBtn'), addTeamBtn: $('addTeamBtn'), heroAddTeamWrap: $('heroAddTeamWrap'), heroAddTeamBtn: $('heroAddTeamBtn'), teamTabs: $('teamTabs'),
+        teamHint: $('teamHint'), qrGridSheet: $('qrGridSheet')
+      };
+
+      function replaceOptions(select, items, emptyLabel) {
+        if (!select) return;
+        var previous = select.value;
+        select.innerHTML = '';
+        var empty = document.createElement('option');
+        empty.value = '';
+        empty.textContent = emptyLabel || 'Choisir';
+        select.appendChild(empty);
+        items.forEach(function (item) {
+          var option = document.createElement('option');
+          option.value = item.value;
+          option.textContent = item.label;
+          select.appendChild(option);
+        });
+        if (Array.from(select.options).some(function (option) { return option.value === previous; })) select.value = previous;
+      }
+
+      function applySharedCatalog(catalog) {
+        sharedNetworkMaps = window.AMIToolsData.derive(catalog);
+        SLOT_MAP = sharedNetworkMaps.slotMap;
+        CABOTAGE_MAP = sharedNetworkMaps.cabotageMap;
+        BUS_ZONE_MAP = sharedNetworkMaps.busZoneMap;
+        var slots = (catalog.serviceSlots || []).filter(function (x) { return x.active !== false; }).sort(function (a, b) { return Number(a.sortOrder || 0) - Number(b.sortOrder || 0); }).map(function (x) { return { value: x.id, label: x.label || x.id }; });
+        var busLines = (catalog.busLines || []).filter(function (x) { return x.active !== false; }).sort(function (a, b) { return Number(a.sortOrder || 0) - Number(b.sortOrder || 0); }).map(function (x) { return { value: x.code, label: x.code + (x.name && x.name !== ('Ligne ' + x.code) ? ' · ' + x.name : '') }; });
+        replaceOptions(els.serviceSlot, slots, 'Choisir');
+        replaceOptions(els.busLineSelect, busLines, 'Choisir');
+        replaceOptions(els.busLine2Select, busLines, 'Aucune');
+        replaceOptions(els.missionPapSelect, (catalog.places && catalog.places.pap || []).map(function (x) { return { value: x, label: x }; }), 'Choisir');
+        replaceOptions(els.missionBoardingSelect, (catalog.places && catalog.places.boarding || []).map(function (x) { return { value: x, label: x }; }), 'Choisir');
+        replaceOptions(els.missionPlaceSelect, (catalog.places && catalog.places.sncf || []).map(function (x) { return { value: x, label: x }; }), 'Choisir');
+        fillCabotageSectorOptions();
+        fillBusZoneOptions();
+      }
+
+      document.addEventListener('amitools:catalog-changed', function (event) {
+        if (event.detail && event.detail.catalog) applySharedCatalog(event.detail.catalog);
+      });
+      applySharedCatalog(window.AMIToolsData.getCatalog());
+
+      function getActiveTeam() {
+        if (state.activeTeamIndex < 0 || state.activeTeamIndex >= state.teams.length) return null;
+        return state.teams[state.activeTeamIndex];
+      }
+
+      function hasActiveTeam() { return !!getActiveTeam(); }
+
+      function minutesFromHHMM(v) {
+        var match = String(v || '').trim().match(/^(\d{1,2}):(\d{2})$/);
+        var h, m;
+        if (!match) return null;
+        h = Number(match[1]);
+        m = Number(match[2]);
+        if (!Number.isInteger(h) || !Number.isInteger(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
+        return h * 60 + m;
+      }
+
+      function hhmmFromMinutes(totalMinutes) {
+        var wrapped = ((Number(totalMinutes) % 1440) + 1440) % 1440;
+        var h = Math.floor(wrapped / 60);
+        var m = wrapped % 60;
+        return pad(h) + ':' + pad(m);
+      }
+
+      function addMinutes(hhmm, delta) {
+        var mins = minutesFromHHMM(hhmm);
+        if (mins === null) return '';
+        return hhmmFromMinutes(mins + delta);
+      }
+
+      function compareTimes(a, b) { if (!a || !b) return 0; return a.localeCompare(b); }
+      function frDateFromIso(v) { if (!v) return ''; var p = v.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+      function isoFromFrDate(v) { var m = String(v).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? m[3] + '-' + m[2] + '-' + m[1] : ''; }
+      function setToday() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+      function currentServiceLabel() { var t = getActiveTeam(); return t ? (t.serviceSlot !== 'SPE' ? t.serviceSlot : 'SPE') : ''; }
+      function currentServiceRange() { var t = getActiveTeam(); if (!t || !t.serviceSlot) return { start: '', end: '' }; return t.serviceSlot !== 'SPE' ? SLOT_MAP[t.serviceSlot] : { start: t.specialStart || '', end: t.specialEnd || '' }; }
+      function getPauseEnd() { var t = getActiveTeam(); return t && t.pauseStart ? addMinutes(t.pauseStart, 20) : ''; }
+
+      function nextMissionStart() {
+        var team = getActiveTeam();
+        var range = currentServiceRange();
+        var sorted, next, pauseStart, pauseEnd;
+        if (!team) return '';
+        sorted = team.missions.slice().sort(function (a, b) { return compareTimes(a.start, b.start); });
+        next = sorted.length ? sorted[sorted.length - 1].end : (range.start || '');
+        pauseStart = team.pauseStart;
+        pauseEnd = getPauseEnd();
+        if (!next) return '';
+        if (!pauseStart || !pauseEnd) return next;
+        if (compareTimes(next, pauseStart) < 0) return next;
+        if (compareTimes(next, pauseEnd) < 0) return pauseEnd;
+        return next;
+      }
+
+      function showToast(message) {
+        if (!els.toastMsg) return;
+        els.toastMsg.textContent = message;
+        els.toastMsg.classList.add('show');
+        clearTimeout(showToast._timer);
+        showToast._timer = setTimeout(function () { els.toastMsg.classList.remove('show'); }, 1600);
+      }
+
+      function renderTabs() {
+        els.teamTabs.innerHTML = '';
+        state.teams.forEach(function (team, index) {
+          var btn = document.createElement('button');
+          var label = document.createElement('span');
+          var close = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'teamTab' + (index === state.activeTeamIndex ? ' active' : '');
+          label.className = 'teamTabLabel';
+          label.textContent = team.label;
+          close.type = 'button';
+          close.className = 'teamTabClose';
+          close.textContent = '×';
+          close.title = 'Supprimer ' + team.label;
+          close.onclick = function (e) { e.stopPropagation(); removeTeam(index); };
+          btn.onclick = function () { syncFormToActiveTeam(); state.activeTeamIndex = index; loadTeamToForm(); };
+          btn.appendChild(label);
+          btn.appendChild(close);
+          els.teamTabs.appendChild(btn);
+        });
+        els.teamHint.textContent = state.teams.length ? 'Equipe active : ' + getActiveTeam().label : 'Ajoute une équipe pour commencer.';
+      }
+
+      function applyFormDisabled(disabled) {
+        [
+          els.serviceDate, els.serviceSlot, els.specialStart, els.specialEnd, els.phoneNumber, els.kizeoNumber,
+          els.phoneAssignedTo, els.pauseStart, els.memberInput, els.addMemberBtn, els.missionStart, els.missionEnd,
+          els.missionType, els.otherMissionSelect, els.otherMissionCustom, els.cabotageMode, els.cabotageSector, els.missionPlace, els.missionPapSelect,
+          els.missionBoardingSelect, els.missionPlaceSelect, els.missionLine, els.busLineSelect, els.busLine2Select, els.busZoneSelect,
+          els.boardingSchoolToggle, els.addMissionBtn, els.saveCommentBtn, els.commentToggle, els.teamComment,
+          els.resetMissionBtn, els.clearAllBtn, els.resetGeneralBtn, els.importArea, els.importBtn,
+          els.downloadTxtBtn, els.previewCopyBtn, els.generateQrBtn
+        ].forEach(function (el) { if (el) el.disabled = !!disabled; });
+      }
+
+      function renderMembers() {
+        var team = getActiveTeam();
+        els.membersList.innerHTML = '';
+        if (!team) return;
+        team.members.forEach(function (member) {
+          var chip = document.createElement('div');
+          var btn = document.createElement('button');
+          chip.className = 'chip';
+          chip.innerHTML = '<span>' + member + '</span>';
+          btn.type = 'button';
+          btn.textContent = '×';
+          btn.onclick = function () {
+            team.members = team.members.filter(function (m) { return m !== member; });
+            state.selectedMembers = state.selectedMembers.filter(function (m) { return m !== member; });
+            team.missions = team.missions.map(function (mission) {
+              return Object.assign({}, mission, { members: mission.members.filter(function (m) { return m !== member; }) });
+            });
+            if (team.phoneAssignedTo === member) team.phoneAssignedTo = '';
+            renderMembers();
+            renderMemberSelector();
+            fillPhoneAssigned();
+            renderMissions();
+            buildExport();
+            resetMissionForm();
+          };
+          chip.appendChild(btn);
+          els.membersList.appendChild(chip);
+        });
+      }
+
+      function renderMemberSelector() {
+        var team = getActiveTeam();
+        els.memberSelector.innerHTML = '';
+        if (!team) return;
+        team.members.forEach(function (member) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn memberToggle ' + (state.selectedMembers.indexOf(member) !== -1 ? '' : 'secondary');
+          btn.textContent = member;
+          btn.onclick = function () {
+            if (state.selectedMembers.indexOf(member) !== -1) state.selectedMembers = state.selectedMembers.filter(function (m) { return m !== member; });
+            else state.selectedMembers.push(member);
+            renderMemberSelector();
+          };
+          els.memberSelector.appendChild(btn);
+        });
+      }
+
+      function fillPhoneAssigned() {
+        var team = getActiveTeam();
+        var previous;
+        els.phoneAssignedTo.innerHTML = '';
+        if (!team || !team.members.length) {
+          var optEmpty = document.createElement('option');
+          optEmpty.value = '';
+          optEmpty.textContent = 'Aucun médiateur';
+          els.phoneAssignedTo.appendChild(optEmpty);
+          return;
+        }
+        previous = team.phoneAssignedTo;
+        team.members.forEach(function (member) {
+          var opt = document.createElement('option');
+          opt.value = member;
+          opt.textContent = member;
+          els.phoneAssignedTo.appendChild(opt);
+        });
+        els.phoneAssignedTo.value = team.members.indexOf(previous) !== -1 ? previous : team.members[0];
+      }
+
+      function renderMissions() {
+        var team = getActiveTeam();
+        els.missionsWrap.innerHTML = '';
+        if (!team || !team.missions.length) {
+          var empty = document.createElement('div');
+          empty.className = 'muted';
+          empty.textContent = hasActiveTeam() ? 'Aucune mission ajoutée pour le moment.' : 'Aucune équipe active.';
+          els.missionsWrap.appendChild(empty);
+          return;
+        }
+        team.missions.forEach(function (mission, index) {
+          var card = document.createElement('div');
+          card.className = 'missionCard';
+          card.innerHTML = '<div class="missionTop"><div><div class="missionTitle">' + mission.start + ' → ' + mission.end + ' · ' + mission.type + '</div><div class="missionSub">' + missionSummary(mission) + '</div><div class="missionSub">' + (mission.members.join(' · ') || '—') + '</div></div><div class="missionActions"><button class="btn secondary" data-edit="' + index + '" type="button">Modifier</button><button class="btn danger" data-del="' + index + '" type="button">Supprimer</button></div></div>';
+          els.missionsWrap.appendChild(card);
+        });
+        els.missionsWrap.querySelectorAll('[data-del]').forEach(function (btn) {
+          btn.onclick = function () {
+            team.missions.splice(Number(btn.dataset.del), 1);
+            renderMissions();
+            buildExport();
+            resetMissionForm();
+          };
+        });
+        els.missionsWrap.querySelectorAll('[data-edit]').forEach(function (btn) {
+          btn.onclick = function () { loadMissionIntoForm(Number(btn.dataset.edit)); };
+        });
+      }
+
+      function fillCabotageSectorOptions() {
+        var mode = els.cabotageMode.value;
+        var map = CABOTAGE_MAP[mode] || {};
+        els.cabotageSector.innerHTML = '<option value="">Choisir</option>';
+        Object.keys(map).forEach(function (sector) {
+          var stations = map[sector];
+          var opt = document.createElement('option');
+          opt.value = sector + ' : ' + stations;
+          opt.textContent = sector + ' · ' + stations;
+          els.cabotageSector.appendChild(opt);
+        });
+      }
+
+      function fillBusZoneOptions() {
+        var line = els.busLineSelect.value;
+        var zones = BUS_ZONE_MAP[line] || [];
+        var previous = els.busZoneSelect.value;
+        els.busZoneSelect.innerHTML = '<option value="">Choisir</option>';
+        zones.forEach(function (zone) {
+          var opt = document.createElement('option');
+          opt.value = zone;
+          opt.textContent = zone;
+          els.busZoneSelect.appendChild(opt);
+        });
+        if (zones.indexOf(previous) !== -1) els.busZoneSelect.value = previous;
+      }
+
+      function updateSlotUi() {
+        var team = getActiveTeam();
+        var isSpe = team && team.serviceSlot === 'SPE';
+        var label = team ? (currentServiceLabel() || 'Choisir') : 'Aucune équipe';
+        var suggested = nextMissionStart();
+        var showHeroAdd = !state.teams.length;
+        els.specialStartField.classList.toggle('hidden', !isSpe);
+        els.specialEndField.classList.toggle('hidden', !isSpe);
+        els.serviceBadge.textContent = team ? (team.label + ' · Service ' + label) : 'Aucune équipe';
+        if (els.heroAddTeamWrap) els.heroAddTeamWrap.classList.toggle('hidden', !showHeroAdd);
+        if (suggested && state.editIndex < 0) els.missionStart.value = suggested;
+      }
+
+      function updateMissionFields() {
+        var type = els.missionType.value;
+        var isOther = type === 'Autre';
+        var isCabotage = type === 'Cabotage';
+        var isPap = type === 'PAP' || type === 'Pôle échange';
+        var isBoarding = type === 'Embarquement';
+        var isSncf = type === 'SNCF' || (type === 'Autre' && els.otherMissionSelect && els.otherMissionSelect.value === 'SNCF');
+        var mode;
+
+        if (els.otherMissionField) els.otherMissionField.classList.toggle('hidden', !isOther);
+        if (els.otherMissionCustom) els.otherMissionCustom.classList.toggle('hidden', !(isOther && els.otherMissionSelect && els.otherMissionSelect.value === 'Ajouter une mission'));
+        els.cabotageModeField.classList.toggle('hidden', !isCabotage);
+        els.cabotageSectorField.classList.add('hidden');
+        els.missionPlaceField.classList.toggle('hidden', !type || isOther);
+        els.missionLineField.classList.toggle('hidden', !type || isOther);
+        els.busLineField.classList.add('hidden');
+        els.busZoneField.classList.add('hidden');
+        if (els.busLine2Field) els.busLine2Field.classList.add('hidden');
+        els.missionPlace.classList.remove('hidden');
+        els.missionPapSelect.classList.add('hidden');
+        els.missionBoardingSelect.classList.add('hidden');
+        els.missionPlaceSelect.classList.add('hidden');
+        if (els.boardingSchoolInline) els.boardingSchoolInline.classList.add('hidden');
+
+        if (!type) {
+          els.missionPlaceField.classList.add('hidden');
+          els.missionLineField.classList.add('hidden');
+          return;
+        }
+        if (isOther) {
+          if (els.otherMissionSelect && els.otherMissionSelect.value === 'SNCF') {
+            els.missionLineField.classList.add('hidden');
+            els.missionPlace.classList.add('hidden');
+            els.missionPlaceField.classList.remove('hidden');
+            els.missionPlaceSelect.classList.remove('hidden');
+            return;
+          }
+          els.missionPlaceField.classList.add('hidden');
+          els.missionLineField.classList.add('hidden');
+          return;
+        }
+        if (isPap) {
+          els.missionLineField.classList.add('hidden');
+          els.missionPlace.classList.add('hidden');
+          els.missionPapSelect.classList.remove('hidden');
+          return;
+        }
+        if (isBoarding) {
+          els.missionLineField.classList.add('hidden');
+          if (els.boardingSchoolInline) els.boardingSchoolInline.classList.remove('hidden');
+          if (els.boardingSchoolToggle && els.boardingSchoolToggle.checked) {
+            els.missionPlace.classList.remove('hidden');
+            els.missionPlace.readOnly = true;
+            els.missionPlace.value = 'Scolaire ( voir fiche mission )';
+            els.missionBoardingSelect.classList.add('hidden');
+          } else {
+            els.missionPlace.classList.add('hidden');
+            els.missionPlace.readOnly = false;
+            els.missionBoardingSelect.classList.remove('hidden');
+          }
+          return;
+        }
+        if (isSncf) {
+          els.missionLineField.classList.add('hidden');
+          els.missionPlace.classList.add('hidden');
+          els.missionPlaceSelect.classList.remove('hidden');
+          return;
+        }
+        if (isCabotage) {
+          mode = els.cabotageMode.value;
+          if (mode === 'metroA' || mode === 'metroB') {
+            fillCabotageSectorOptions();
+            els.cabotageSectorField.classList.remove('hidden');
+            els.missionPlaceField.classList.add('hidden');
+            els.missionLineField.classList.add('hidden');
+            return;
+          }
+          if (mode === 'bus') {
+            els.missionPlaceField.classList.add('hidden');
+            els.missionLineField.classList.add('hidden');
+            els.busLineField.classList.remove('hidden');
+            if (els.busLine2Field) els.busLine2Field.classList.remove('hidden');
+            els.busZoneField.classList.remove('hidden');
+            fillBusZoneOptions();
+            return;
+          }
+          if (mode === 'busMetro') {
+            els.missionPlaceField.classList.add('hidden');
+            els.missionLineField.classList.remove('hidden');
+            return;
+          }
+          els.missionPlaceField.classList.add('hidden');
+          els.missionLineField.classList.add('hidden');
+        }
+      }
+
+      function syncFormToActiveTeam() {
+        var team = getActiveTeam();
+        if (!team) return;
+        team.serviceDate = els.serviceDate.value;
+        team.serviceSlot = els.serviceSlot.value;
+        team.specialStart = els.specialStart.value;
+        team.specialEnd = els.specialEnd.value;
+        team.phoneNumber = els.phoneNumber.value;
+        team.kizeoNumber = els.kizeoNumber.value;
+        team.phoneAssignedTo = els.phoneAssignedTo.value;
+        team.pauseStart = els.pauseStart.value;
+        team.comment = normalize(els.teamComment ? els.teamComment.value : '');
+      }
+
+      function loadTeamToForm() {
+        var team = getActiveTeam();
+        applyFormDisabled(!team);
+        renderTabs();
+        if (!team) {
+          els.serviceDate.value = setToday();
+          els.serviceSlot.value = '';
+          els.specialStart.value = '';
+          els.specialEnd.value = '';
+          els.phoneNumber.value = '';
+          els.kizeoNumber.value = '';
+          els.pauseStart.value = '';
+          if (els.commentToggle) els.commentToggle.checked = false;
+          if (els.commentField) els.commentField.classList.add('hidden');
+          if (els.teamComment) els.teamComment.value = '';
+          els.importArea.value = '';
+          renderMembers();
+          renderMemberSelector();
+          renderMissions();
+          fillPhoneAssigned();
+          buildExport();
+          updateSlotUi();
+          resetMissionForm();
+          return;
+        }
+        els.serviceDate.value = team.serviceDate || setToday();
+        els.serviceSlot.value = team.serviceSlot || '';
+        els.specialStart.value = team.specialStart || '';
+        els.specialEnd.value = team.specialEnd || '';
+        els.phoneNumber.value = team.phoneNumber || '';
+        els.kizeoNumber.value = team.kizeoNumber || '';
+        els.pauseStart.value = team.pauseStart || '';
+        if (els.teamComment) els.teamComment.value = team.comment || '';
+        if (els.commentToggle) els.commentToggle.checked = !!(team.comment || '');
+        if (els.commentField) els.commentField.classList.toggle('hidden', !(team.comment || ''));
+        state.selectedMembers = team.members.slice();
+        els.importArea.value = '';
+        fillPhoneAssigned();
+        els.phoneAssignedTo.value = team.members.indexOf(team.phoneAssignedTo) !== -1 ? team.phoneAssignedTo : (team.members[0] || '');
+        renderMembers();
+        renderMemberSelector();
+        renderMissions();
+        buildExport();
+        updateSlotUi();
+        resetMissionForm();
+      }
+
+      function removeTeam(index) {
+        if (index < 0 || index >= state.teams.length) return;
+        state.teams.splice(index, 1);
+        state.teams.forEach(function (team, i) { team.label = 'Equipe ' + (i + 1); team.id = 'team-' + (i + 1); });
+        if (!state.teams.length) {
+          state.activeTeamIndex = -1;
+          state.selectedMembers = [];
+          state.editIndex = -1;
+        } else if (state.activeTeamIndex >= state.teams.length) {
+          state.activeTeamIndex = state.teams.length - 1;
+        } else if (index <= state.activeTeamIndex) {
+          state.activeTeamIndex = Math.max(0, state.activeTeamIndex - 1);
+        }
+        loadTeamToForm();
+        showToast('Equipe supprimée');
+      }
+
+      function addTeam() {
+        var nextIndex, team;
+        if (state.teams.length >= 4) { showToast('Maximum 4 équipes'); return; }
+        syncFormToActiveTeam();
+        nextIndex = state.teams.length + 1;
+        team = createEmptyTeam(nextIndex);
+        team.serviceDate = setToday();
+        state.teams.push(team);
+        state.activeTeamIndex = state.teams.length - 1;
+        loadTeamToForm();
+        showToast(team.label + ' créée');
+      }
+
+      function getMissionPayloadFromForm() {
+        var selectedType = els.missionType.value;
+        var resolvedType = selectedType === 'Autre'
+          ? ((els.otherMissionSelect && els.otherMissionSelect.value === 'Ajouter une mission')
+              ? normalize(els.otherMissionCustom ? els.otherMissionCustom.value : '')
+              : normalize(els.otherMissionSelect ? els.otherMissionSelect.value : ''))
+          : selectedType;
+        var cabMode = els.cabotageMode.value;
+        var start = els.missionStart.value;
+        var end = els.missionEnd.value;
+        var members = Array.from(new Set(state.selectedMembers));
+        var place = normalize(els.missionPlace.value);
+        var line = normalize(els.missionLine.value);
+        var sourceType = selectedType;
+
+        if (resolvedType === 'PAP' || resolvedType === 'Pôle échange') place = els.missionPapSelect.value;
+        if (resolvedType === 'Embarquement') place = els.boardingSchoolToggle && els.boardingSchoolToggle.checked ? 'Scolaire ( voir fiche mission )' : els.missionBoardingSelect.value;
+        if (resolvedType === 'SNCF') place = els.missionPlaceSelect.value;
+        if (resolvedType === 'Cabotage' && (cabMode === 'metroA' || cabMode === 'metroB')) place = els.cabotageSector.value;
+        if (resolvedType === 'Cabotage' && cabMode === 'bus') {
+          var busLine1 = normalize(els.busLineSelect.value);
+          var busLine2 = normalize(els.busLine2Select ? els.busLine2Select.value : '');
+          var busZone = normalize(els.busZoneSelect.value);
+          var busLinesLabel = busLine2 ? (busLine1 + ' + ' + busLine2) : busLine1;
+          line = [busLinesLabel, busZone].filter(Boolean).join(' · ');
+        }
+
+        return { start: start, end: end, type: resolvedType, sourceType: sourceType, cabMode: cabMode, place: place, line: line, members: members };
+      }
+
+      function validateMission(mission) {
+        var team = getActiveTeam();
+        var pauseStart, pauseEnd, overlapsPause;
+        if (!team) return 'Ajoute une équipe avant de créer une mission.';
+        if (!mission.start || !mission.end || !mission.type) return 'Renseigne début, fin et type.';
+        if (!mission.members.length) return 'Sélectionne au moins un médiateur.';
+        if (minutesFromHHMM(mission.start) === null || minutesFromHHMM(mission.end) === null) return 'Renseigne des horaires valides.';
+        if (mission.end === mission.start) return 'La fin doit être différente du début.';
+        if (mission.sourceType === 'Autre' && !mission.type) return 'Choisis une sous-mission ou saisis une mission personnalisée.';
+        if (mission.type === 'Cabotage') {
+          if (!mission.cabMode) return 'Choisis un mode de cabotage.';
+          if ((mission.cabMode === 'metroA' || mission.cabMode === 'metroB') && !mission.place) return 'Choisis un secteur métro.';
+          if (mission.cabMode === 'bus' && !mission.line) return 'Choisis au moins une ligne et une zone de bus.';
+          if (mission.cabMode === 'busMetro' && !mission.line) return 'Renseigne la ligne du bus métropolitain.';
+        }
+        if ((mission.type === 'PAP' || mission.type === 'Pôle échange' || mission.type === 'Embarquement' || mission.type === 'SNCF') && !mission.place) return 'Choisis un lieu.';
+        if (['Cabotage', 'PAP', 'Pôle échange', 'Embarquement', 'SNCF', 'RDS', 'TAC', 'STAR me guide', 'Médiation sociale'].indexOf(mission.type) === -1 && !mission.place && !mission.line) return 'Renseigne un lieu ou une précision.';
+        pauseStart = team.pauseStart;
+        pauseEnd = getPauseEnd();
+        if (pauseStart && pauseEnd) {
+          overlapsPause = compareTimes(mission.start, pauseEnd) < 0 && compareTimes(mission.end, pauseStart) > 0;
+          if (overlapsPause) return 'Cette mission chevauche la pause (' + pauseStart + '-' + pauseEnd + ').';
+        }
+        return '';
+      }
+
+      function missionSummary(mission) {
+        if (mission.type === 'Cabotage') {
+          if (mission.cabMode === 'metroA') return 'Cabotage / métro A / ' + mission.place;
+          if (mission.cabMode === 'metroB') return 'Cabotage / métro B / ' + mission.place;
+          if (mission.cabMode === 'bus') return 'Cabotage / Bus / ' + mission.line;
+          if (mission.cabMode === 'busMetro') return 'Cabotage / Bus métropolitain / ' + mission.line;
+        }
+        if (mission.type === 'PAP' || mission.type === 'Pôle échange' || mission.type === 'Embarquement' || mission.type === 'SNCF') return mission.type + ' / ' + mission.place;
+        if (mission.type === 'RDS' || mission.type === 'TAC' || mission.type === 'STAR me guide' || mission.type === 'Médiation sociale') return mission.type;
+        if (mission.place && mission.line) return mission.type + ' / ' + mission.place + ' / ' + mission.line;
+        return mission.type + ' / ' + (mission.place || mission.line || '');
+      }
+
+      function loadMissionIntoForm(index) {
+        var team = getActiveTeam();
+        var mission = team ? team.missions[index] : null;
+        var parts;
+        var otherMissionTypes = ['RDS', 'TAC', 'STAR me guide', 'SNCF'];
+        if (!mission) return;
+        state.editIndex = index;
+        els.missionStart.value = mission.start;
+        els.missionEnd.value = mission.end;
+        if (otherMissionTypes.indexOf(mission.type) !== -1) {
+          els.missionType.value = 'Autre';
+          if (els.otherMissionSelect) els.otherMissionSelect.value = mission.type;
+          if (els.otherMissionCustom) els.otherMissionCustom.value = '';
+        } else if (mission.sourceType === 'Autre') {
+          els.missionType.value = 'Autre';
+          if (els.otherMissionSelect) els.otherMissionSelect.value = 'Ajouter une mission';
+          if (els.otherMissionCustom) els.otherMissionCustom.value = mission.type || '';
+        } else {
+          els.missionType.value = mission.type;
+          if (els.otherMissionSelect) els.otherMissionSelect.value = '';
+          if (els.otherMissionCustom) els.otherMissionCustom.value = '';
+        }
+        els.cabotageMode.value = mission.cabMode || '';
+        updateMissionFields();
+
+        if (mission.type === 'PAP' || mission.type === 'Pôle échange') {
+          els.missionPapSelect.value = mission.place || '';
+        } else if (mission.type === 'Embarquement') {
+          if (mission.place === 'Scolaire ( voir fiche mission )') {
+            if (els.boardingSchoolToggle) els.boardingSchoolToggle.checked = true;
+            els.missionBoardingSelect.value = '';
+            els.missionBoardingSelect.disabled = true;
+            els.missionPlace.value = 'Scolaire ( voir fiche mission )';
+          } else {
+            if (els.boardingSchoolToggle) els.boardingSchoolToggle.checked = false;
+            els.missionBoardingSelect.value = mission.place || '';
+            els.missionBoardingSelect.disabled = false;
+            els.missionPlace.value = mission.place || '';
+          }
+        } else if (mission.type === 'SNCF') {
+          els.missionPlaceSelect.value = mission.place || '';
+        } else if (mission.type === 'Cabotage' && (mission.cabMode === 'metroA' || mission.cabMode === 'metroB')) {
+          els.cabotageSector.value = mission.place || '';
+        } else if (mission.type === 'Cabotage' && mission.cabMode === 'bus') {
+          parts = String(mission.line || '').split('·').map(function (v) { return normalize(v); });
+          var busLinesParts = (parts[0] || '').split('+').map(function (v) { return normalize(v); });
+          els.busLineSelect.value = busLinesParts[0] || '';
+          if (els.busLine2Select) els.busLine2Select.value = busLinesParts[1] || '';
+          fillBusZoneOptions();
+          els.busZoneSelect.value = parts[1] || '';
+        } else if (mission.type === 'Cabotage' && mission.cabMode === 'busMetro') {
+          els.missionLine.value = mission.line || '';
+        } else {
+          els.missionPlace.value = mission.place || '';
+          els.missionLine.value = mission.line || '';
+        }
+
+        state.selectedMembers = mission.members.slice();
+        renderMemberSelector();
+        els.addMissionBtn.textContent = 'Enregistrer modification';
+      }
+
+      function resetMissionForm() {
+        state.editIndex = -1;
+        els.missionStart.value = nextMissionStart() || '';
+        els.missionEnd.value = '';
+        els.missionType.value = '';
+        if (els.otherMissionSelect) els.otherMissionSelect.value = '';
+        els.cabotageMode.value = '';
+        els.cabotageSector.innerHTML = '<option value="">Choisir</option>';
+        els.missionPlace.value = '';
+        els.missionPapSelect.value = '';
+        els.missionBoardingSelect.value = '';
+        if (els.boardingSchoolToggle) els.boardingSchoolToggle.checked = false;
+        if (els.missionBoardingSelect) els.missionBoardingSelect.disabled = false;
+        els.missionPlace.readOnly = false;
+        els.missionPlaceSelect.value = '';
+        els.missionLine.value = '';
+        els.busLineSelect.value = '';
+        if (els.busLine2Select) els.busLine2Select.value = '';
+        els.busZoneSelect.innerHTML = '<option value="">Choisir</option>';
+        state.selectedMembers = hasActiveTeam() ? getActiveTeam().members.slice() : [];
+        renderMemberSelector();
+        updateMissionFields();
+        els.addMissionBtn.textContent = 'Ajouter mission';
+      }
+
+      function addOrUpdateMission() {
+        var team = getActiveTeam();
+        var mission = getMissionPayloadFromForm();
+        var error = validateMission(mission);
+        if (error) { alert(error); return; }
+        if (!team) return;
+        if (state.editIndex >= 0) team.missions.splice(state.editIndex, 1, mission);
+        else team.missions.push(mission);
+        team.missions.sort(function (a, b) { return compareTimes(a.start, b.start); });
+        renderMissions();
+        buildExport();
+        resetMissionForm();
+      }
+
+      function buildExportText(team) {
+        var active = team || getActiveTeam();
+        var dateFr, slot, range, lines, exportedItems;
+        if (!active) return '';
+        dateFr = frDateFromIso(active.serviceDate || '');
+        slot = active.serviceSlot ? (active.serviceSlot !== 'SPE' ? active.serviceSlot : 'SPE') : 'Choisir';
+        range = active.serviceSlot === 'SPE' ? { start: active.specialStart || '', end: active.specialEnd || '' } : (SLOT_MAP[active.serviceSlot] || { start: '', end: '' });
+        lines = [];
+        exportedItems = active.missions.map(function (mission) {
+          return { start: mission.start, text: mission.start + '-' + mission.end + ' / ' + missionSummary(mission) + ' / Médiateurs : ' + (mission.members.join(', ') || '--') };
+        });
+        lines.push('Date : ' + dateFr);
+        lines.push('Horaire : ' + slot);
+        if (slot === 'SPE' && range.start && range.end) lines.push('Horaires spé : ' + range.start + '-' + range.end);
+        lines.push('Tel : ' + (normalize(active.phoneNumber) || '--'));
+        lines.push('Kizeo : ' + (normalize(active.kizeoNumber) || '--'));
+        lines.push('Téléphone attribué à : ' + (normalize(active.phoneAssignedTo) || '--'));
+        lines.push('Nom des médiateurs : ' + (active.members.join(', ') || '--'));
+        if (active.pauseStart) lines.push('Pause : ' + active.pauseStart + '-' + addMinutes(active.pauseStart, 20));
+        lines.push('===');
+        lines.push('Missions :');
+        if (active.pauseStart) exportedItems.push({ start: active.pauseStart, text: active.pauseStart + '-' + addMinutes(active.pauseStart, 20) + ' / Pause' });
+        exportedItems.sort(function (a, b) { return compareTimes(a.start, b.start); });
+        exportedItems.forEach(function (item, index) {
+          lines.push(item.text);
+          if (index < exportedItems.length - 1 || active.comment) lines.push('-');
+        });
+        if (active.comment) lines.push('Commentaire : ' + active.comment);
+        return lines.join('\n');
+      }
+
+      function buildExport() {
+        var text = buildExportText();
+        els.exportPreview.textContent = text || 'Sélectionne ou crée une équipe.';
+        return text;
+      }
+
+      function downloadTxt() {
+        var team = getActiveTeam();
+        var text, datePart, filename, blob, url, a;
+        if (!team) { showToast('Aucune équipe'); return; }
+        text = buildExport();
+        datePart = frDateFromIso(team.serviceDate || '').replace(/\//g, '-');
+        filename = team.label.toLowerCase().replace(/\s+/g, '-') + '-' + (datePart || 'service') + '.txt';
+        try {
+          blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+          url = URL.createObjectURL(blob);
+          a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () {
+            if (a && a.parentNode) a.parentNode.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 1200);
+          showToast('TXT téléchargé');
+          return;
+        } catch (e) {}
+        showToast('Téléchargement impossible');
+      }
+
+      function fallbackCopy(text) {
+        try {
+          var area = document.createElement('textarea');
+          area.value = text;
+          area.setAttribute('readonly', '');
+          area.style.position = 'fixed';
+          area.style.left = '-9999px';
+          area.style.top = '0';
+          document.body.appendChild(area);
+          area.focus();
+          area.select();
+          area.setSelectionRange(0, area.value.length);
+          if (document.execCommand('copy')) { area.remove(); showToast('Texte copié'); return; }
+          area.remove();
+        } catch (e) {}
+        showToast('Copie impossible');
+      }
+
+      function copyTxt() {
+        var text = buildExport();
+        if (!text) { showToast('Aucune équipe'); return; }
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(function () { showToast('Texte copié'); }).catch(function () { fallbackCopy(text); });
+        } else fallbackCopy(text);
+      }
+
+      function importFromText() {
+        var team = getActiveTeam();
+        var raw = els.importArea.value.trim();
+        var lines, dateLine, slotLine, speLine, telLine, kizeoLine, phoneAssignedLine, membersLine, pauseLine, commentLine;
+        var frDate, slot, tel, kizeo, phoneAssigned, members, missionIndex, i, comment;
+        if (!team) { showToast('Ajoute une équipe'); return; }
+        if (!raw) return;
+
+        lines = raw.split(/\r?\n/).map(function (v) { return v.trim(); }).filter(function (v) { return v !== '-'; });
+        dateLine = lines.find(function (l) { return l.indexOf('Date :') === 0; }) || '';
+        slotLine = lines.find(function (l) { return l.indexOf('Horaire :') === 0; }) || '';
+        speLine = lines.find(function (l) { return l.indexOf('Horaires spé :') === 0; }) || '';
+        telLine = lines.find(function (l) { return l.toLowerCase().indexOf('tel :') === 0; }) || '';
+        kizeoLine = lines.find(function (l) { return l.toLowerCase().indexOf('kizeo :') === 0; }) || '';
+        phoneAssignedLine = lines.find(function (l) { return l.indexOf('Téléphone attribué à :') === 0; }) || '';
+        membersLine = lines.find(function (l) { return l.indexOf('Nom des médiateurs :') === 0; }) || '';
+        pauseLine = lines.find(function (l) { return l.indexOf('Pause :') === 0; }) || '';
+        commentLine = lines.find(function (l) { return l.indexOf('Commentaire :') === 0; }) || '';
+
+        frDate = dateLine.split(':').slice(1).join(':').trim();
+        slot = slotLine.split(':').slice(1).join(':').trim();
+        tel = telLine.split(':').slice(1).join(':').trim();
+        kizeo = kizeoLine.split(':').slice(1).join(':').trim();
+        phoneAssigned = phoneAssignedLine.split(':').slice(1).join(':').trim();
+        members = membersLine.split(':').slice(1).join(':').split(',').map(normalize).filter(Boolean);
+        comment = commentLine.split(':').slice(1).join(':').trim();
+
+        team.serviceDate = frDate ? isoFromFrDate(frDate) : team.serviceDate;
+        team.serviceSlot = slot === 'Choisir' ? '' : slot;
+        if (speLine) {
+          var times = speLine.split(':').slice(1).join(':').trim().split('-').map(normalize);
+          team.specialStart = times[0] || '';
+          team.specialEnd = times[1] || '';
+        } else {
+          team.specialStart = '';
+          team.specialEnd = '';
+        }
+        team.phoneNumber = tel === '--' ? '' : tel;
+        team.kizeoNumber = kizeo === '--' ? '' : kizeo;
+        team.members = members.length ? members : [];
+        team.phoneAssignedTo = team.members.indexOf(phoneAssigned) !== -1 ? phoneAssigned : '';
+        team.pauseStart = pauseLine ? (pauseLine.split(':').slice(1).join(':').trim().split('-').map(normalize)[0] || '') : '';
+        team.comment = comment || '';
+        team.missions = [];
+
+        missionIndex = lines.findIndex(function (l) { return l === 'Missions :'; });
+        if (missionIndex >= 0) {
+          for (i = missionIndex + 1; i < lines.length; i += 1) {
+            var line = lines[i];
+            var parts, timeMatch, start, end, type, mission, membersPart, membersIndex;
+            if (!line || line.indexOf('/') === -1) continue;
+            if (line.indexOf('Commentaire :') === 0) continue;
+            if (line.toLowerCase().indexOf('/ pause') !== -1) continue;
+            parts = line.split('/').map(function (v) { return normalize(v); });
+            membersIndex = parts.findIndex(function (part) { return part.toLowerCase().indexOf('médiateurs') === 0; });
+            membersPart = membersIndex >= 0 ? parts[membersIndex].split(':').slice(1).join(':').trim() : '';
+            if (membersIndex >= 0) parts = parts.slice(0, membersIndex);
+            timeMatch = (parts[0] || '').match(/^(\d{2}[:h]\d{2})-(\d{2}[:h]\d{2})$/i);
+            if (!timeMatch) continue;
+            start = timeMatch[1].replace('h', ':');
+            end = timeMatch[2].replace('h', ':');
+            type = parts[1] || '';
+            mission = {
+              start: start,
+              end: end,
+              type: type,
+              sourceType: (['RDS', 'TAC', 'STAR me guide', 'SNCF'].indexOf(type) !== -1 || (type && ['Cabotage', 'Embarquement', 'PAP', 'Pôle échange', 'Médiation sociale'].indexOf(type) === -1)) ? 'Autre' : type,
+              cabMode: '',
+              place: '',
+              line: '',
+              members: membersPart ? membersPart.split(',').map(normalize).filter(Boolean) : team.members.slice()
+            };
+            if (type === 'Cabotage') {
+              if (/^m[ée]tro a$/i.test(parts[2] || '')) { mission.cabMode = 'metroA'; mission.place = parts[3] || ''; }
+              else if (/^m[ée]tro b$/i.test(parts[2] || '')) { mission.cabMode = 'metroB'; mission.place = parts[3] || ''; }
+              else if (/^bus m[ée]tropolitain$/i.test(parts[2] || '')) { mission.cabMode = 'busMetro'; mission.line = parts[3] || ''; }
+              else if (/^bus$/i.test(parts[2] || '')) { mission.cabMode = 'bus'; mission.line = parts[3] || ''; }
+            } else if (['PAP', 'Pôle échange', 'Embarquement', 'SNCF'].indexOf(type) !== -1) {
+              mission.place = parts[2] || '';
+            } else {
+              mission.place = parts[2] || '';
+              mission.line = parts[3] || '';
+            }
+            team.missions.push(mission);
+          }
+        }
+
+        team.missions.sort(function (a, b) { return compareTimes(a.start, b.start); });
+        loadTeamToForm();
+        showToast(team.label + ' importée');
+      }
+
+      function buildQrImageUrl(text) { return 'https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=4&data=' + encodeURIComponent(text || ''); }
+      function drawRealQr(text, imageEl, done) {
+        if (!imageEl) { if (typeof done === 'function') done(false); return; }
+        imageEl.onload = function () { if (typeof done === 'function') done(true); };
+        imageEl.onerror = function () { if (typeof done === 'function') done(false); };
+        imageEl.src = buildQrImageUrl(text);
+      }
+
+      function populateQrCell(cell, team) {
+        var title = cell.querySelector('[data-role="title"]');
+        var service = cell.querySelector('[data-role="service"]');
+        var names = cell.querySelector('[data-role="names"]');
+        var img = cell.querySelector('[data-role="img"]');
+        if (!team) {
+          cell.classList.add('empty');
+          title.textContent = '—';
+          service.textContent = 'Service : —';
+          names.textContent = '—';
+          img.removeAttribute('src');
+          return;
+        }
+        cell.classList.remove('empty');
+        title.textContent = team.label;
+        service.textContent = 'Service : ' + (team.serviceSlot || '—');
+        names.textContent = team.members.length ? team.members.join(', ') : '—';
+        drawRealQr(buildExportText(team), img);
+      }
+
+      function openPrintScreen() {
+        var appRoot = document.querySelector('.app');
+        var cells = els.qrGridSheet.querySelectorAll('.qrCell');
+        if (!state.teams.length) { showToast('Ajoute au moins une équipe'); return; }
+        syncFormToActiveTeam();
+        cells.forEach(function (cell, index) { populateQrCell(cell, state.teams[index] || null); });
+        if (appRoot) appRoot.classList.add('hiddenView');
+        els.printScreen.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        showToast('Aperçu prêt');
+      }
+
+      function closePrintScreen() {
+        var appRoot = document.querySelector('.app');
+        els.printScreen.classList.remove('active');
+        if (appRoot) appRoot.classList.remove('hiddenView');
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
+
+      function resetActiveTeamGeneralData() {
+        var team = getActiveTeam();
+        var keptDate;
+        if (!team) { showToast('Aucune équipe'); return; }
+        keptDate = team.serviceDate || setToday();
+        team.serviceDate = keptDate;
+        team.serviceSlot = '';
+        team.specialStart = '';
+        team.specialEnd = '';
+        team.phoneNumber = '';
+        team.kizeoNumber = '';
+        team.phoneAssignedTo = '';
+        team.pauseStart = '';
+        team.comment = '';
+        team.members = [];
+        team.missions = [];
+        state.selectedMembers = [];
+        state.editIndex = -1;
+        els.memberInput.value = '';
+        els.importArea.value = '';
+        loadTeamToForm();
+        showToast('Equipe réinitialisée');
+      }
+
+      function clearActiveTeamMissions() {
+        var team = getActiveTeam();
+        if (!team) { showToast('Aucune équipe'); return; }
+        team.missions = [];
+        team.comment = '';
+        if (els.teamComment) els.teamComment.value = '';
+        if (els.commentToggle) els.commentToggle.checked = false;
+        if (els.commentField) els.commentField.classList.add('hidden');
+        renderMissions();
+        buildExport();
+        resetMissionForm();
+        showToast('Missions vidées');
+      }
+
+      function runTests() {
+        var team1 = createEmptyTeam(1);
+        console.assert(addMinutes('16:00', 20) === '16:20', 'addMinutes basic');
+        console.assert(addMinutes('23:50', 20) === '00:10', 'addMinutes wraps midnight');
+        console.assert(frDateFromIso('2026-03-23') === '23/03/2026', 'frDateFromIso');
+        team1.serviceDate = '2026-03-23';
+        team1.serviceSlot = 'M';
+        team1.phoneNumber = '22';
+        team1.kizeoNumber = '10';
+        team1.phoneAssignedTo = 'celine';
+        team1.members = ['Arnaud', 'celine', 'mathieu'];
+        team1.pauseStart = '10:10';
+        team1.comment = 'Message test';
+        team1.missions = [{ start: '07:00', end: '08:00', type: 'Embarquement', cabMode: '', place: 'Scolaire ( voir fiche mission )', line: '', members: ['Arnaud'] }];
+        console.assert(buildExportText(team1).indexOf('07:00-08:00 / Embarquement / Scolaire ( voir fiche mission ) / Médiateurs : Arnaud') !== -1, 'export mission');
+      }
+
+      els.addMemberBtn.onclick = function () {
+        var team = getActiveTeam();
+        var clean;
+        if (!team) { showToast('Ajoute une équipe'); return; }
+        clean = normalize(els.memberInput.value);
+        if (!clean) return;
+        if (team.members.indexOf(clean) === -1) team.members.push(clean);
+        team.phoneAssignedTo = team.phoneAssignedTo || clean;
+        state.selectedMembers = team.members.slice();
+        els.memberInput.value = '';
+        renderMembers();
+        renderMemberSelector();
+        fillPhoneAssigned();
+        buildExport();
+        resetMissionForm();
+      };
+
+      els.memberInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); els.addMemberBtn.click(); }
+      });
+
+      els.serviceDate.addEventListener('input', syncFormToActiveTeam);
+      els.phoneNumber.addEventListener('input', syncFormToActiveTeam);
+      els.kizeoNumber.addEventListener('input', syncFormToActiveTeam);
+      els.phoneAssignedTo.addEventListener('change', function () { syncFormToActiveTeam(); buildExport(); });
+      els.serviceSlot.onchange = function () { syncFormToActiveTeam(); updateSlotUi(); resetMissionForm(); buildExport(); };
+
+      [els.specialStart, els.specialEnd, els.pauseStart].forEach(function (el) {
+        el.addEventListener('input', function () { syncFormToActiveTeam(); updateSlotUi(); buildExport(); resetMissionForm(); });
+        el.addEventListener('change', function () { syncFormToActiveTeam(); updateSlotUi(); buildExport(); resetMissionForm(); });
+      });
+
+      els.cabotageMode.onchange = function () { updateMissionFields(); };
+      els.missionType.onchange = function () { updateMissionFields(); };
+      if (els.otherMissionSelect) els.otherMissionSelect.onchange = function () { updateMissionFields(); };
+      if (els.otherMissionCustom) els.otherMissionCustom.addEventListener('input', function () {});
+      els.busLineSelect.onchange = function () { fillBusZoneOptions(); };
+      if (els.busLine2Select) els.busLine2Select.onchange = function () {};
+      els.missionPapSelect.addEventListener('change', function () { els.missionPlace.value = els.missionPapSelect.value; });
+      els.missionBoardingSelect.addEventListener('change', function () {
+        if (!(els.boardingSchoolToggle && els.boardingSchoolToggle.checked)) els.missionPlace.value = els.missionBoardingSelect.value;
+      });
+      if (els.boardingSchoolToggle) {
+        els.boardingSchoolToggle.addEventListener('change', function () {
+          if (els.boardingSchoolToggle.checked) {
+            els.missionPlace.value = 'Scolaire ( voir fiche mission )';
+            els.missionPlace.readOnly = true;
+            els.missionBoardingSelect.value = '';
+            els.missionBoardingSelect.disabled = true;
+          } else {
+            els.missionPlace.value = els.missionBoardingSelect.value || '';
+            els.missionPlace.readOnly = false;
+            els.missionBoardingSelect.disabled = false;
+          }
+          updateMissionFields();
+        });
+      }
+      els.missionPlaceSelect.addEventListener('change', function () { els.missionPlace.value = els.missionPlaceSelect.value; });
+      els.cabotageSector.addEventListener('change', function () { els.missionPlace.value = els.cabotageSector.value; });
+
+      if (els.commentToggle) {
+        els.commentToggle.addEventListener('change', function () {
+          if (!els.commentField) return;
+          els.commentField.classList.toggle('hidden', !els.commentToggle.checked);
+          if (!els.commentToggle.checked && els.teamComment) {
+            els.teamComment.value = '';
+            syncFormToActiveTeam();
+            buildExport();
+          }
+        });
+      }
+      if (els.teamComment) {
+        els.teamComment.addEventListener('input', function () { syncFormToActiveTeam(); buildExport(); });
+      }
+      if (els.saveCommentBtn) {
+        els.saveCommentBtn.onclick = function () {
+          var team = getActiveTeam();
+          if (!team) { showToast('Ajoute une équipe'); return; }
+          team.comment = normalize(els.teamComment ? els.teamComment.value : '');
+          if (els.commentToggle) els.commentToggle.checked = !!team.comment;
+          if (els.commentField) els.commentField.classList.toggle('hidden', !team.comment);
+          buildExport();
+          showToast(team.comment ? 'Commentaire enregistré' : 'Commentaire supprimé');
+        };
+      }
+
+      els.addMissionBtn.onclick = addOrUpdateMission;
+      els.resetMissionBtn.onclick = resetMissionForm;
+      els.downloadTxtBtn.onclick = downloadTxt;
+      els.previewCopyBtn.onclick = copyTxt;
+      els.importBtn.onclick = importFromText;
+      els.generateQrBtn.onclick = openPrintScreen;
+      els.resetGeneralBtn.onclick = resetActiveTeamGeneralData;
+      els.clearAllBtn.onclick = clearActiveTeamMissions;
+      els.addTeamBtn.onclick = addTeam;
+      if (els.heroAddTeamBtn) els.heroAddTeamBtn.onclick = addTeam;
+      els.backFromPrintBtn.onclick = closePrintScreen;
+      els.printBtn.onclick = function () { window.print(); };
+
+      function init() {
+        state.teams = [];
+        state.activeTeamIndex = -1;
+        applyFormDisabled(true);
+        renderTabs();
+        loadTeamToForm();
+        runTests();
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
