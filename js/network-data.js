@@ -1,12 +1,12 @@
 (function () {
   'use strict';
 
-  var CACHE_KEY = 'amitools-network-catalog-v2';
+  var CACHE_KEY = 'amitools-network-catalog-v3';
   var TABLE_NAME = 'network_catalog';
   var ROW_ID = 'main';
 
   var DEFAULT_CATALOG = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'Reseau AMITOOLS',
     serviceSlots: [
       { id: 'M', label: 'M · 7h - 14h', start: '07:00', end: '14:00', sortOrder: 10, active: true },
@@ -24,6 +24,56 @@
       boarding: ['SJG', 'REP', 'STAa ( JFK )', 'STAb ( CVI )', 'GARa ( JFK )', 'GARb ( CVI )', 'Navette Stade'],
       sncf: ['Dinan', 'Messac', 'Vitré']
     },
+    informationTiles: [
+      {
+        id: 'agencies', kind: 'agencies', icon: 'A', title: 'Horaires agences STAR', pageTitle: 'Horaires agences STAR', active: true, sortOrder: 10,
+        footnote: '* vente de titres combinés STAR + BreizhGo mensuels uniquement — pas de vente de titre BreizhGo seul.',
+        items: [
+          { name: 'Sainte-Anne', subtitle: 'Safe place Umay', badge: 'STAR', address: 'Place Sainte-Anne, Rennes', hours: 'Du lundi au samedi de 10h à 19h', services: 'STAR • STAR + BreizhGo*' },
+          { name: 'Henri Fréville', subtitle: '', badge: 'STAR', address: 'Avenue Henri Fréville, Rennes', hours: 'Du lundi au vendredi, de 7h30 à 12h\nOuvert uniquement 5 jours en début et fin de mois', services: 'STAR • STAR + BreizhGo*' },
+          { name: 'Villejean-Université', subtitle: '', badge: 'STAR', address: 'Avenue de la Bataille Flandres-Dunkerque, Rennes', hours: 'Du lundi au vendredi, de 7h30 à 12h\nOuvert uniquement 5 jours en début et fin de mois', services: 'STAR' },
+          { name: 'Beaulieu-Université', subtitle: '', badge: 'STAR', address: 'Avenue du Professeur Charles Foulon, Rennes', hours: 'Agence ouverte uniquement en période de rentrée scolaire\n(entre mi-août et mi-septembre)', services: 'STAR' },
+          { name: 'Maison du Vélo', subtitle: '', badge: 'Vélo', address: '15 bis Place de la Gare, Rennes', hours: 'Du lundi au samedi, de 9h à 18h', services: 'Pas de vente de titre STAR • Dédié uniquement aux locations vélos' },
+          { name: 'Espace KorriGo', subtitle: 'Safe place Umay', badge: 'KorriGo', address: 'Gare SNCF de Rennes', hours: 'Du lundi au samedi, de 7h à 20h\nDimanche et jours fériés, de 13h à 20h (niveau 0 uniquement)', services: 'STAR • BreizhGo (cars et TER)' }
+        ]
+      },
+      {
+        id: 'metros', kind: 'metros', icon: 'M', title: 'Horaires métro', pageTitle: 'Horaires métro', active: true, sortOrder: 20,
+        note: 'Le métro lignes A et B ferme ses portes tous les jours à 00h45. Pendant l’été, il n’y a pas de prolongation du service en fin de semaine.',
+        lines: [
+          { code: 'A', name: 'Ligne A', color: '#d93a3a', summary: 'Circulation tous les jours de l’année, excepté le 1er mai (Fête du travail).', access: 'Accessible aux personnes à mobilité réduite.', details: [
+            { label: 'Semaine hors période estivale', value: 'Du lundi au mercredi : 5h15 → 0h25\nLes jeudis et vendredis : 5h15 → 1h25' },
+            { label: 'Week-end hors période estivale', value: 'Les samedis : 5h15 → 1h25\nLes dimanches et jours fériés : 7h10 → 0h25' },
+            { label: 'Fréquence', value: 'Un métro toutes les 1 min 21 à 4 min, du lundi au vendredi, entre 6h et minuit.' }
+          ] },
+          { code: 'B', name: 'Ligne B', color: '#22a55a', summary: 'Circulation tous les jours de l’année, excepté le 1er mai (Fête du travail).', access: 'Accessible aux personnes à mobilité réduite.', details: [
+            { label: 'Semaine hors période estivale', value: 'Du lundi au mercredi : 5h10 → 0h20\nLes jeudis et vendredis : 5h10 → 1h20' },
+            { label: 'Week-end hors période estivale', value: 'Les samedis : 5h10 → 1h20\nLes dimanches et jours fériés : 7h15 → 0h20' },
+            { label: 'Fréquence', value: 'Un métro toutes les 2 min 05 à 5 min environ toute la journée.' }
+          ] }
+        ]
+      },
+      {
+        id: 'welcome', kind: 'welcome', icon: 'P', title: 'Horaires plateaux d’accueil', pageTitle: 'Horaires plateaux d’accueil', active: true, sortOrder: 30,
+        caption: 'Les créneaux en vert correspondent aux accueils sur rendez-vous.',
+        days: [
+          { day: 'Lundi', morning: '9h30–12h30\n(sur RDV)', appointment: true, afternoon: '14h–17h' },
+          { day: 'Mardi', morning: 'Fermé', appointment: false, afternoon: '14h–17h' },
+          { day: 'Mercredi', morning: '9h30–12h30\n(sur RDV)', appointment: true, afternoon: '14h–17h' },
+          { day: 'Jeudi', morning: 'Fermé', appointment: false, afternoon: '14h–17h' },
+          { day: 'Vendredi', morning: '9h30–12h30\n(sur RDV)', appointment: true, afternoon: '14h–17h' }
+        ],
+        contacts: [
+          { icon: '📅', text: 'Du lundi au vendredi' },
+          { icon: '📍', text: '53 avenue de Pays-Bas\n35200 Rennes' },
+          { icon: '✉️', text: 'rennes@pimmsmediation.fr' },
+          { icon: '📞', text: '02.99.32.02.58' }
+        ]
+      },
+      { id: 'zones', kind: 'zones', icon: 'Z', title: 'Zones réseau STAR', pageTitle: 'Zones réseau STAR', active: true, sortOrder: 40, intro: 'Cartographie des zones du réseau STAR. Sélection rapide des principales lignes par secteur.' },
+      { id: 'custom1', kind: 'custom', icon: '+', title: 'Nouvelle info', pageTitle: 'Nouvelle information', active: false, sortOrder: 50, intro: '', blocks: [] },
+      { id: 'custom2', kind: 'custom', icon: '+', title: 'Nouvelle info', pageTitle: 'Nouvelle information', active: false, sortOrder: 60, intro: '', blocks: [] }
+    ],
     metroLines: [
       {
         id: 'metroA', code: 'A', name: 'Métro A', color: '#d93a3a', active: true, sortOrder: 10,
@@ -91,7 +141,24 @@
     }
     next.places.boarding = Array.isArray(next.places.boarding) ? uniqueList(next.places.boarding) : clone(DEFAULT_CATALOG.places.boarding);
     next.places.sncf = Array.isArray(next.places.sncf) ? uniqueList(next.places.sncf) : clone(DEFAULT_CATALOG.places.sncf);
-    next.schemaVersion = 2;
+    if (sourceVersion < 3 || !Array.isArray(next.informationTiles)) next.informationTiles = clone(DEFAULT_CATALOG.informationTiles);
+    next.informationTiles = next.informationTiles.map(function (tile, index) {
+      var normalized = tile && typeof tile === 'object' ? tile : {};
+      normalized.id = String(normalized.id || ('info-' + index));
+      normalized.kind = String(normalized.kind || 'custom');
+      normalized.icon = String(normalized.icon || '+').slice(0, 2);
+      normalized.title = String(normalized.title || 'Information');
+      normalized.pageTitle = String(normalized.pageTitle || normalized.title);
+      normalized.active = normalized.active !== false;
+      normalized.sortOrder = Number(normalized.sortOrder || ((index + 1) * 10));
+      if (!Array.isArray(normalized.items)) normalized.items = [];
+      if (!Array.isArray(normalized.lines)) normalized.lines = [];
+      if (!Array.isArray(normalized.days)) normalized.days = [];
+      if (!Array.isArray(normalized.contacts)) normalized.contacts = [];
+      if (!Array.isArray(normalized.blocks)) normalized.blocks = [];
+      return normalized;
+    });
+    next.schemaVersion = 3;
     return next;
   }
 
