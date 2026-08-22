@@ -149,9 +149,9 @@
 
     <section class="panel">
       <div class="sectionHead">
-        <div><h2>Tuiles d’information</h2><div class="help">Modifie les tuiles affichées sur l’accueil mobile et le contenu de leurs pages. Tu peux aussi activer les deux emplacements libres.</div></div>
+        <div><h2>Tuiles d’information</h2><div class="help">Ouvre l’aperçu de l’application pour ajouter, modifier, déplacer ou supprimer les tuiles.</div></div>
+        <a class="btn" href="tiles-admin.html" style="text-decoration:none;">Modifier les tuiles</a>
       </div>
-      <div id="informationTiles" class="tileEditors"></div>
     </section>
 
     <section class="panel">
@@ -455,7 +455,7 @@
           els.informationTiles.appendChild(editor);
         });
       }
-      function renderAll() { renderStatus(); renderLogin(); renderInformationTiles(); renderPlaces(); renderBus(); renderMetro(); renderSlots(); }
+      function renderAll() { renderStatus(); renderLogin(); renderPlaces(); renderBus(); renderMetro(); renderSlots(); }
 
       els.addBusBtn.addEventListener('click', function () {
         state.catalog.busLines.push({ id: uid('bus'), code: 'NOUV', name: 'Nouvelle ligne', active: true, sortOrder: (state.catalog.busLines.length + 1) * 10, zones: [], stations: [] });
