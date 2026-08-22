@@ -134,6 +134,13 @@
 
     <section class="panel">
       <div class="sectionHead">
+        <div><h2>Stations PAP et Pôle échange</h2><div class="help">Ces deux listes alimentent directement les missions des versions référent et mobile. Sépare les stations par des virgules.</div></div>
+      </div>
+      <div id="missionPlaces" class="cards"></div>
+    </section>
+
+    <section class="panel">
+      <div class="sectionHead">
         <div><h2>Lignes de bus</h2><div class="help">Ajoute une ligne, ses zones, ses terminus et, si besoin, la liste de ses stations.</div></div>
         <button id="addBusBtn" class="btn secondary" type="button">+ Nouvelle ligne</button>
       </div>
@@ -162,12 +169,28 @@
         statusDot: $('statusDot'), statusMain: $('statusMain'), statusMeta: $('statusMeta'), configNotice: $('configNotice'), message: $('message'),
         loginForm: $('loginForm'), logoutBtn: $('logoutBtn'), loggedUser: $('loggedUser'), email: $('email'), password: $('password'),
         saveBtn: $('saveBtn'), restoreBtn: $('restoreBtn'), exportBtn: $('exportBtn'), importBtn: $('importBtn'), importFile: $('importFile'), dirtyBadge: $('dirtyBadge'),
-        addBusBtn: $('addBusBtn'), busCards: $('busCards'), metroGroups: $('metroGroups'), serviceSlots: $('serviceSlots')
+        addBusBtn: $('addBusBtn'), busCards: $('busCards'), metroGroups: $('metroGroups'), serviceSlots: $('serviceSlots'), missionPlaces: $('missionPlaces')
       };
 
       function uid(prefix) { return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7); }
       function clone(value) { return JSON.parse(JSON.stringify(value)); }
       function splitList(value) { return String(value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); }
+      function uniqueList(values) {
+        var seen = {};
+        return (values || []).filter(function (value) {
+          var key = String(value || '').trim().toLocaleLowerCase('fr');
+          if (!key || seen[key]) return false;
+          seen[key] = true;
+          return true;
+        });
+      }
+      function collectMetroStations() {
+        var values = [];
+        (state.catalog.metroLines || []).forEach(function (line) {
+          (line.sectors || []).forEach(function (sector) { values = values.concat(sector.stations || []); });
+        });
+        return uniqueList(values);
+      }
       function setMessage(text, type) {
         els.message.textContent = text || '';
         els.message.className = 'notice' + (type ? ' ' + type : '') + (text ? '' : ' hidden');
@@ -246,6 +269,31 @@
           card.appendChild(top); card.appendChild(grid); els.busCards.appendChild(card);
         });
       }
+      function renderPlaces() {
+        els.missionPlaces.innerHTML = '';
+        state.catalog.places = state.catalog.places || {};
+        [
+          { key: 'pap', title: 'Stations pour les missions PAP' },
+          { key: 'exchange', title: 'Stations pour les missions Pôle échange' }
+        ].forEach(function (definition) {
+          if (!Array.isArray(state.catalog.places[definition.key])) state.catalog.places[definition.key] = [];
+          var card = document.createElement('article'); card.className = 'card';
+          var top = document.createElement('div'); top.className = 'cardTop';
+          var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = definition.title;
+          top.appendChild(badge);
+          top.appendChild(makeButton('Ajouter les stations métro', 'btn secondary small', function () {
+            state.catalog.places[definition.key] = uniqueList(state.catalog.places[definition.key].concat(collectMetroStations()));
+            markDirty(); renderPlaces();
+          }));
+          var grid = document.createElement('div'); grid.className = 'fieldGrid';
+          var stations = makeInput('Stations · séparées par des virgules', state.catalog.places[definition.key].join(', '), function (value) {
+            state.catalog.places[definition.key] = uniqueList(splitList(value));
+          }, { textarea: true });
+          stations.classList.add('full'); grid.appendChild(stations);
+          var help = document.createElement('div'); help.className = 'help'; help.textContent = state.catalog.places[definition.key].length + ' station(s) enregistrée(s).';
+          card.appendChild(top); card.appendChild(grid); card.appendChild(help); els.missionPlaces.appendChild(card);
+        });
+      }
       function renderMetro() {
         els.metroGroups.innerHTML = '';
         state.catalog.metroLines.forEach(function (line) {
@@ -280,7 +328,7 @@
           els.serviceSlots.appendChild(row);
         });
       }
-      function renderAll() { renderStatus(); renderLogin(); renderBus(); renderMetro(); renderSlots(); }
+      function renderAll() { renderStatus(); renderLogin(); renderPlaces(); renderBus(); renderMetro(); renderSlots(); }
 
       els.addBusBtn.addEventListener('click', function () {
         state.catalog.busLines.push({ id: uid('bus'), code: 'NOUV', name: 'Nouvelle ligne', active: true, sortOrder: (state.catalog.busLines.length + 1) * 10, zones: [], stations: [] });

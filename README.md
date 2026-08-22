@@ -4,7 +4,7 @@ AMITOOLS contient trois interfaces partageant le meme catalogue reseau :
 
 - `index.html` : application mobile des employes ;
 - `referent.html` : preparation des prises de service ;
-- `admin.html` : administration des lignes, zones, stations, secteurs metro et horaires.
+- `admin.html` : administration des lignes, zones, stations, secteurs metro, lieux PAP et Pole echange, et horaires.
 
 ## Source de donnees
 

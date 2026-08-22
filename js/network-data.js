@@ -6,7 +6,7 @@
   var ROW_ID = 'main';
 
   var DEFAULT_CATALOG = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'Reseau AMITOOLS',
     serviceSlots: [
       { id: 'M', label: 'M · 7h - 14h', start: '07:00', end: '14:00', sortOrder: 10, active: true },
@@ -19,7 +19,8 @@
     missionTypes: ['Cabotage', 'Embarquement', 'PAP', 'Pôle échange', 'Médiation sociale', 'Autre'],
     otherMissionTypes: ['RDS', 'TAC', 'STAR me guide', 'SNCF'],
     places: {
-      pap: ['REP', 'POT', 'TRI', 'VU', 'HFR', 'GAR', 'STAa', 'STAb', 'IJC', 'CLE', 'SGE'],
+      pap: ['PON', 'ANF', 'VU', 'JFK', 'REP', 'CDG', 'GAR', 'STAa', 'HFR', 'GCL', 'JCA', 'POT', 'BLO', 'TRI', 'ITA', 'CLE', 'LCO', 'SJG', 'GARB', 'COL', 'SGE', 'STAb', 'GCH', 'JFE', 'ATA', 'BUN', 'IJC'],
+      exchange: ['PON', 'ANF', 'VU', 'JFK', 'REP', 'CDG', 'GAR', 'STAa', 'HFR', 'GCL', 'JCA', 'POT', 'BLO', 'TRI', 'ITA', 'CLE', 'LCO', 'SJG', 'GARB', 'COL', 'SGE', 'STAb', 'GCH', 'JFE', 'ATA', 'BUN', 'IJC'],
       boarding: ['SJG', 'REP', 'STAa ( JFK )', 'STAb ( CVI )', 'GARa ( JFK )', 'GARb ( CVI )', 'Navette Stade'],
       sncf: ['Dinan', 'Messac', 'Vitré']
     },
@@ -67,6 +68,33 @@
     return JSON.parse(JSON.stringify(value));
   }
 
+  function uniqueList(values) {
+    var seen = {};
+    return (values || []).map(function (value) { return String(value || '').trim(); }).filter(function (value) {
+      var key = value.toLocaleLowerCase('fr');
+      if (!value || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  function normalizeCatalog(value) {
+    var next = clone(value || DEFAULT_CATALOG);
+    var sourceVersion = Number(next.schemaVersion || 1);
+    next.places = next.places && typeof next.places === 'object' ? next.places : {};
+    if (sourceVersion < 2) {
+      next.places.pap = uniqueList((next.places.pap || []).concat(DEFAULT_CATALOG.places.pap));
+      next.places.exchange = uniqueList((next.places.exchange || []).concat(DEFAULT_CATALOG.places.exchange));
+    } else {
+      next.places.pap = Array.isArray(next.places.pap) ? uniqueList(next.places.pap) : clone(DEFAULT_CATALOG.places.pap);
+      next.places.exchange = Array.isArray(next.places.exchange) ? uniqueList(next.places.exchange) : clone(DEFAULT_CATALOG.places.exchange);
+    }
+    next.places.boarding = Array.isArray(next.places.boarding) ? uniqueList(next.places.boarding) : clone(DEFAULT_CATALOG.places.boarding);
+    next.places.sncf = Array.isArray(next.places.sncf) ? uniqueList(next.places.sncf) : clone(DEFAULT_CATALOG.places.sncf);
+    next.schemaVersion = 2;
+    return next;
+  }
+
   function byOrder(a, b) {
     return Number(a.sortOrder || 0) - Number(b.sortOrder || 0) || String(a.code || a.label || '').localeCompare(String(b.code || b.label || ''), 'fr');
   }
@@ -78,7 +106,7 @@
   function readCache() {
     try {
       var value = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-      return validCatalog(value) ? value : null;
+      return validCatalog(value) ? normalizeCatalog(value) : null;
     } catch (_) {
       return null;
     }
@@ -88,8 +116,9 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(value)); } catch (_) {}
   }
 
-  var catalog = readCache() || clone(DEFAULT_CATALOG);
-  var metadata = { source: readCache() ? 'cache' : 'local', revision: 0, updatedAt: null, error: null };
+  var cachedCatalog = readCache();
+  var catalog = cachedCatalog || normalizeCatalog(DEFAULT_CATALOG);
+  var metadata = { source: cachedCatalog ? 'cache' : 'local', revision: 0, updatedAt: null, error: null };
   var client = null;
   var channel = null;
   var readyResolve;
@@ -123,7 +152,7 @@
 
   function setCatalog(next, nextMetadata) {
     if (!validCatalog(next)) throw new Error('Catalogue reseau invalide');
-    catalog = clone(next);
+    catalog = normalizeCatalog(next);
     metadata = Object.assign({}, metadata, nextMetadata || {});
     writeCache(catalog);
     emit();
@@ -167,6 +196,7 @@
   async function saveCatalog(next) {
     if (!client) throw new Error('La base en ligne n\'est pas configuree.');
     if (!validCatalog(next)) throw new Error('Catalogue reseau invalide.');
+    next = normalizeCatalog(next);
     var userResponse = await client.auth.getUser();
     if (userResponse.error || !userResponse.data.user) throw new Error('Connexion referent requise.');
     var response = await client.from(TABLE_NAME).upsert({ id: ROW_ID, data: next, updated_by: userResponse.data.user.id }, { onConflict: 'id' }).select('data, revision, updated_at').single();
@@ -196,7 +226,7 @@
     ready: ready,
     initialize: loadRemote,
     getCatalog: function () { return clone(catalog); },
-    getDefaultCatalog: function () { return clone(DEFAULT_CATALOG); },
+    getDefaultCatalog: function () { return normalizeCatalog(DEFAULT_CATALOG); },
     getMetadata: function () { return Object.assign({}, metadata); },
     derive: derive,
     saveCatalog: saveCatalog,

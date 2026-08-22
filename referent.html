@@ -899,7 +899,8 @@
 
   <script>
     (function () {
-      var sharedNetworkMaps = window.AMIToolsData.derive(window.AMIToolsData.getCatalog());
+      var sharedCatalog = window.AMIToolsData.getCatalog();
+      var sharedNetworkMaps = window.AMIToolsData.derive(sharedCatalog);
       var SLOT_MAP = sharedNetworkMaps.slotMap;
       var CABOTAGE_MAP = sharedNetworkMaps.cabotageMap;
       var BUS_ZONE_MAP = sharedNetworkMaps.busZoneMap;
@@ -964,7 +965,14 @@
         if (Array.from(select.options).some(function (option) { return option.value === previous; })) select.value = previous;
       }
 
+      function fillMissionPlaceOptions(type) {
+        var placeKey = type === 'Pôle échange' ? 'exchange' : 'pap';
+        var places = sharedCatalog.places && sharedCatalog.places[placeKey] || [];
+        replaceOptions(els.missionPapSelect, places.map(function (value) { return { value: value, label: value }; }), 'Choisir une station');
+      }
+
       function applySharedCatalog(catalog) {
+        sharedCatalog = catalog;
         sharedNetworkMaps = window.AMIToolsData.derive(catalog);
         SLOT_MAP = sharedNetworkMaps.slotMap;
         CABOTAGE_MAP = sharedNetworkMaps.cabotageMap;
@@ -974,7 +982,7 @@
         replaceOptions(els.serviceSlot, slots, 'Choisir');
         replaceOptions(els.busLineSelect, busLines, 'Choisir');
         replaceOptions(els.busLine2Select, busLines, 'Aucune');
-        replaceOptions(els.missionPapSelect, (catalog.places && catalog.places.pap || []).map(function (x) { return { value: x, label: x }; }), 'Choisir');
+        fillMissionPlaceOptions(els.missionType.value);
         replaceOptions(els.missionBoardingSelect, (catalog.places && catalog.places.boarding || []).map(function (x) { return { value: x, label: x }; }), 'Choisir');
         replaceOptions(els.missionPlaceSelect, (catalog.places && catalog.places.sncf || []).map(function (x) { return { value: x, label: x }; }), 'Choisir');
         fillCabotageSectorOptions();
@@ -1265,6 +1273,7 @@
         if (isPap) {
           els.missionLineField.classList.add('hidden');
           els.missionPlace.classList.add('hidden');
+          fillMissionPlaceOptions(type);
           els.missionPapSelect.classList.remove('hidden');
           return;
         }
