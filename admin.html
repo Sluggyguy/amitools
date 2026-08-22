@@ -68,13 +68,28 @@
     .slots { display: grid; gap: 9px; }
     .slot { display: grid; grid-template-columns: 90px minmax(210px, 1fr) 130px 130px auto; gap: 9px; align-items: end; }
     .dirty { color: #9a5c00; background: #fff3d6; border: 1px solid #f1d18a; padding: 7px 10px; border-radius: 999px; font-size: 12px; font-weight: 900; }
+    .tileEditors { display: grid; gap: 14px; }
+    .tileEditor { border: 1px solid var(--line); border-radius: 18px; padding: 15px; background: #fbfcff; }
+    .tileEditorTop { display: flex; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .tileEditorTitle { display: flex; gap: 10px; align-items: center; font-weight: 950; }
+    .tilePreview { display: inline-flex; width: 42px; height: 42px; align-items: center; justify-content: center; border-radius: 13px; background: var(--blue-soft); color: var(--blue); font-size: 20px; }
+    .tileCommon { display: grid; grid-template-columns: 90px minmax(180px, 1fr) minmax(180px, 1fr) 100px auto; gap: 10px; align-items: end; }
+    .subEditor { margin-top: 14px; padding-top: 14px; border-top: 1px dashed #cad3e3; }
+    .subEditorHead { display: flex; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .editorRows { display: grid; gap: 9px; }
+    .editorRow { display: grid; grid-template-columns: repeat(2, minmax(150px, 1fr)) auto; gap: 9px; align-items: end; padding: 11px; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+    .editorRow.wide { grid-template-columns: repeat(3, minmax(140px, 1fr)) auto; }
+    .editorRow.agency { grid-template-columns: repeat(3, minmax(130px, 1fr)); }
+    .editorRow.agency .rowActions { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+    .subTitle { font-size: 15px; font-weight: 950; }
     .fileInput { display: none; }
     @media (max-width: 760px) {
       .shell { padding: 14px; }
       .topbar, .sectionHead { flex-direction: column; }
       .actions { width: 100%; }
-      .loginGrid, .fieldGrid, .metroHead, .sector, .slot { grid-template-columns: 1fr; }
+      .loginGrid, .fieldGrid, .metroHead, .sector, .slot, .tileCommon, .editorRow, .editorRow.wide, .editorRow.agency { grid-template-columns: 1fr; }
       .full { grid-column: auto; }
+      .editorRow.agency .rowActions { grid-column: auto; }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -134,6 +149,13 @@
 
     <section class="panel">
       <div class="sectionHead">
+        <div><h2>Tuiles d’information</h2><div class="help">Modifie les tuiles affichées sur l’accueil mobile et le contenu de leurs pages. Tu peux aussi activer les deux emplacements libres.</div></div>
+      </div>
+      <div id="informationTiles" class="tileEditors"></div>
+    </section>
+
+    <section class="panel">
+      <div class="sectionHead">
         <div><h2>Stations PAP et Pôle échange</h2><div class="help">Ces deux listes alimentent directement les missions des versions référent et mobile. Sépare les stations par des virgules.</div></div>
       </div>
       <div id="missionPlaces" class="cards"></div>
@@ -169,7 +191,7 @@
         statusDot: $('statusDot'), statusMain: $('statusMain'), statusMeta: $('statusMeta'), configNotice: $('configNotice'), message: $('message'),
         loginForm: $('loginForm'), logoutBtn: $('logoutBtn'), loggedUser: $('loggedUser'), email: $('email'), password: $('password'),
         saveBtn: $('saveBtn'), restoreBtn: $('restoreBtn'), exportBtn: $('exportBtn'), importBtn: $('importBtn'), importFile: $('importFile'), dirtyBadge: $('dirtyBadge'),
-        addBusBtn: $('addBusBtn'), busCards: $('busCards'), metroGroups: $('metroGroups'), serviceSlots: $('serviceSlots'), missionPlaces: $('missionPlaces')
+        addBusBtn: $('addBusBtn'), busCards: $('busCards'), metroGroups: $('metroGroups'), serviceSlots: $('serviceSlots'), missionPlaces: $('missionPlaces'), informationTiles: $('informationTiles')
       };
 
       function uid(prefix) { return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7); }
@@ -327,7 +349,113 @@
           els.serviceSlots.appendChild(row);
         });
       }
-      function renderAll() { renderStatus(); renderLogin(); renderPlaces(); renderBus(); renderMetro(); renderSlots(); }
+      function makeSubEditor(title, addLabel, onAdd) {
+        var section = document.createElement('div'); section.className = 'subEditor';
+        var head = document.createElement('div'); head.className = 'subEditorHead';
+        var heading = document.createElement('div'); heading.className = 'subTitle'; heading.textContent = title;
+        head.appendChild(heading);
+        if (onAdd) head.appendChild(makeButton(addLabel, 'btn secondary small', onAdd));
+        section.appendChild(head);
+        var rows = document.createElement('div'); rows.className = 'editorRows'; section.appendChild(rows);
+        return { section: section, rows: rows };
+      }
+      function renderInformationTiles() {
+        els.informationTiles.innerHTML = '';
+        state.catalog.informationTiles = Array.isArray(state.catalog.informationTiles) ? state.catalog.informationTiles : [];
+        state.catalog.informationTiles.slice().sort(function (a, b) { return Number(a.sortOrder || 0) - Number(b.sortOrder || 0); }).forEach(function (tile) {
+          tile.items = Array.isArray(tile.items) ? tile.items : [];
+          tile.lines = Array.isArray(tile.lines) ? tile.lines : [];
+          tile.days = Array.isArray(tile.days) ? tile.days : [];
+          tile.contacts = Array.isArray(tile.contacts) ? tile.contacts : [];
+          tile.blocks = Array.isArray(tile.blocks) ? tile.blocks : [];
+          var editor = document.createElement('article'); editor.className = 'tileEditor';
+          var top = document.createElement('div'); top.className = 'tileEditorTop';
+          var title = document.createElement('div'); title.className = 'tileEditorTitle';
+          var preview = document.createElement('span'); preview.className = 'tilePreview'; preview.textContent = tile.icon || '+';
+          var titleText = document.createElement('span'); titleText.textContent = tile.title || 'Information';
+          title.appendChild(preview); title.appendChild(titleText); top.appendChild(title);
+          var type = document.createElement('span'); type.className = 'help'; type.textContent = tile.kind === 'custom' ? 'Page personnalisée' : 'Page structurée'; top.appendChild(type);
+          editor.appendChild(top);
+
+          var common = document.createElement('div'); common.className = 'tileCommon';
+          common.appendChild(makeInput('Icône', tile.icon, function (v) { tile.icon = v.slice(0, 2); preview.textContent = tile.icon || '+'; }));
+          common.appendChild(makeInput('Titre de la tuile', tile.title, function (v) { tile.title = v; titleText.textContent = v || 'Information'; }));
+          common.appendChild(makeInput('Titre de la page', tile.pageTitle, function (v) { tile.pageTitle = v; }));
+          common.appendChild(makeInput('Ordre', tile.sortOrder, function (v) { tile.sortOrder = Number(v) || 0; }, { type: 'number' }));
+          common.appendChild(makeCheck('Tuile visible', tile.active, function (v) { tile.active = v; }));
+          editor.appendChild(common);
+
+          if (tile.kind === 'agencies') {
+            var footnote = makeInput('Note en bas de page', tile.footnote, function (v) { tile.footnote = v; }, { textarea: true }); footnote.classList.add('subEditor'); editor.appendChild(footnote);
+            var agencies = makeSubEditor('Lieux et agences', '+ Ajouter un lieu', function () { tile.items.push({ name: 'Nouveau lieu', subtitle: '', badge: 'STAR', address: '', hours: '', services: '' }); markDirty(); renderInformationTiles(); });
+            (tile.items || []).forEach(function (item, index) {
+              var row = document.createElement('div'); row.className = 'editorRow agency';
+              row.appendChild(makeInput('Nom', item.name, function (v) { item.name = v; }));
+              row.appendChild(makeInput('Sous-titre', item.subtitle, function (v) { item.subtitle = v; }));
+              row.appendChild(makeInput('Badge', item.badge, function (v) { item.badge = v; }));
+              row.appendChild(makeInput('Adresse', item.address, function (v) { item.address = v; }, { textarea: true }));
+              row.appendChild(makeInput('Horaires', item.hours, function (v) { item.hours = v; }, { textarea: true }));
+              row.appendChild(makeInput('Services', item.services, function (v) { item.services = v; }, { textarea: true }));
+              var actions = document.createElement('div'); actions.className = 'rowActions'; actions.appendChild(makeButton('Supprimer', 'btn danger small', function () { tile.items.splice(index, 1); markDirty(); renderInformationTiles(); })); row.appendChild(actions);
+              agencies.rows.appendChild(row);
+            }); editor.appendChild(agencies.section);
+          } else if (tile.kind === 'metros') {
+            var note = makeInput('Message d’introduction', tile.note, function (v) { tile.note = v; }, { textarea: true }); note.classList.add('subEditor'); editor.appendChild(note);
+            var metroLines = makeSubEditor('Lignes de métro', '+ Ajouter une ligne', function () { tile.lines.push({ code: '', name: 'Nouvelle ligne', color: '#3157d5', summary: '', access: '', details: [] }); markDirty(); renderInformationTiles(); });
+            (tile.lines || []).forEach(function (line, lineIndex) {
+              line.details = Array.isArray(line.details) ? line.details : [];
+              var lineBox = document.createElement('div'); lineBox.className = 'card';
+              var lineGrid = document.createElement('div'); lineGrid.className = 'fieldGrid';
+              lineGrid.appendChild(makeInput('Code', line.code, function (v) { line.code = v.toUpperCase(); }));
+              lineGrid.appendChild(makeInput('Nom', line.name, function (v) { line.name = v; }));
+              lineGrid.appendChild(makeInput('Couleur', line.color, function (v) { line.color = v; }, { type: 'color' }));
+              lineGrid.appendChild(makeButton('Supprimer la ligne', 'btn danger small', function () { tile.lines.splice(lineIndex, 1); markDirty(); renderInformationTiles(); }));
+              var summary = makeInput('Résumé', line.summary, function (v) { line.summary = v; }, { textarea: true }); summary.classList.add('full'); lineGrid.appendChild(summary);
+              var access = makeInput('Accessibilité', line.access, function (v) { line.access = v; }, { textarea: true }); access.classList.add('full'); lineGrid.appendChild(access); lineBox.appendChild(lineGrid);
+              var details = makeSubEditor('Détails et horaires', '+ Ajouter un détail', function () { line.details.push({ label: 'Nouvel horaire', value: '' }); markDirty(); renderInformationTiles(); });
+              (line.details || []).forEach(function (detail, detailIndex) {
+                var row = document.createElement('div'); row.className = 'editorRow';
+                row.appendChild(makeInput('Libellé', detail.label, function (v) { detail.label = v; }));
+                row.appendChild(makeInput('Valeur', detail.value, function (v) { detail.value = v; }, { textarea: true }));
+                row.appendChild(makeButton('Supprimer', 'btn danger small', function () { line.details.splice(detailIndex, 1); markDirty(); renderInformationTiles(); })); details.rows.appendChild(row);
+              }); lineBox.appendChild(details.section); metroLines.rows.appendChild(lineBox);
+            }); editor.appendChild(metroLines.section);
+          } else if (tile.kind === 'welcome') {
+            var caption = makeInput('Légende', tile.caption, function (v) { tile.caption = v; }, { textarea: true }); caption.classList.add('subEditor'); editor.appendChild(caption);
+            var days = makeSubEditor('Horaires par jour', '+ Ajouter un jour', function () { tile.days.push({ day: 'Nouveau jour', morning: '', appointment: false, afternoon: '' }); markDirty(); renderInformationTiles(); });
+            (tile.days || []).forEach(function (day, index) {
+              var row = document.createElement('div'); row.className = 'editorRow wide';
+              row.appendChild(makeInput('Jour', day.day, function (v) { day.day = v; }));
+              row.appendChild(makeInput('Matin', day.morning, function (v) { day.morning = v; }, { textarea: true }));
+              var afternoonField = document.createElement('div');
+              afternoonField.appendChild(makeInput('Après-midi', day.afternoon, function (v) { day.afternoon = v; }, { textarea: true }));
+              afternoonField.appendChild(makeCheck('Matin sur rendez-vous', day.appointment, function (v) { day.appointment = v; })); row.appendChild(afternoonField);
+              row.appendChild(makeButton('Supprimer', 'btn danger small', function () { tile.days.splice(index, 1); markDirty(); renderInformationTiles(); })); days.rows.appendChild(row);
+            }); editor.appendChild(days.section);
+            var contacts = makeSubEditor('Coordonnées', '+ Ajouter une coordonnée', function () { tile.contacts.push({ icon: '•', text: '' }); markDirty(); renderInformationTiles(); });
+            (tile.contacts || []).forEach(function (contact, index) {
+              var row = document.createElement('div'); row.className = 'editorRow';
+              row.appendChild(makeInput('Icône', contact.icon, function (v) { contact.icon = v; }));
+              row.appendChild(makeInput('Texte', contact.text, function (v) { contact.text = v; }, { textarea: true }));
+              row.appendChild(makeButton('Supprimer', 'btn danger small', function () { tile.contacts.splice(index, 1); markDirty(); renderInformationTiles(); })); contacts.rows.appendChild(row);
+            }); editor.appendChild(contacts.section);
+          } else if (tile.kind === 'zones') {
+            var intro = makeInput('Introduction', tile.intro, function (v) { tile.intro = v; }, { textarea: true }); intro.classList.add('subEditor'); editor.appendChild(intro);
+            var zoneHelp = document.createElement('div'); zoneHelp.className = 'help'; zoneHelp.textContent = 'Les cartes de zones restent générées automatiquement à partir des lignes de bus.'; editor.appendChild(zoneHelp);
+          } else {
+            var customIntro = makeInput('Introduction', tile.intro, function (v) { tile.intro = v; }, { textarea: true }); customIntro.classList.add('subEditor'); editor.appendChild(customIntro);
+            var blocks = makeSubEditor('Blocs de contenu', '+ Ajouter un bloc', function () { tile.blocks.push({ title: 'Nouveau bloc', text: '' }); markDirty(); renderInformationTiles(); });
+            (tile.blocks || []).forEach(function (block, index) {
+              var row = document.createElement('div'); row.className = 'editorRow';
+              row.appendChild(makeInput('Titre', block.title, function (v) { block.title = v; }));
+              row.appendChild(makeInput('Texte', block.text, function (v) { block.text = v; }, { textarea: true }));
+              row.appendChild(makeButton('Supprimer', 'btn danger small', function () { tile.blocks.splice(index, 1); markDirty(); renderInformationTiles(); })); blocks.rows.appendChild(row);
+            }); editor.appendChild(blocks.section);
+          }
+          els.informationTiles.appendChild(editor);
+        });
+      }
+      function renderAll() { renderStatus(); renderLogin(); renderInformationTiles(); renderPlaces(); renderBus(); renderMetro(); renderSlots(); }
 
       els.addBusBtn.addEventListener('click', function () {
         state.catalog.busLines.push({ id: uid('bus'), code: 'NOUV', name: 'Nouvelle ligne', active: true, sortOrder: (state.catalog.busLines.length + 1) * 10, zones: [], stations: [] });

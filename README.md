@@ -4,12 +4,14 @@ AMITOOLS contient trois interfaces partageant le meme catalogue reseau :
 
 - `index.html` : application mobile des employes ;
 - `referent.html` : preparation des prises de service ;
-- `admin.html` : administration des lignes, zones, stations, secteurs metro, lieux PAP et Pole echange, et horaires.
+- `admin.html` : administration des lignes, zones, stations, secteurs metro, lieux PAP et Pole echange, horaires, ainsi que des tuiles d'information de l'application mobile.
 
 ## Source de donnees
 
 Le catalogue initial et le client de synchronisation se trouvent dans `js/network-data.js`.
 Une fois `config.js` renseigne, Supabase devient la source de verite. Les applications conservent automatiquement la derniere revision dans le navigateur afin de continuer a fonctionner hors connexion.
+
+Les quatre pages d'information historiques (agences, metro, plateaux d'accueil et zones) sont modifiables depuis l'administration. Deux emplacements supplementaires permettent de publier des pages personnalisees composees d'une introduction et de blocs de contenu.
 
 ## Mise en service de la base
 

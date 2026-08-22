@@ -643,7 +643,8 @@
     .agenciesWrap,
     .metrosWrap,
     .welcomeWrap,
-    .zonesWrap {
+    .zonesWrap,
+    .customInfoWrap {
       display: flex;
       flex-direction: column;
       gap: 14px;
@@ -656,7 +657,8 @@
     .zoneCard,
     .metroCard,
     .welcomeSchedule,
-    .welcomeInfoCard {
+    .welcomeInfoCard,
+    .customInfoCard {
       background: linear-gradient(180deg,#ffffff 0%, #f3f5fa 100%);
       border: 1px solid rgba(0,0,0,.06);
       border-radius: 22px;
@@ -722,12 +724,33 @@
 
     .agencyVal,
     .metroVal,
-    .zoneLine {
+    .zoneLine,
+    .customInfoText {
       font-size: 13px;
       font-weight: 800;
       line-height: 1.38;
       color: #111;
     }
+
+    .agencyVal,
+    .metroVal,
+    .welcomeText,
+    .customInfoText,
+    .customInfoIntro { white-space: pre-line; }
+
+    .customInfoIntro {
+      background: #f7f8fc;
+      border: 1px solid #e7ebf4;
+      border-radius: 16px;
+      padding: 13px 14px;
+      color: #4c5563;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .customInfoTitle { margin-bottom: 8px; font-size: 17px; font-weight: 1000; }
+    .toolTile[hidden] { display: none !important; }
 
     .agencyFootnote,
     .metroNote,
@@ -1741,14 +1764,14 @@
               </span>
             </button>
 
-            <button class="toolTile infoToolTile" type="button" aria-label="Emplacement libre information 1">
+            <button class="toolTile infoToolTile" id="tileCustom1" type="button" aria-label="Emplacement libre information 1" hidden>
               <div class="tileIcon">+</div>
               <span>
                 <span class="tileLabel">Nouvelle<br>info</span>
               </span>
             </button>
 
-            <button class="toolTile infoToolTile" type="button" aria-label="Emplacement libre information 2">
+            <button class="toolTile infoToolTile" id="tileCustom2" type="button" aria-label="Emplacement libre information 2" hidden>
               <div class="tileIcon">+</div>
               <span>
                 <span class="tileLabel">Nouvelle<br>info</span>
@@ -1763,7 +1786,7 @@
 
     <section class="screen" id="screenAgences">
       <div class="screenHeader">
-        <div class="screenTitle">Horaires agences STAR</div>
+        <div class="screenTitle" id="agenciesPageTitle">Horaires agences STAR</div>
         <button class="btn secondary iconBtn" id="btnBackAgences">Menu</button>
       </div>
       <div class="agenciesWrap">
@@ -1822,7 +1845,7 @@
 
     <section class="screen" id="screenMetros">
       <div class="screenHeader">
-        <div class="screenTitle">Horaires métro</div>
+        <div class="screenTitle" id="metrosPageTitle">Horaires métro</div>
         <button class="btn secondary iconBtn" id="btnBackMetros">Menu</button>
       </div>
       <div class="metrosWrap">
@@ -1854,7 +1877,7 @@
 
     <section class="screen" id="screenAccueil">
       <div class="screenHeader">
-        <div class="screenTitle">Horaires plateaux d’accueil</div>
+        <div class="screenTitle" id="welcomePageTitle">Horaires plateaux d’accueil</div>
         <button class="btn secondary iconBtn" id="btnBackAccueil">Menu</button>
       </div>
       <div class="welcomeWrap">
@@ -1899,7 +1922,7 @@
 
     <section class="screen" id="screenZones">
       <div class="screenHeader">
-        <div class="screenTitle">Zones réseau STAR</div>
+        <div class="screenTitle" id="zonesPageTitle">Zones réseau STAR</div>
         <button class="btn secondary iconBtn" id="btnBackZones">Menu</button>
       </div>
       <div class="zonesWrap">
@@ -1951,6 +1974,15 @@
           </div>
         </div>
       </div>
+      <div class="signature">App made by : Arnaud Thomas</div>
+    </section>
+
+    <section class="screen" id="screenInformation">
+      <div class="screenHeader">
+        <div class="screenTitle" id="informationPageTitle">Information</div>
+        <button class="btn secondary iconBtn" id="btnBackInformation">Menu</button>
+      </div>
+      <div class="customInfoWrap" id="informationPageContent"></div>
       <div class="signature">App made by : Arnaud Thomas</div>
     </section>
 
@@ -2415,6 +2447,7 @@
         metros: $('screenMetros'),
         accueil: $('screenAccueil'),
         zones: $('screenZones'),
+        information: $('screenInformation'),
         priseService: $('screenPriseService'),
         tetris: $('screenTetris')
       };
@@ -2428,11 +2461,14 @@
         tileMetros: $('tileMetros'),
         tileAccueil: $('tileAccueil'),
         tileZones: $('tileZones'),
+        tileCustom1: $('tileCustom1'),
+        tileCustom2: $('tileCustom2'),
         tilePriseService: $('tilePriseService'),
         backAgencesBtn: $('btnBackAgences'),
         backMetrosBtn: $('btnBackMetros'),
         backAccueilBtn: $('btnBackAccueil'),
         backZonesBtn: $('btnBackZones'),
+        backInformationBtn: $('btnBackInformation'),
         backSetupMenuBtn: $('btnBackSetupMenu'),
         backPriseServiceBtn: $('btnBackPriseService'),
         backTetrisBtn: $('btnBackTetris'),
@@ -2709,11 +2745,14 @@
       wire(els.tileMetros, () => show('metros'), 'tileMetros');
       wire(els.tileAccueil, () => show('accueil'), 'tileAccueil');
       wire(els.tileZones, () => show('zones'), 'tileZones');
+      wire(els.tileCustom1, () => { document.dispatchEvent(new CustomEvent('amitools:open-information-tile', { detail: { id: 'custom1' } })); show('information'); }, 'tileCustom1');
+      wire(els.tileCustom2, () => { document.dispatchEvent(new CustomEvent('amitools:open-information-tile', { detail: { id: 'custom2' } })); show('information'); }, 'tileCustom2');
       wire(els.tilePriseService, () => show('priseService'), 'tilePriseService');
       wire(els.backAgencesBtn, () => show('menu'), 'btnBackAgences');
       wire(els.backMetrosBtn, () => show('menu'), 'btnBackMetros');
       wire(els.backAccueilBtn, () => show('menu'), 'btnBackAccueil');
       wire(els.backZonesBtn, () => show('menu'), 'btnBackZones');
+      wire(els.backInformationBtn, () => show('menu'), 'btnBackInformation');
       wire(els.backSetupMenuBtn, () => show('menu'), 'btnBackSetupMenu');
       wire(els.backPriseServiceBtn, () => show('menu'), 'btnBackPriseService');
       wire(els.backTetrisBtn, () => {
@@ -2987,6 +3026,138 @@
         replaceSharedOptions(els.missionPapSelect, places.map((value) => ({ value, label: value })), 'Choisir une station');
       }
 
+      function appendTextElement(parent, className, text, tagName) {
+        const element = document.createElement(tagName || 'div');
+        if (className) element.className = className;
+        element.textContent = text || '';
+        parent.appendChild(element);
+        return element;
+      }
+
+      function renderInformationTiles(catalog) {
+        const domById = {
+          agencies: document.getElementById('tileAgences'),
+          metros: document.getElementById('tileMetros'),
+          welcome: document.getElementById('tileAccueil'),
+          zones: document.getElementById('tileZones'),
+          custom1: document.getElementById('tileCustom1'),
+          custom2: document.getElementById('tileCustom2')
+        };
+        const tiles = (catalog.informationTiles || []).slice().sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+        const grid = domById.agencies && domById.agencies.parentElement;
+        tiles.forEach((tile) => {
+          const button = domById[tile.id];
+          if (!button) return;
+          const icon = button.querySelector('.tileIcon');
+          const label = button.querySelector('.tileLabel');
+          if (icon) icon.textContent = tile.icon || '+';
+          if (label) label.textContent = tile.title || 'Information';
+          button.hidden = tile.active === false;
+          button.setAttribute('aria-label', tile.title || 'Information');
+          if (grid) grid.appendChild(button);
+        });
+      }
+
+      function renderAgenciesInformation(tile) {
+        const wrap = document.querySelector('#screenAgences .agenciesWrap');
+        if (!wrap) return;
+        const title = document.getElementById('agenciesPageTitle');
+        if (title) title.textContent = tile.pageTitle || tile.title || 'Horaires agences STAR';
+        wrap.innerHTML = '';
+        (tile.items || []).forEach((item) => {
+          const card = document.createElement('div'); card.className = 'agencyCard';
+          const top = document.createElement('div'); top.className = 'agencyTop';
+          const name = appendTextElement(top, 'agencyName', item.name);
+          if (item.subtitle) appendTextElement(name, '', item.subtitle, 'span').style.cssText = 'display:block;margin-top:3px;font-size:12px;font-weight:800;color:#6a7380;';
+          appendTextElement(top, 'agencyTag', item.badge || 'INFO'); card.appendChild(top);
+          [['Adresse', item.address], ['Horaires', item.hours], ['Vente de titres', item.services]].forEach(([label, value]) => {
+            if (!value) return;
+            const line = document.createElement('div'); line.className = 'agencyLine';
+            appendTextElement(line, 'agencyKey', label); appendTextElement(line, 'agencyVal', value); card.appendChild(line);
+          });
+          wrap.appendChild(card);
+        });
+        if (tile.footnote) appendTextElement(wrap, 'agencyFootnote', tile.footnote);
+      }
+
+      function renderMetrosInformation(tile) {
+        const wrap = document.querySelector('#screenMetros .metrosWrap');
+        if (!wrap) return;
+        const title = document.getElementById('metrosPageTitle');
+        if (title) title.textContent = tile.pageTitle || tile.title || 'Horaires métro';
+        wrap.innerHTML = '';
+        if (tile.note) appendTextElement(wrap, 'metroNote', tile.note);
+        (tile.lines || []).forEach((line) => {
+          const card = document.createElement('div'); card.className = 'metroCard';
+          const top = document.createElement('div'); top.className = 'metroTop';
+          const lineTitle = document.createElement('div'); lineTitle.className = 'metroTitle';
+          const badge = appendTextElement(lineTitle, 'metroBadge', line.code, 'span'); badge.style.background = line.color || '#111';
+          lineTitle.appendChild(document.createTextNode(' ' + (line.name || ''))); top.appendChild(lineTitle); card.appendChild(top);
+          if (line.summary) { const summary = appendTextElement(card, 'metroVal', line.summary); summary.style.marginBottom = '10px'; }
+          const grid = document.createElement('div'); grid.className = 'metroGrid';
+          (line.details || []).forEach((detail) => {
+            const info = document.createElement('div'); info.className = 'metroInfo';
+            appendTextElement(info, 'metroKey', detail.label); appendTextElement(info, 'metroVal', detail.value); grid.appendChild(info);
+          });
+          card.appendChild(grid);
+          if (line.access) appendTextElement(card, 'metroAccess', line.access);
+          wrap.appendChild(card);
+        });
+      }
+
+      function renderWelcomeInformation(tile) {
+        const wrap = document.querySelector('#screenAccueil .welcomeWrap');
+        if (!wrap) return;
+        const title = document.getElementById('welcomePageTitle');
+        if (title) title.textContent = tile.pageTitle || tile.title || 'Horaires plateaux d’accueil';
+        wrap.innerHTML = '';
+        const schedule = document.createElement('div'); schedule.className = 'welcomeSchedule';
+        const table = document.createElement('table'); table.className = 'welcomeTable'; table.setAttribute('aria-label', tile.pageTitle || 'Horaires des plateaux d’accueil');
+        const thead = document.createElement('thead'); const headRow = document.createElement('tr');
+        (tile.days || []).forEach((day) => appendTextElement(headRow, '', day.day, 'th')); thead.appendChild(headRow); table.appendChild(thead);
+        const tbody = document.createElement('tbody'); const morningRow = document.createElement('tr'); const afternoonRow = document.createElement('tr');
+        (tile.days || []).forEach((day) => {
+          const morning = appendTextElement(morningRow, day.appointment ? 'rdv' : (/fermé/i.test(day.morning || '') ? 'closed' : ''), day.morning, 'td'); morning.style.whiteSpace = 'pre-line';
+          const afternoon = appendTextElement(afternoonRow, /fermé/i.test(day.afternoon || '') ? 'closed' : '', day.afternoon, 'td'); afternoon.style.whiteSpace = 'pre-line';
+        });
+        tbody.appendChild(morningRow); tbody.appendChild(afternoonRow); table.appendChild(tbody); schedule.appendChild(table);
+        if (tile.caption) appendTextElement(schedule, 'welcomeCaption', tile.caption); wrap.appendChild(schedule);
+        if ((tile.contacts || []).length) {
+          const card = document.createElement('div'); card.className = 'welcomeInfoCard'; const grid = document.createElement('div'); grid.className = 'welcomeInfoGrid';
+          tile.contacts.forEach((contact) => { const row = document.createElement('div'); row.className = 'welcomeInfoLine'; appendTextElement(row, 'welcomeIcon', contact.icon); appendTextElement(row, 'welcomeText', contact.text); grid.appendChild(row); });
+          card.appendChild(grid); wrap.appendChild(card);
+        }
+      }
+
+      function renderCustomInformationTile(tileId) {
+        const tile = (sharedCatalog.informationTiles || []).find((entry) => entry.id === tileId);
+        const title = document.getElementById('informationPageTitle');
+        const wrap = document.getElementById('informationPageContent');
+        if (!title || !wrap) return;
+        title.textContent = tile && (tile.pageTitle || tile.title) || 'Information'; wrap.innerHTML = '';
+        if (!tile) return;
+        if (tile.intro) appendTextElement(wrap, 'customInfoIntro', tile.intro);
+        (tile.blocks || []).forEach((block) => {
+          const card = document.createElement('div'); card.className = 'customInfoCard';
+          if (block.title) appendTextElement(card, 'customInfoTitle', block.title);
+          if (block.text) appendTextElement(card, 'customInfoText', block.text); wrap.appendChild(card);
+        });
+      }
+
+      function renderInformationViews(catalog) {
+        renderInformationTiles(catalog);
+        const tiles = catalog.informationTiles || [];
+        const find = (kind) => tiles.find((tile) => tile.kind === kind);
+        const agencies = find('agencies'); if (agencies) renderAgenciesInformation(agencies);
+        const metros = find('metros'); if (metros) renderMetrosInformation(metros);
+        const welcome = find('welcome'); if (welcome) renderWelcomeInformation(welcome);
+        const zones = find('zones');
+        if (zones) {
+          const title = document.getElementById('zonesPageTitle'); if (title) title.textContent = zones.pageTitle || zones.title || 'Zones réseau STAR';
+          const intro = document.querySelector('#screenZones .zoneIntro'); if (intro) intro.textContent = zones.intro || '';
+        }
+      }
+
       function renderSharedNetworkViews(catalog) {
         const zoneWrap = document.querySelector('#screenZones .zonesWrap');
         if (zoneWrap) {
@@ -3053,6 +3224,7 @@
         replaceSharedOptions(els.busLineSelectSecondary, busLines, 'Aucune');
         fillMissionPlaceOptions(els.missionType.value);
         replaceSharedOptions(els.missionBoardingSelect, (catalog.places && catalog.places.boarding || []).map((x) => ({ value: x, label: x })), 'Choisir');
+        renderInformationViews(catalog);
         renderSharedNetworkViews(catalog);
         fillCabotageSectorOptions();
         fillBusZoneOptions();
@@ -3061,6 +3233,7 @@
       document.addEventListener('amitools:catalog-changed', (event) => {
         if (event.detail && event.detail.catalog) applySharedCatalog(event.detail.catalog);
       });
+      document.addEventListener('amitools:open-information-tile', (event) => renderCustomInformationTile(event.detail && event.detail.id));
       applySharedCatalog(window.AMIToolsData.getCatalog());
 
       function assert(cond, msg) { if (!cond) throw new Error(msg); }
