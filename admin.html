@@ -141,7 +141,7 @@
 
     <section class="panel">
       <div class="sectionHead">
-        <div><h2>Lignes de bus</h2><div class="help">Ajoute une ligne, ses zones, ses terminus et, si besoin, la liste de ses stations.</div></div>
+        <div><h2>Lignes de bus</h2><div class="help">Ajoute une ligne, puis renseigne ses zones et ses terminus.</div></div>
         <button id="addBusBtn" class="btn secondary" type="button">+ Nouvelle ligne</button>
       </div>
       <div id="busCards" class="cards"></div>
@@ -263,7 +263,6 @@
           var zones = makeInput('Zones et terminus · une ligne par zone : Z1 | Terminus', zonesText, function (v) {
             line.zones = String(v).split(/\r?\n/).map(function (row) { var parts = row.split('|'); return { id: String(parts.shift() || '').trim().toUpperCase(), label: parts.join('|').trim() }; }).filter(function (z) { return z.id; });
           }, { textarea: true }); zones.classList.add('full'); grid.appendChild(zones);
-          var stations = makeInput('Stations · séparées par des virgules', (line.stations || []).join(', '), function (v) { line.stations = splitList(v); }, { textarea: true }); stations.classList.add('full'); grid.appendChild(stations);
           grid.appendChild(makeInput('Ordre', line.sortOrder || (index + 1) * 10, function (v) { line.sortOrder = Number(v) || 0; }, { type: 'number' }));
           grid.appendChild(makeCheck('Ligne active', line.active, function (v) { line.active = v; }));
           card.appendChild(top); card.appendChild(grid); els.busCards.appendChild(card);
