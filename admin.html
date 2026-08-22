@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Base réseau · AMITOOLS</title>
+  <meta name="theme-color" content="#ffffff" />
+  <style>
+    :root {
+      --bg: #eef2f8;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #68738a;
+      --line: #dfe5ef;
+      --blue: #3157d5;
+      --blue-soft: #eef2ff;
+      --green: #16845b;
+      --red: #b42335;
+      --shadow: 0 18px 45px rgba(27, 39, 74, .09);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: radial-gradient(circle at top left, #f9fbff, var(--bg) 55%); min-height: 100vh; }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    .shell { max-width: 1320px; margin: 0 auto; padding: 24px; }
+    .topbar { display: flex; gap: 18px; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .titleBlock { display: flex; flex-direction: column; gap: 4px; }
+    h1 { margin: 0; font-size: clamp(25px, 4vw, 38px); letter-spacing: -.04em; }
+    .subtitle { color: var(--muted); font-weight: 650; }
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+    .btn { border: 0; border-radius: 13px; padding: 11px 15px; font-weight: 850; background: var(--blue); color: #fff; box-shadow: 0 7px 16px rgba(49,87,213,.18); }
+    .btn.secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
+    .btn.danger { background: #fff2f3; color: var(--red); border: 1px solid #ffd5da; box-shadow: none; }
+    .btn.small { padding: 8px 11px; border-radius: 10px; font-size: 13px; }
+    .btn:disabled { cursor: not-allowed; opacity: .48; }
+    .panel { background: rgba(255,255,255,.95); border: 1px solid var(--line); border-radius: 22px; padding: 18px; box-shadow: var(--shadow); margin-bottom: 16px; }
+    .status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #e09a22; box-shadow: 0 0 0 4px #fff2d8; }
+    .dot.remote { background: var(--green); box-shadow: 0 0 0 4px #ddf7ed; }
+    .statusMain { font-weight: 900; }
+    .statusMeta { color: var(--muted); font-size: 13px; font-weight: 700; }
+    .notice { margin-top: 12px; border-radius: 14px; padding: 11px 13px; background: #fff8e5; border: 1px solid #f5dea1; color: #755719; font-weight: 750; line-height: 1.4; }
+    .notice.error { background: #fff0f2; border-color: #ffcbd2; color: #8b2635; }
+    .notice.success { background: #eaf9f3; border-color: #bdebd8; color: #176b50; }
+    .hidden { display: none !important; }
+    .loginGrid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+    label { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-weight: 850; font-size: 12px; }
+    input, textarea, select { width: 100%; border: 1px solid #cfd7e6; border-radius: 12px; background: #fff; color: var(--ink); padding: 10px 12px; outline: none; }
+    input:focus, textarea:focus, select:focus { border-color: #6d85e6; box-shadow: 0 0 0 4px #edf0ff; }
+    textarea { min-height: 88px; resize: vertical; line-height: 1.4; }
+    .sectionHead { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+    h2, h3 { margin: 0; }
+    h2 { font-size: 21px; letter-spacing: -.02em; }
+    .help { margin-top: 4px; color: var(--muted); font-size: 13px; font-weight: 650; line-height: 1.4; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 12px; }
+    .card { border: 1px solid var(--line); border-radius: 17px; background: #fbfcff; padding: 14px; }
+    .cardTop { display: flex; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .badge { display: inline-flex; justify-content: center; align-items: center; min-width: 45px; min-height: 38px; padding: 0 10px; border-radius: 12px; color: #fff; background: #26334d; font-weight: 950; }
+    .fieldGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .full { grid-column: 1 / -1; }
+    .check { flex-direction: row; align-items: center; gap: 8px; }
+    .check input { width: auto; }
+    .metroGroup { border: 1px solid var(--line); border-radius: 18px; padding: 14px; margin-top: 12px; background: #fbfcff; }
+    .metroHead { display: grid; grid-template-columns: 90px minmax(180px, 1fr) 100px auto; gap: 10px; align-items: end; }
+    .sectorList { display: grid; gap: 9px; margin-top: 13px; }
+    .sector { display: grid; grid-template-columns: minmax(190px, 1fr) minmax(220px, 1.4fr) auto auto; gap: 9px; align-items: end; padding: 11px; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+    .slots { display: grid; gap: 9px; }
+    .slot { display: grid; grid-template-columns: 90px minmax(210px, 1fr) 130px 130px auto; gap: 9px; align-items: end; }
+    .dirty { color: #9a5c00; background: #fff3d6; border: 1px solid #f1d18a; padding: 7px 10px; border-radius: 999px; font-size: 12px; font-weight: 900; }
+    .fileInput { display: none; }
+    @media (max-width: 760px) {
+      .shell { padding: 14px; }
+      .topbar, .sectionHead { flex-direction: column; }
+      .actions { width: 100%; }
+      .loginGrid, .fieldGrid, .metroHead, .sector, .slot { grid-template-columns: 1fr; }
+      .full { grid-column: auto; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/network-data.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="titleBlock">
+        <h1>Base réseau AMITOOLS</h1>
+        <div class="subtitle">Une seule source pour la version référent et l’application mobile.</div>
+      </div>
+      <div class="actions">
+        <span id="dirtyBadge" class="dirty hidden">Modifications non enregistrées</span>
+        <a class="btn secondary" href="referent.html" style="text-decoration:none;">Retour aux prises de service</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="status">
+        <span id="statusDot" class="dot"></span>
+        <div>
+          <div id="statusMain" class="statusMain">Chargement du catalogue…</div>
+          <div id="statusMeta" class="statusMeta"></div>
+        </div>
+      </div>
+      <div id="configNotice" class="notice hidden"></div>
+      <div id="message" class="notice hidden" role="status"></div>
+    </section>
+
+    <section id="loginPanel" class="panel">
+      <div class="sectionHead">
+        <div><h2>Connexion référent</h2><div class="help">La consultation mobile reste publique. Seuls les comptes autorisés peuvent enregistrer des changements.</div></div>
+        <button id="logoutBtn" class="btn secondary small hidden" type="button">Se déconnecter</button>
+      </div>
+      <form id="loginForm" class="loginGrid">
+        <label>Adresse e-mail<input id="email" type="email" autocomplete="username" required /></label>
+        <label>Mot de passe<input id="password" type="password" autocomplete="current-password" required /></label>
+        <button class="btn" type="submit">Se connecter</button>
+      </form>
+      <div id="loggedUser" class="help hidden"></div>
+    </section>
+
+    <section class="panel">
+      <div class="sectionHead">
+        <div><h2>Outils</h2><div class="help">Enregistre tout d’un coup pour publier une nouvelle révision aux deux applications.</div></div>
+        <div class="actions">
+          <button id="restoreBtn" class="btn secondary" type="button">Valeurs initiales</button>
+          <button id="exportBtn" class="btn secondary" type="button">Exporter JSON</button>
+          <button id="importBtn" class="btn secondary" type="button">Importer JSON</button>
+          <input id="importFile" class="fileInput" type="file" accept="application/json,.json" />
+          <button id="saveBtn" class="btn" type="button" disabled>Enregistrer dans la base</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="sectionHead">
+        <div><h2>Lignes de bus</h2><div class="help">Ajoute une ligne, ses zones, ses terminus et, si besoin, la liste de ses stations.</div></div>
+        <button id="addBusBtn" class="btn secondary" type="button">+ Nouvelle ligne</button>
+      </div>
+      <div id="busCards" class="cards"></div>
+    </section>
+
+    <section class="panel">
+      <div class="sectionHead">
+        <div><h2>Métro et secteurs de cabotage</h2><div class="help">Les stations sont séparées par des virgules. L’ordre affiché ici devient l’ordre utilisé partout.</div></div>
+      </div>
+      <div id="metroGroups"></div>
+    </section>
+
+    <section class="panel">
+      <div class="sectionHead"><div><h2>Horaires de service</h2><div class="help">Ces créneaux alimentent la préparation référent et la prise de service mobile.</div></div></div>
+      <div id="serviceSlots" class="slots"></div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+      var state = { catalog: window.AMIToolsData.getCatalog(), dirty: false, user: null };
+      var $ = function (id) { return document.getElementById(id); };
+      var els = {
+        statusDot: $('statusDot'), statusMain: $('statusMain'), statusMeta: $('statusMeta'), configNotice: $('configNotice'), message: $('message'),
+        loginForm: $('loginForm'), logoutBtn: $('logoutBtn'), loggedUser: $('loggedUser'), email: $('email'), password: $('password'),
+        saveBtn: $('saveBtn'), restoreBtn: $('restoreBtn'), exportBtn: $('exportBtn'), importBtn: $('importBtn'), importFile: $('importFile'), dirtyBadge: $('dirtyBadge'),
+        addBusBtn: $('addBusBtn'), busCards: $('busCards'), metroGroups: $('metroGroups'), serviceSlots: $('serviceSlots')
+      };
+
+      function uid(prefix) { return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7); }
+      function clone(value) { return JSON.parse(JSON.stringify(value)); }
+      function splitList(value) { return String(value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); }
+      function setMessage(text, type) {
+        els.message.textContent = text || '';
+        els.message.className = 'notice' + (type ? ' ' + type : '') + (text ? '' : ' hidden');
+      }
+      function markDirty() {
+        state.dirty = true;
+        els.dirtyBadge.classList.remove('hidden');
+      }
+      function clearDirty() {
+        state.dirty = false;
+        els.dirtyBadge.classList.add('hidden');
+      }
+      function makeInput(labelText, value, onInput, options) {
+        var label = document.createElement('label');
+        var input = document.createElement(options && options.textarea ? 'textarea' : 'input');
+        label.appendChild(document.createTextNode(labelText));
+        input.value = value == null ? '' : value;
+        if (options && options.type) input.type = options.type;
+        input.addEventListener('input', function () { onInput(input.value); markDirty(); });
+        label.appendChild(input);
+        return label;
+      }
+      function makeCheck(text, checked, onChange) {
+        var label = document.createElement('label'); label.className = 'check';
+        var input = document.createElement('input'); input.type = 'checkbox'; input.checked = checked !== false;
+        input.addEventListener('change', function () { onChange(input.checked); markDirty(); });
+        label.appendChild(input); label.appendChild(document.createTextNode(text)); return label;
+      }
+      function makeButton(text, className, onClick) {
+        var button = document.createElement('button'); button.type = 'button'; button.className = className; button.textContent = text; button.addEventListener('click', onClick); return button;
+      }
+      function renderStatus() {
+        var meta = window.AMIToolsData.getMetadata();
+        var remote = meta.source === 'remote';
+        els.statusDot.classList.toggle('remote', remote);
+        els.statusMain.textContent = remote ? 'Synchronisé avec la base en ligne' : (meta.source === 'cache' ? 'Copie hors connexion utilisée' : 'Catalogue initial utilisé');
+        var details = [];
+        if (meta.revision) details.push('Révision ' + meta.revision);
+        if (meta.updatedAt) details.push('mise à jour ' + new Date(meta.updatedAt).toLocaleString('fr-FR'));
+        els.statusMeta.textContent = details.join(' · ');
+        if (!window.AMIToolsData.isConfigured()) {
+          els.configNotice.textContent = 'La structure est prête, mais la base Supabase n’est pas encore reliée. Ajoute l’URL et la clé publique dans config.js après avoir créé le projet.';
+          els.configNotice.classList.remove('hidden');
+        } else if (meta.error) {
+          els.configNotice.textContent = meta.error;
+          els.configNotice.classList.remove('hidden');
+        } else {
+          els.configNotice.classList.add('hidden');
+        }
+      }
+      function renderLogin() {
+        els.loginForm.classList.toggle('hidden', !!state.user);
+        els.logoutBtn.classList.toggle('hidden', !state.user);
+        els.loggedUser.classList.toggle('hidden', !state.user);
+        els.loggedUser.textContent = state.user ? 'Connecté : ' + (state.user.email || state.user.id) : '';
+        els.saveBtn.disabled = !state.user || !window.AMIToolsData.isConfigured();
+      }
+      function renderBus() {
+        els.busCards.innerHTML = '';
+        state.catalog.busLines.forEach(function (line, index) {
+          var card = document.createElement('article'); card.className = 'card';
+          var top = document.createElement('div'); top.className = 'cardTop';
+          var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = line.code || 'BUS';
+          top.appendChild(badge);
+          top.appendChild(makeButton('Supprimer', 'btn danger small', function () { if (confirm('Supprimer la ligne ' + (line.code || '') + ' ?')) { state.catalog.busLines.splice(index, 1); markDirty(); renderBus(); } }));
+          var grid = document.createElement('div'); grid.className = 'fieldGrid';
+          grid.appendChild(makeInput('Code', line.code, function (v) { line.code = v.trim().toUpperCase(); badge.textContent = line.code || 'BUS'; }));
+          grid.appendChild(makeInput('Nom complet', line.name, function (v) { line.name = v; }));
+          var zonesText = (line.zones || []).map(function (zone) { return zone.id + ' | ' + (zone.label || ''); }).join('\n');
+          var zones = makeInput('Zones et terminus · une ligne par zone : Z1 | Terminus', zonesText, function (v) {
+            line.zones = String(v).split(/\r?\n/).map(function (row) { var parts = row.split('|'); return { id: String(parts.shift() || '').trim().toUpperCase(), label: parts.join('|').trim() }; }).filter(function (z) { return z.id; });
+          }, { textarea: true }); zones.classList.add('full'); grid.appendChild(zones);
+          var stations = makeInput('Stations · séparées par des virgules', (line.stations || []).join(', '), function (v) { line.stations = splitList(v); }, { textarea: true }); stations.classList.add('full'); grid.appendChild(stations);
+          grid.appendChild(makeInput('Ordre', line.sortOrder || (index + 1) * 10, function (v) { line.sortOrder = Number(v) || 0; }, { type: 'number' }));
+          grid.appendChild(makeCheck('Ligne active', line.active, function (v) { line.active = v; }));
+          card.appendChild(top); card.appendChild(grid); els.busCards.appendChild(card);
+        });
+      }
+      function renderMetro() {
+        els.metroGroups.innerHTML = '';
+        state.catalog.metroLines.forEach(function (line) {
+          var group = document.createElement('article'); group.className = 'metroGroup';
+          var head = document.createElement('div'); head.className = 'metroHead';
+          head.appendChild(makeInput('Code', line.code, function (v) { line.code = v.trim().toUpperCase(); }));
+          head.appendChild(makeInput('Nom', line.name, function (v) { line.name = v; }));
+          head.appendChild(makeInput('Couleur', line.color || '#3157d5', function (v) { line.color = v; }, { type: 'color' }));
+          head.appendChild(makeButton('+ Secteur', 'btn secondary small', function () { line.sectors.push({ id: uid('metro-' + String(line.code || 'x').toLowerCase()), label: 'Nouveau secteur', stations: [], active: true, sortOrder: (line.sectors.length + 1) * 10 }); markDirty(); renderMetro(); }));
+          group.appendChild(head);
+          var list = document.createElement('div'); list.className = 'sectorList';
+          (line.sectors || []).forEach(function (sector, sectorIndex) {
+            var row = document.createElement('div'); row.className = 'sector';
+            row.appendChild(makeInput('Nom du secteur', sector.label, function (v) { sector.label = v; }));
+            row.appendChild(makeInput('Stations · séparées par des virgules', (sector.stations || []).join(', '), function (v) { sector.stations = splitList(v); }));
+            row.appendChild(makeCheck('Actif', sector.active, function (v) { sector.active = v; }));
+            row.appendChild(makeButton('Supprimer', 'btn danger small', function () { if (confirm('Supprimer ce secteur ?')) { line.sectors.splice(sectorIndex, 1); markDirty(); renderMetro(); } }));
+            list.appendChild(row);
+          });
+          group.appendChild(list); els.metroGroups.appendChild(group);
+        });
+      }
+      function renderSlots() {
+        els.serviceSlots.innerHTML = '';
+        state.catalog.serviceSlots.forEach(function (slot, index) {
+          var row = document.createElement('div'); row.className = 'slot';
+          row.appendChild(makeInput('Code', slot.id, function (v) { slot.id = v.trim().toUpperCase(); }));
+          row.appendChild(makeInput('Libellé', slot.label, function (v) { slot.label = v; }));
+          row.appendChild(makeInput('Début', slot.start, function (v) { slot.start = v; }, { type: 'time' }));
+          row.appendChild(makeInput('Fin', slot.end, function (v) { slot.end = v; }, { type: 'time' }));
+          row.appendChild(makeCheck('Actif', slot.active, function (v) { slot.active = v; }));
+          els.serviceSlots.appendChild(row);
+        });
+      }
+      function renderAll() { renderStatus(); renderLogin(); renderBus(); renderMetro(); renderSlots(); }
+
+      els.addBusBtn.addEventListener('click', function () {
+        state.catalog.busLines.push({ id: uid('bus'), code: 'NOUV', name: 'Nouvelle ligne', active: true, sortOrder: (state.catalog.busLines.length + 1) * 10, zones: [], stations: [] });
+        markDirty(); renderBus();
+      });
+      els.loginForm.addEventListener('submit', async function (event) {
+        event.preventDefault(); setMessage('Connexion en cours…');
+        try { await window.AMIToolsData.signIn(els.email.value.trim(), els.password.value); state.user = await window.AMIToolsData.getUser(); els.password.value = ''; setMessage('Connexion réussie.', 'success'); renderLogin(); }
+        catch (error) { setMessage(error.message || 'Connexion impossible.', 'error'); }
+      });
+      els.logoutBtn.addEventListener('click', async function () { await window.AMIToolsData.signOut(); state.user = null; setMessage('Déconnecté.'); renderLogin(); });
+      els.saveBtn.addEventListener('click', async function () {
+        setMessage('Enregistrement de la nouvelle révision…'); els.saveBtn.disabled = true;
+        try { state.catalog = await window.AMIToolsData.saveCatalog(state.catalog); clearDirty(); setMessage('Modifications enregistrées. Les deux applications vont recevoir cette révision.', 'success'); }
+        catch (error) { setMessage(error.message || 'Enregistrement impossible.', 'error'); }
+        finally { renderStatus(); renderLogin(); }
+      });
+      els.restoreBtn.addEventListener('click', function () { if (confirm('Revenir au catalogue initial ? Rien ne sera publié avant Enregistrer.')) { state.catalog = window.AMIToolsData.getDefaultCatalog(); markDirty(); renderAll(); } });
+      els.exportBtn.addEventListener('click', function () {
+        var blob = new Blob([JSON.stringify(state.catalog, null, 2)], { type: 'application/json' }); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'amitools-catalogue-reseau.json'; a.click(); URL.revokeObjectURL(url);
+      });
+      els.importBtn.addEventListener('click', function () { els.importFile.click(); });
+      els.importFile.addEventListener('change', function () {
+        var file = els.importFile.files && els.importFile.files[0]; if (!file) return; var reader = new FileReader();
+        reader.onload = function () { try { var parsed = JSON.parse(reader.result); if (!parsed || !Array.isArray(parsed.metroLines) || !Array.isArray(parsed.busLines)) throw new Error('Format invalide'); state.catalog = parsed; markDirty(); renderAll(); setMessage('Fichier importé. Vérifie puis enregistre.', 'success'); } catch (error) { setMessage('Import impossible : ' + error.message, 'error'); } };
+        reader.readAsText(file); els.importFile.value = '';
+      });
+      document.addEventListener('amitools:catalog-changed', function (event) {
+        if (!state.dirty && event.detail && event.detail.catalog) { state.catalog = clone(event.detail.catalog); renderAll(); }
+        else renderStatus();
+      });
+
+      window.AMIToolsData.ready.then(async function () { state.catalog = window.AMIToolsData.getCatalog(); state.user = await window.AMIToolsData.getUser(); renderAll(); });
+      renderAll();
+    })();
+  </script>
+</body>
+</html>

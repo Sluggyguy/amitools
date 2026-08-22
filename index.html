@@ -7,6 +7,9 @@
   <link rel="apple-touch-icon" href="icons/Amicon192.png" />
   <title>AMISTAR Tools</title>
   <meta name="theme-color" content="#ffffff" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/network-data.js"></script>
   <style>
     :root {
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -2839,75 +2842,16 @@
 
   <script>
     (() => {
-      const SLOT_MAP = {
-        M: { start: '07:00', end: '14:00' },
-        J: { start: '10:00', end: '17:00' },
-        AM: { start: '12:50', end: '19:50' },
-        S01: { start: '15:30', end: '22:30' },
-        S05: { start: '17:00', end: '00:00' },
-        SPE: { start: '', end: '' },
-      };
+      let sharedNetworkMaps = window.AMIToolsData.derive(window.AMIToolsData.getCatalog());
+      let SLOT_MAP = sharedNetworkMaps.slotMap;
       const PAUSE_DURATION_MIN = 20;
       const STORAGE_KEY = 'prise-service-app-state-v1'; // mémo léger uniquement, la vraie restauration passe par la session prénom/jour
       const PRISE_SERVICE_SESSION_PREFIX = 'prise-service-session-v2-';
       const SESSION_DB_NAME = 'amistar-tools-db';
       const SESSION_STORE_NAME = 'dailySessions';
-      const CABOTAGE_MAP = {
-        metroA: {
-          'CAB nord ANF': 'PON - VU - JFK',
-          'CAB nord ( spé ) JFK': 'PON - ANF',
-          'CAB centre STA': 'REP - CDG - GAR',
-          'CAB centre ( spé ) GAR': 'CDG - REP',
-          'CAB sud HFR': 'GCL - JCA',
-          'CAB Sud ( spé ) GCL': 'JCA - HFR',
-          'CAB sud POT': 'BLO - TRI - ITA',
-        },
-        metroB: {
-          'CAB sud MAB': 'CLE - LCO - SJG',
-          'CAB centre SGE': 'GARB - COL',
-          'CAB centre COL': 'GAR - SGE - STAb',
-          'CAB nord LGA': 'GCH - JFE - STAb',
-          'CAB nord CVI': 'ATA - BUN - IJC',
-          'CAB nord ( spé ) CVI': 'ATA - BUN',
-        }
-      };
-      const BUS_ZONE_MAP = {
-        C1: ['Z1', 'Z3'],
-        C2: ['Z2', 'Z3'],
-        C3: ['Z1', 'Z4'],
-        C4: ['Z1', 'Z3'],
-        C5: ['Z2', 'Z4'],
-        C6: ['Z3', 'Z4'],
-        L10: ['Z2', 'Z4'],
-        L11: ['Z1', 'Z3'],
-        L12: ['Z1', 'Z4'],
-        L13: ['Z3', 'Z4'],
-        L14: ['Z1', 'Z2']
-      };
-      const BUS_ZONE_DETAIL_MAP = {
-        'C1|Z1': 'St Grégoire Champs Daguet',
-        'C3|Z1': 'Patton',
-        'C4|Z1': 'St Grégoire Grand Quartier',
-        'L11|Z1': 'Vezin-le-Coquet ZI Ouest',
-        'L12|Z1': 'Villejean Université',
-        'L14|Z1': 'Roazhon Park',
-        'C2|Z2': 'Cesson-Cévigné Champs Blancs',
-        'C5|Z2': 'Saint-Laurent',
-        'L10|Z2': 'Beaulieu Chimie',
-        'L14|Z2': 'Cesson-Cévigné Monniais',
-        'C1|Z3': 'Chantepie Rosa Parks',
-        'C2|Z3': 'Haut Sancé',
-        'C4|Z3': 'ZA Saint-Sulpice',
-        'C6|Z3': 'Cesson-Sévigné Rigourdière',
-        'L11|Z3': 'La Poterie',
-        'L13|Z3': 'Chantepie Cucé',
-        'C3|Z4': 'Henri Fréville',
-        'C5|Z4': 'Lycée Bréquigny',
-        'C6|Z4': 'St Jacques de la Lande Aéroport',
-        'L10|Z4': 'Porte de Cleunay',
-        'L12|Z4': 'La Poterie',
-        'L13|Z4': 'Bruz Porte de Ker Lann'
-      };
+      let CABOTAGE_MAP = sharedNetworkMaps.cabotageMap;
+      let BUS_ZONE_MAP = sharedNetworkMaps.busZoneMap;
+      let BUS_ZONE_DETAIL_MAP = sharedNetworkMaps.busZoneDetailMap;
 
       const $ = (id) => document.getElementById(id);
       const ACTIVE_MEDIATOR_STORAGE_KEY = 'amistar-active-mediator-v1';
@@ -3018,6 +2962,98 @@
         infoModalCloseBtn: $('psInfoModalCloseBtn'),
         infoModalOkBtn: $('psInfoModalOkBtn'),
       };
+
+      function replaceSharedOptions(select, items, emptyLabel) {
+        if (!select) return;
+        const previous = select.value;
+        select.innerHTML = '';
+        const empty = document.createElement('option');
+        empty.value = '';
+        empty.textContent = emptyLabel || 'Choisir';
+        select.appendChild(empty);
+        items.forEach((item) => {
+          const option = document.createElement('option');
+          option.value = item.value;
+          option.textContent = item.label;
+          select.appendChild(option);
+        });
+        if (Array.from(select.options).some((option) => option.value === previous)) select.value = previous;
+      }
+
+      function renderSharedNetworkViews(catalog) {
+        const zoneWrap = document.querySelector('#screenZones .zonesWrap');
+        if (zoneWrap) {
+          zoneWrap.querySelectorAll('.zoneCard').forEach((card) => card.remove());
+          const zones = {};
+          (catalog.busLines || []).filter((line) => line.active !== false).forEach((line) => {
+            (line.zones || []).forEach((zone) => {
+              if (!zones[zone.id]) zones[zone.id] = [];
+              zones[zone.id].push({ code: line.code, label: zone.label || line.name || '' });
+            });
+          });
+          Object.keys(zones).sort().forEach((zoneId) => {
+            const card = document.createElement('div');
+            card.className = 'zoneCard ' + zoneId.toLowerCase();
+            const header = document.createElement('div'); header.className = 'zoneHeader';
+            const title = document.createElement('div'); title.className = 'zoneTitle';
+            const badge = document.createElement('span'); badge.className = 'zoneBadge'; badge.textContent = 'Zone ' + zoneId.replace(/^Z/i, '');
+            title.appendChild(badge); header.appendChild(title); card.appendChild(header);
+            const list = document.createElement('div'); list.className = 'zoneList';
+            zones[zoneId].sort((a, b) => a.code.localeCompare(b.code, 'fr', { numeric: true })).forEach((entry) => {
+              const item = document.createElement('div'); item.className = 'zoneItem';
+              const line = document.createElement('div'); line.className = 'zoneLine';
+              const strong = document.createElement('strong'); strong.textContent = entry.code;
+              line.appendChild(strong); line.appendChild(document.createTextNode(' — ' + entry.label)); item.appendChild(line); list.appendChild(item);
+            });
+            card.appendChild(list); zoneWrap.appendChild(card);
+          });
+        }
+
+        const metroWrap = document.querySelector('#screenMetros .metrosWrap');
+        if (metroWrap) {
+          const previous = metroWrap.querySelector('.networkCatalogSectors');
+          if (previous) previous.remove();
+          const section = document.createElement('div'); section.className = 'networkCatalogSectors';
+          (catalog.metroLines || []).filter((line) => line.active !== false).forEach((line) => {
+            const card = document.createElement('div'); card.className = 'metroCard';
+            const top = document.createElement('div'); top.className = 'metroTop';
+            const title = document.createElement('div'); title.className = 'metroTitle';
+            const badge = document.createElement('span'); badge.className = 'metroBadge ' + String(line.code || '').toLowerCase(); badge.style.background = line.color || '#111'; badge.textContent = line.code;
+            title.appendChild(badge); title.appendChild(document.createTextNode(' Secteurs ' + (line.name || 'métro'))); top.appendChild(title); card.appendChild(top);
+            (line.sectors || []).filter((sector) => sector.active !== false).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0)).forEach((sector) => {
+              const info = document.createElement('div'); info.className = 'metroInfo';
+              const key = document.createElement('div'); key.className = 'metroKey'; key.textContent = sector.label;
+              const value = document.createElement('div'); value.className = 'metroVal'; value.textContent = (sector.stations || []).join(' → ');
+              info.appendChild(key); info.appendChild(value); card.appendChild(info);
+            });
+            section.appendChild(card);
+          });
+          metroWrap.appendChild(section);
+        }
+      }
+
+      function applySharedCatalog(catalog) {
+        sharedNetworkMaps = window.AMIToolsData.derive(catalog);
+        SLOT_MAP = sharedNetworkMaps.slotMap;
+        CABOTAGE_MAP = sharedNetworkMaps.cabotageMap;
+        BUS_ZONE_MAP = sharedNetworkMaps.busZoneMap;
+        BUS_ZONE_DETAIL_MAP = sharedNetworkMaps.busZoneDetailMap;
+        const slots = (catalog.serviceSlots || []).filter((x) => x.active !== false).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0)).map((x) => ({ value: x.id, label: x.label || x.id }));
+        const busLines = (catalog.busLines || []).filter((x) => x.active !== false).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0)).map((x) => ({ value: x.code, label: x.code + (x.name && x.name !== ('Ligne ' + x.code) ? ' · ' + x.name : '') }));
+        replaceSharedOptions(els.serviceSlot, slots, 'Choisir');
+        replaceSharedOptions(els.busLineSelect, busLines, 'Choisir');
+        replaceSharedOptions(els.busLineSelectSecondary, busLines, 'Aucune');
+        replaceSharedOptions(els.missionPapSelect, (catalog.places && catalog.places.pap || []).map((x) => ({ value: x, label: x })), 'Choisir');
+        replaceSharedOptions(els.missionBoardingSelect, (catalog.places && catalog.places.boarding || []).map((x) => ({ value: x, label: x })), 'Choisir');
+        renderSharedNetworkViews(catalog);
+        fillCabotageSectorOptions();
+        fillBusZoneOptions();
+      }
+
+      document.addEventListener('amitools:catalog-changed', (event) => {
+        if (event.detail && event.detail.catalog) applySharedCatalog(event.detail.catalog);
+      });
+      applySharedCatalog(window.AMIToolsData.getCatalog());
 
       function assert(cond, msg) { if (!cond) throw new Error(msg); }
       function pad(n) { return String(n).padStart(2, '0'); }
