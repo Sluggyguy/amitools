@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amitools-shell-v7';
+const CACHE_NAME = 'amitools-shell-v8';
 const APP_SHELL = [
   './',
   './index.html',

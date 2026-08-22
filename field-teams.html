@@ -45,6 +45,7 @@
     .notice { margin-top: 12px; border-radius: 13px; padding: 11px 13px; background: #fff8e5; border: 1px solid #f5dea1; color: #755719; font-weight: 750; }
     .notice.error { background: #fff0f2; border-color: #ffcbd2; color: #8b2635; }
     .notice.success { background: #eaf9f3; border-color: #bdebd8; color: #176b50; }
+    .notice + .toolbar { margin-top: 14px; }
     .toolbar { display: flex; justify-content: space-between; align-items: end; gap: 12px; }
     .toolbar label { width: min(240px, 100%); }
     .livePill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 999px; background: #eaf9f3; color: var(--green); font-size: 12px; font-weight: 900; }
@@ -109,7 +110,7 @@
       </div>
     </header>
 
-    <section class="panel" id="loginPanel">
+    <section class="panel hidden" id="loginPanel">
       <h2>Connexion référent</h2>
       <p class="subtitle">Les informations du terrain sont protégées et réservées aux comptes autorisés.</p>
       <form class="loginGrid" id="loginForm">
@@ -120,7 +121,8 @@
       <div class="notice hidden" id="loginMessage" role="status"></div>
     </section>
 
-    <section class="panel hidden" id="controlPanel">
+    <section class="panel" id="controlPanel">
+      <div class="notice" id="testModeNotice">Mode test public : aucune connexion n’est demandée pour le moment. Toute personne possédant ce lien peut consulter les équipes affichées.</div>
       <div class="toolbar">
         <label>Date suivie<input id="serviceDate" type="date" /></label>
         <div class="actions">
@@ -146,7 +148,8 @@
   <script>
     (function () {
       'use strict';
-      var state = { user: null, rows: [], reloadTimer: null };
+      var PUBLIC_TEST_MODE = true;
+      var state = { user: PUBLIC_TEST_MODE ? { testMode: true } : null, rows: [], reloadTimer: null };
       var $ = function (id) { return document.getElementById(id); };
       var els = {
         loginPanel: $('loginPanel'), loginForm: $('loginForm'), email: $('email'), password: $('password'), loginMessage: $('loginMessage'), logoutBtn: $('logoutBtn'),
@@ -204,10 +207,10 @@
         els.liveStatus.style.color = connected ? '#18794e' : '#b54708';
       }
       function renderLogin() {
-        var logged = !!state.user;
-        els.loginPanel.classList.toggle('hidden', logged);
+        var logged = PUBLIC_TEST_MODE || !!state.user;
+        els.loginPanel.classList.toggle('hidden', PUBLIC_TEST_MODE || logged);
         els.controlPanel.classList.toggle('hidden', !logged);
-        els.logoutBtn.classList.toggle('hidden', !logged);
+        els.logoutBtn.classList.toggle('hidden', PUBLIC_TEST_MODE || !logged);
         if (!logged) {
           els.teamsGrid.classList.add('hidden');
           els.emptyState.classList.add('hidden');
@@ -255,11 +258,12 @@
         els.teamCount.textContent = String(state.rows.length);
         els.memberCount.textContent = String(totalMembers);
         els.currentCount.textContent = String(totalCurrent);
-        els.teamsGrid.classList.toggle('hidden', !state.rows.length || !state.user);
-        els.emptyState.classList.toggle('hidden', !!state.rows.length || !state.user);
+        var hasAccess = PUBLIC_TEST_MODE || !!state.user;
+        els.teamsGrid.classList.toggle('hidden', !state.rows.length || !hasAccess);
+        els.emptyState.classList.toggle('hidden', !!state.rows.length || !hasAccess);
       }
       async function loadRows() {
-        if (!state.user) return;
+        if (!PUBLIC_TEST_MODE && !state.user) return;
         els.refreshBtn.disabled = true;
         setNotice(els.controlMessage, 'Actualisation des équipes…');
         try {
@@ -314,11 +318,15 @@
       });
       els.refreshBtn.addEventListener('click', loadRows);
       els.serviceDate.addEventListener('change', startControl);
-      window.setInterval(function () { if (state.user) renderRows(); }, 30000);
+      window.setInterval(function () { if (PUBLIC_TEST_MODE || state.user) renderRows(); }, 30000);
 
       els.serviceDate.value = todayIso();
       renderLogin();
       window.AMIToolsData.ready.then(async function () {
+        if (PUBLIC_TEST_MODE) {
+          await startControl();
+          return;
+        }
         state.user = await window.AMIToolsData.getUser();
         if (state.user && !await window.AMIToolsFieldTeams.isAdmin()) {
           await window.AMIToolsData.signOut();
