@@ -1733,51 +1733,7 @@
             <div class="menuSectionTitle">Informations</div>
             <div class="menuDivider"></div>
           </div>
-          <div class="toolsGrid">
-            <button class="toolTile infoToolTile" id="tileAgences">
-              <div class="tileIcon">A</div>
-              <span>
-                <span class="tileLabel">Horaires<br>agences STAR</span><br>
-                
-              </span>
-            </button>
-
-            <button class="toolTile infoToolTile" id="tileMetros">
-              <div class="tileIcon">M</div>
-              <span>
-                <span class="tileLabel">Horaires<br>métro</span>
-              </span>
-            </button>
-
-            <button class="toolTile infoToolTile" id="tileAccueil">
-              <div class="tileIcon">P</div>
-              <span>
-                <span class="tileLabel">Horaires<br>plateaux d’accueil</span><br>
-                
-              </span>
-            </button>
-
-            <button class="toolTile infoToolTile" id="tileZones">
-              <div class="tileIcon">Z</div>
-              <span>
-                <span class="tileLabel">Zones<br>réseau STAR</span>
-              </span>
-            </button>
-
-            <button class="toolTile infoToolTile" id="tileCustom1" type="button" aria-label="Emplacement libre information 1" hidden>
-              <div class="tileIcon">+</div>
-              <span>
-                <span class="tileLabel">Nouvelle<br>info</span>
-              </span>
-            </button>
-
-            <button class="toolTile infoToolTile" id="tileCustom2" type="button" aria-label="Emplacement libre information 2" hidden>
-              <div class="tileIcon">+</div>
-              <span>
-                <span class="tileLabel">Nouvelle<br>info</span>
-              </span>
-            </button>
-          </div>
+          <div class="toolsGrid" id="informationTilesGrid"></div>
         </div>
       </div>
       
@@ -2457,12 +2413,6 @@
         startMediatorInput: $('startMediatorName'),
         startQrShortcutBtn: $('btnStartQrShortcut'),
         tileCabotage: $('tileCabotage'),
-        tileAgences: $('tileAgences'),
-        tileMetros: $('tileMetros'),
-        tileAccueil: $('tileAccueil'),
-        tileZones: $('tileZones'),
-        tileCustom1: $('tileCustom1'),
-        tileCustom2: $('tileCustom2'),
         tilePriseService: $('tilePriseService'),
         backAgencesBtn: $('btnBackAgences'),
         backMetrosBtn: $('btnBackMetros'),
@@ -2530,6 +2480,9 @@
         assert(screens[screenName], `Écran inconnu: ${screenName}`);
         screens[screenName].classList.add('active');
       }
+      document.addEventListener('amitools:navigate', (event) => {
+        if (event.detail && screens[event.detail.screen]) show(event.detail.screen);
+      });
 
       function safeLocalStorage() {
         try { return window.localStorage; } catch { return null; }
@@ -2741,12 +2694,6 @@
         renderSetup();
         show('setup');
       }, 'tileCabotage');
-      wire(els.tileAgences, () => show('agences'), 'tileAgences');
-      wire(els.tileMetros, () => show('metros'), 'tileMetros');
-      wire(els.tileAccueil, () => show('accueil'), 'tileAccueil');
-      wire(els.tileZones, () => show('zones'), 'tileZones');
-      wire(els.tileCustom1, () => { document.dispatchEvent(new CustomEvent('amitools:open-information-tile', { detail: { id: 'custom1' } })); show('information'); }, 'tileCustom1');
-      wire(els.tileCustom2, () => { document.dispatchEvent(new CustomEvent('amitools:open-information-tile', { detail: { id: 'custom2' } })); show('information'); }, 'tileCustom2');
       wire(els.tilePriseService, () => show('priseService'), 'tilePriseService');
       wire(els.backAgencesBtn, () => show('menu'), 'btnBackAgences');
       wire(els.backMetrosBtn, () => show('menu'), 'btnBackMetros');
@@ -3035,26 +2982,22 @@
       }
 
       function renderInformationTiles(catalog) {
-        const domById = {
-          agencies: document.getElementById('tileAgences'),
-          metros: document.getElementById('tileMetros'),
-          welcome: document.getElementById('tileAccueil'),
-          zones: document.getElementById('tileZones'),
-          custom1: document.getElementById('tileCustom1'),
-          custom2: document.getElementById('tileCustom2')
-        };
+        const grid = document.getElementById('informationTilesGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
         const tiles = (catalog.informationTiles || []).slice().sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
-        const grid = domById.agencies && domById.agencies.parentElement;
-        tiles.forEach((tile) => {
-          const button = domById[tile.id];
-          if (!button) return;
-          const icon = button.querySelector('.tileIcon');
-          const label = button.querySelector('.tileLabel');
-          if (icon) icon.textContent = tile.icon || '+';
-          if (label) label.textContent = tile.title || 'Information';
-          button.hidden = tile.active === false;
+        tiles.filter((tile) => tile.active !== false).forEach((tile) => {
+          const button = document.createElement('button'); button.type = 'button'; button.className = 'toolTile infoToolTile';
+          const icon = document.createElement('div'); icon.className = 'tileIcon'; icon.textContent = tile.icon || '+';
+          const content = document.createElement('span'); const label = document.createElement('span'); label.className = 'tileLabel'; label.textContent = tile.title || 'Information';
+          content.appendChild(label); button.appendChild(icon); button.appendChild(content);
           button.setAttribute('aria-label', tile.title || 'Information');
-          if (grid) grid.appendChild(button);
+          button.addEventListener('click', () => {
+            const screenByKind = { agencies: 'agences', metros: 'metros', welcome: 'accueil', zones: 'zones' };
+            if (tile.kind === 'custom') document.dispatchEvent(new CustomEvent('amitools:open-information-tile', { detail: { id: tile.id } }));
+            document.dispatchEvent(new CustomEvent('amitools:navigate', { detail: { screen: screenByKind[tile.kind] || 'information' } }));
+          });
+          grid.appendChild(button);
         });
       }
 

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Modifier les tuiles · AMITOOLS</title>
+  <meta name="theme-color" content="#eef2f8" />
+  <style>
+    :root { --bg:#eef2f8; --panel:#fff; --ink:#172033; --muted:#68738a; --line:#dfe5ef; --blue:#3157d5; --green:#16845b; --red:#b42335; font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); background:radial-gradient(circle at top left,#f9fbff,var(--bg) 55%); }
+    button,input,textarea { font:inherit; }
+    button { cursor:pointer; }
+    .shell { max-width:1380px; margin:0 auto; padding:24px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; }
+    h1,h2,h3 { margin:0; }
+    h1 { font-size:clamp(25px,4vw,38px); letter-spacing:-.04em; }
+    .subtitle,.help { color:var(--muted); font-weight:700; line-height:1.4; }
+    .subtitle { margin-top:4px; }
+    .help { font-size:13px; }
+    .actions { display:flex; flex-wrap:wrap; gap:9px; align-items:center; }
+    .btn { border:0; border-radius:13px; padding:11px 15px; font-weight:900; background:var(--blue); color:#fff; box-shadow:0 7px 16px rgba(49,87,213,.18); }
+    .btn.secondary { background:#fff; color:var(--ink); border:1px solid var(--line); box-shadow:none; }
+    .btn.danger { background:#fff0f2; color:var(--red); border:1px solid #ffcbd2; box-shadow:none; }
+    .btn.small { padding:8px 11px; border-radius:10px; font-size:13px; }
+    .btn:disabled { opacity:.48; cursor:not-allowed; }
+    .panel { background:rgba(255,255,255,.96); border:1px solid var(--line); border-radius:22px; padding:18px; box-shadow:0 18px 45px rgba(27,39,74,.09); }
+    .statusBar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+    .status { display:flex; align-items:center; gap:10px; font-weight:900; }
+    .dot { width:10px; height:10px; border-radius:50%; background:#e09a22; box-shadow:0 0 0 4px #fff2d8; }
+    .dot.remote { background:var(--green); box-shadow:0 0 0 4px #ddf7ed; }
+    .dirty { color:#9a5c00; background:#fff3d6; border:1px solid #f1d18a; padding:7px 10px; border-radius:999px; font-size:12px; font-weight:900; }
+    .hidden { display:none !important; }
+    .notice { margin-bottom:16px; border-radius:14px; padding:11px 13px; background:#fff8e5; border:1px solid #f5dea1; color:#755719; font-weight:750; }
+    .notice.error { background:#fff0f2; border-color:#ffcbd2; color:#8b2635; }
+    .notice.success { background:#eaf9f3; border-color:#bdebd8; color:#176b50; }
+    .login { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end; margin-bottom:16px; }
+    label { display:flex; flex-direction:column; gap:6px; color:var(--muted); font-size:12px; font-weight:850; }
+    input,textarea { width:100%; border:1px solid #cfd7e6; border-radius:12px; padding:10px 12px; background:#fff; color:var(--ink); outline:none; }
+    input:focus,textarea:focus { border-color:#6d85e6; box-shadow:0 0 0 4px #edf0ff; }
+    textarea { min-height:88px; resize:vertical; line-height:1.4; }
+    .workspace { display:grid; grid-template-columns:minmax(340px,430px) minmax(0,1fr); gap:18px; align-items:start; }
+    .previewPanel { position:sticky; top:18px; }
+    .previewHead,.editorHead,.subHead { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .previewHead { margin-bottom:14px; }
+    .phone { max-width:390px; min-height:650px; margin:0 auto; padding:18px; border:8px solid #1e2533; border-radius:38px; background:linear-gradient(180deg,#fff,#f2f4f9); box-shadow:0 24px 50px rgba(31,42,72,.2); }
+    .phoneTop { margin:4px 0 20px; font-size:24px; font-weight:1000; letter-spacing:-.03em; }
+    .phoneSection { display:flex; align-items:center; gap:10px; margin-bottom:12px; color:#6a7380; font-size:13px; font-weight:950; text-transform:uppercase; letter-spacing:.08em; }
+    .phoneSection:after { content:""; height:1px; flex:1; background:#d9dfeb; }
+    .tilesGrid { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+    .tile { min-height:112px; padding:14px; border:1px solid rgba(0,0,0,.06); border-radius:21px; background:#fff; color:#111; text-align:left; box-shadow:0 10px 22px rgba(16,24,40,.09); transition:.15s; position:relative; }
+    .tile:hover,.tile.selected { transform:translateY(-2px); border-color:#6f87e8; box-shadow:0 14px 26px rgba(49,87,213,.16); }
+    .tile.inactive { opacity:.52; }
+    .tileIcon { width:39px; height:39px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; border-radius:13px; background:#eef2ff; color:var(--blue); font-size:19px; font-weight:1000; }
+    .tileTitle { font-size:14px; font-weight:950; line-height:1.2; }
+    .hiddenBadge { position:absolute; top:9px; right:9px; padding:4px 6px; border-radius:7px; background:#edf0f5; color:#68738a; font-size:9px; font-weight:950; text-transform:uppercase; }
+    .addTile { border:2px dashed #aeb9ce; background:rgba(255,255,255,.45); box-shadow:none; text-align:center; }
+    .addTile .tileIcon { margin:0 auto 10px; }
+    .emptyEditor { min-height:420px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; color:var(--muted); }
+    .editorHead { padding-bottom:14px; border-bottom:1px solid var(--line); margin-bottom:14px; }
+    .editorTitle { display:flex; align-items:center; gap:10px; }
+    .editorIcon { width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:14px; background:#eef2ff; color:var(--blue); font-size:20px; font-weight:1000; }
+    .fieldGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .full { grid-column:1/-1; }
+    .check { flex-direction:row; align-items:center; margin-top:8px; }
+    .check input { width:auto; }
+    .sub { margin-top:16px; padding-top:15px; border-top:1px dashed #cad3e3; }
+    .subHead { margin-bottom:10px; }
+    .subHead h3 { font-size:16px; }
+    .rows { display:grid; gap:10px; }
+    .row { padding:12px; border:1px solid var(--line); border-radius:15px; background:#fbfcff; }
+    .rowGrid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+    .rowActions { display:flex; justify-content:flex-end; margin-top:9px; }
+    .editorFooter { display:flex; justify-content:space-between; gap:10px; margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+    @media(max-width:900px) { .workspace{grid-template-columns:1fr}.previewPanel{position:static}.phone{min-height:560px}.topbar,.statusBar{align-items:flex-start;flex-direction:column}.login{grid-template-columns:1fr}.fieldGrid,.rowGrid{grid-template-columns:1fr}.full{grid-column:auto}.shell{padding:14px} }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/network-data.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div><h1>Modifier les tuiles</h1><div class="subtitle">Clique sur une tuile comme dans l’application pour modifier son contenu.</div></div>
+      <div class="actions"><a class="btn secondary" href="admin.html" style="text-decoration:none;">Retour à l’administration</a><button id="saveBtn" class="btn" type="button" disabled>Enregistrer dans la base</button></div>
+    </header>
+    <section class="panel statusBar">
+      <div class="status"><span id="statusDot" class="dot"></span><span id="statusText">Chargement…</span></div>
+      <span id="dirtyBadge" class="dirty hidden">Modifications non enregistrées</span>
+    </section>
+    <div id="message" class="notice hidden" role="status"></div>
+    <form id="loginForm" class="panel login">
+      <label>Adresse e-mail<input id="email" type="email" autocomplete="username" required /></label>
+      <label>Mot de passe<input id="password" type="password" autocomplete="current-password" required /></label>
+      <button class="btn" type="submit">Se connecter</button>
+    </form>
+    <div class="workspace">
+      <section class="panel previewPanel">
+        <div class="previewHead"><div><h2>Aperçu mobile</h2><div class="help">Les tuiles grisées sont masquées dans l’application.</div></div></div>
+        <div class="phone"><div class="phoneTop">AMISTAR Tools</div><div class="phoneSection">Informations</div><div id="tilesGrid" class="tilesGrid"></div></div>
+      </section>
+      <section id="editorPanel" class="panel"><div class="emptyEditor"><div class="editorIcon">✎</div><h2>Sélectionne une tuile</h2><div>Son contenu et ses réglages apparaîtront ici.</div></div></section>
+    </div>
+  </main>
+  <script>
+    (function () {
+      'use strict';
+      var state = { catalog: window.AMIToolsData.getCatalog(), selectedId: null, dirty: false, user: null };
+      var $ = function (id) { return document.getElementById(id); };
+      var els = { save: $('saveBtn'), statusDot: $('statusDot'), statusText: $('statusText'), dirty: $('dirtyBadge'), message: $('message'), login: $('loginForm'), email: $('email'), password: $('password'), grid: $('tilesGrid'), editor: $('editorPanel') };
+      function uid() { return 'custom-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6); }
+      function clone(value) { return JSON.parse(JSON.stringify(value)); }
+      function tiles() { state.catalog.informationTiles = Array.isArray(state.catalog.informationTiles) ? state.catalog.informationTiles : []; return state.catalog.informationTiles; }
+      function selected() { return tiles().find(function (tile) { return tile.id === state.selectedId; }) || null; }
+      function setMessage(text, type) { els.message.textContent = text || ''; els.message.className = 'notice' + (type ? ' ' + type : '') + (text ? '' : ' hidden'); }
+      function dirty() { state.dirty = true; els.dirty.classList.remove('hidden'); els.save.disabled = !state.user; }
+      function field(labelText, value, onInput, options) {
+        var label = document.createElement('label'); label.appendChild(document.createTextNode(labelText));
+        var input = document.createElement(options && options.textarea ? 'textarea' : 'input'); input.value = value == null ? '' : value;
+        if (options && options.type) input.type = options.type;
+        input.addEventListener('input', function () { onInput(input.value); dirty(); if (!options || options.preview !== false) renderPreview(); });
+        label.appendChild(input); return label;
+      }
+      function check(text, checked, onChange) { var label=document.createElement('label'); label.className='check'; var input=document.createElement('input'); input.type='checkbox'; input.checked=checked!==false; input.addEventListener('change',function(){onChange(input.checked);dirty();renderPreview();}); label.appendChild(input); label.appendChild(document.createTextNode(text)); return label; }
+      function button(text, className, onClick) { var value=document.createElement('button'); value.type='button'; value.className=className; value.textContent=text; value.addEventListener('click',onClick); return value; }
+      function orderedTiles() { return tiles().slice().sort(function(a,b){return Number(a.sortOrder||0)-Number(b.sortOrder||0);}); }
+      function renderStatus() { var meta=window.AMIToolsData.getMetadata(); els.statusDot.classList.toggle('remote',meta.source==='remote'); els.statusText.textContent=(meta.source==='remote'?'Synchronisé avec la base en ligne':'Catalogue hors connexion')+(meta.revision?' · Révision '+meta.revision:''); els.login.classList.toggle('hidden',!!state.user); els.save.disabled=!state.user||!state.dirty; document.querySelectorAll('.saveAction').forEach(function(action){action.disabled=!state.user;}); }
+      function renderPreview() {
+        els.grid.innerHTML='';
+        orderedTiles().forEach(function(tile){ var card=button('', 'tile'+(tile.id===state.selectedId?' selected':'')+(tile.active===false?' inactive':''), function(){state.selectedId=tile.id;renderPreview();renderEditor();}); card.setAttribute('aria-label','Modifier '+(tile.title||'Information')); var icon=document.createElement('div'); icon.className='tileIcon'; icon.textContent=tile.icon||'+'; var title=document.createElement('div'); title.className='tileTitle'; title.textContent=tile.title||'Information'; card.appendChild(icon); card.appendChild(title); if(tile.active===false){var hidden=document.createElement('span');hidden.className='hiddenBadge';hidden.textContent='Masquée';card.appendChild(hidden);} els.grid.appendChild(card); });
+        var add=button('', 'tile addTile', addTile); add.setAttribute('aria-label','Ajouter une nouvelle tuile'); var addIcon=document.createElement('div');addIcon.className='tileIcon';addIcon.textContent='+';var addText=document.createElement('div');addText.className='tileTitle';addText.textContent='Ajouter une tuile';add.appendChild(addIcon);add.appendChild(addText);els.grid.appendChild(add);
+        renderStatus();
+      }
+      function addTile() { var order=orderedTiles(); var tile={id:uid(),kind:'custom',icon:'i',title:'Nouvelle information',pageTitle:'Nouvelle information',active:true,sortOrder:order.length?Number(order[order.length-1].sortOrder||0)+10:10,intro:'',blocks:[]}; tiles().push(tile); state.selectedId=tile.id; dirty(); renderPreview(); renderEditor(); }
+      function moveSelected(direction) { var list=orderedTiles(), index=list.findIndex(function(tile){return tile.id===state.selectedId;}); var target=index+direction; if(index<0||target<0||target>=list.length)return; var current=list[index];list[index]=list[target];list[target]=current;list.forEach(function(tile,i){tile.sortOrder=(i+1)*10;});dirty();renderPreview();renderEditor(); }
+      function removeSelected() { var tile=selected(); if(!tile||!confirm('Supprimer la tuile « '+(tile.title||'Information')+' » ?'))return; state.catalog.informationTiles=tiles().filter(function(item){return item.id!==tile.id;});state.selectedId=null;dirty();renderPreview();renderEditor(); }
+      function subSection(title, addText, onAdd) { var section=document.createElement('div');section.className='sub';var head=document.createElement('div');head.className='subHead';var heading=document.createElement('h3');heading.textContent=title;head.appendChild(heading);if(onAdd)head.appendChild(button(addText,'btn secondary small',onAdd));section.appendChild(head);var rows=document.createElement('div');rows.className='rows';section.appendChild(rows);return{section:section,rows:rows}; }
+      function row(fields, onDelete) { var box=document.createElement('div');box.className='row';var grid=document.createElement('div');grid.className='rowGrid';fields.forEach(function(item){grid.appendChild(item);});box.appendChild(grid);var actions=document.createElement('div');actions.className='rowActions';actions.appendChild(button('Supprimer','btn danger small',onDelete));box.appendChild(actions);return box; }
+      function renderEditor() {
+        var tile=selected(); els.editor.innerHTML=''; if(!tile){els.editor.innerHTML='<div class="emptyEditor"><div class="editorIcon">✎</div><h2>Sélectionne une tuile</h2><div>Son contenu et ses réglages apparaîtront ici.</div></div>';return;}
+        tile.items=Array.isArray(tile.items)?tile.items:[];tile.lines=Array.isArray(tile.lines)?tile.lines:[];tile.days=Array.isArray(tile.days)?tile.days:[];tile.contacts=Array.isArray(tile.contacts)?tile.contacts:[];tile.blocks=Array.isArray(tile.blocks)?tile.blocks:[];
+        var head=document.createElement('div');head.className='editorHead';var title=document.createElement('div');title.className='editorTitle';var icon=document.createElement('div');icon.className='editorIcon';icon.textContent=tile.icon||'+';var words=document.createElement('div');var heading=document.createElement('h2');heading.textContent=tile.title||'Information';var kind=document.createElement('div');kind.className='help';kind.textContent=tile.kind==='custom'?'Page personnalisée':'Page structurée';words.appendChild(heading);words.appendChild(kind);title.appendChild(icon);title.appendChild(words);head.appendChild(title);var arrows=document.createElement('div');arrows.className='actions';arrows.appendChild(button('↑','btn secondary small',function(){moveSelected(-1);}));arrows.appendChild(button('↓','btn secondary small',function(){moveSelected(1);}));head.appendChild(arrows);els.editor.appendChild(head);
+        var common=document.createElement('div');common.className='fieldGrid';common.appendChild(field('Icône',tile.icon,function(v){tile.icon=v.slice(0,2);icon.textContent=tile.icon||'+';}));common.appendChild(field('Titre de la tuile',tile.title,function(v){tile.title=v;heading.textContent=v||'Information';}));common.appendChild(field('Titre de la page',tile.pageTitle,function(v){tile.pageTitle=v;}));common.appendChild(check('Afficher cette tuile dans l’application',tile.active,function(v){tile.active=v;}));els.editor.appendChild(common);
+        if(tile.kind==='agencies') renderAgencies(tile); else if(tile.kind==='metros') renderMetros(tile); else if(tile.kind==='welcome') renderWelcome(tile); else if(tile.kind==='zones') renderZones(tile); else renderCustom(tile);
+        var footer=document.createElement('div');footer.className='editorFooter';footer.appendChild(button('Supprimer cette tuile','btn danger',removeSelected));var saveNow=button('Enregistrer maintenant','btn saveAction',save);saveNow.disabled=!state.user;footer.appendChild(saveNow);els.editor.appendChild(footer);
+      }
+      function renderAgencies(tile) { els.editor.appendChild(field('Note en bas de page',tile.footnote,function(v){tile.footnote=v;},{textarea:true,preview:false}));var section=subSection('Lieux et agences','+ Ajouter un lieu',function(){tile.items.push({name:'Nouveau lieu',subtitle:'',badge:'STAR',address:'',hours:'',services:''});dirty();renderEditor();});tile.items.forEach(function(item,index){section.rows.appendChild(row([field('Nom',item.name,function(v){item.name=v;},{preview:false}),field('Sous-titre',item.subtitle,function(v){item.subtitle=v;},{preview:false}),field('Badge',item.badge,function(v){item.badge=v;},{preview:false}),field('Adresse',item.address,function(v){item.address=v;},{textarea:true,preview:false}),field('Horaires',item.hours,function(v){item.hours=v;},{textarea:true,preview:false}),field('Services',item.services,function(v){item.services=v;},{textarea:true,preview:false})],function(){tile.items.splice(index,1);dirty();renderEditor();}));});els.editor.appendChild(section.section); }
+      function renderMetros(tile) { els.editor.appendChild(field('Message d’introduction',tile.note,function(v){tile.note=v;},{textarea:true,preview:false}));var section=subSection('Lignes de métro','+ Ajouter une ligne',function(){tile.lines.push({code:'',name:'Nouvelle ligne',color:'#3157d5',summary:'',access:'',details:[]});dirty();renderEditor();});tile.lines.forEach(function(line,lineIndex){line.details=Array.isArray(line.details)?line.details:[];var box=document.createElement('div');box.className='row';var grid=document.createElement('div');grid.className='rowGrid';grid.appendChild(field('Code',line.code,function(v){line.code=v.toUpperCase();},{preview:false}));grid.appendChild(field('Nom',line.name,function(v){line.name=v;},{preview:false}));grid.appendChild(field('Couleur',line.color,function(v){line.color=v;},{type:'color',preview:false}));grid.appendChild(field('Résumé',line.summary,function(v){line.summary=v;},{textarea:true,preview:false}));grid.appendChild(field('Accessibilité',line.access,function(v){line.access=v;},{textarea:true,preview:false}));box.appendChild(grid);var details=subSection('Détails et horaires','+ Ajouter un détail',function(){line.details.push({label:'Nouvel horaire',value:''});dirty();renderEditor();});line.details.forEach(function(detail,index){details.rows.appendChild(row([field('Libellé',detail.label,function(v){detail.label=v;},{preview:false}),field('Valeur',detail.value,function(v){detail.value=v;},{textarea:true,preview:false})],function(){line.details.splice(index,1);dirty();renderEditor();}));});box.appendChild(details.section);var actions=document.createElement('div');actions.className='rowActions';actions.appendChild(button('Supprimer la ligne','btn danger small',function(){tile.lines.splice(lineIndex,1);dirty();renderEditor();}));box.appendChild(actions);section.rows.appendChild(box);});els.editor.appendChild(section.section); }
+      function renderWelcome(tile) { els.editor.appendChild(field('Légende',tile.caption,function(v){tile.caption=v;},{textarea:true,preview:false}));var days=subSection('Horaires par jour','+ Ajouter un jour',function(){tile.days.push({day:'Nouveau jour',morning:'',appointment:false,afternoon:''});dirty();renderEditor();});tile.days.forEach(function(day,index){days.rows.appendChild(row([field('Jour',day.day,function(v){day.day=v;},{preview:false}),field('Matin',day.morning,function(v){day.morning=v;},{textarea:true,preview:false}),field('Après-midi',day.afternoon,function(v){day.afternoon=v;},{textarea:true,preview:false}),check('Matin sur rendez-vous',day.appointment,function(v){day.appointment=v;})],function(){tile.days.splice(index,1);dirty();renderEditor();}));});els.editor.appendChild(days.section);var contacts=subSection('Coordonnées','+ Ajouter une coordonnée',function(){tile.contacts.push({icon:'•',text:''});dirty();renderEditor();});tile.contacts.forEach(function(contact,index){contacts.rows.appendChild(row([field('Icône',contact.icon,function(v){contact.icon=v;},{preview:false}),field('Texte',contact.text,function(v){contact.text=v;},{textarea:true,preview:false})],function(){tile.contacts.splice(index,1);dirty();renderEditor();}));});els.editor.appendChild(contacts.section); }
+      function renderZones(tile) { els.editor.appendChild(field('Introduction',tile.intro,function(v){tile.intro=v;},{textarea:true,preview:false}));var note=document.createElement('div');note.className='help';note.style.marginTop='10px';note.textContent='Les cartes de zones sont générées automatiquement depuis les lignes de bus.';els.editor.appendChild(note); }
+      function renderCustom(tile) { els.editor.appendChild(field('Introduction',tile.intro,function(v){tile.intro=v;},{textarea:true,preview:false}));var section=subSection('Blocs de contenu','+ Ajouter un bloc',function(){tile.blocks.push({title:'Nouveau bloc',text:''});dirty();renderEditor();});tile.blocks.forEach(function(block,index){section.rows.appendChild(row([field('Titre',block.title,function(v){block.title=v;},{preview:false}),field('Texte',block.text,function(v){block.text=v;},{textarea:true,preview:false})],function(){tile.blocks.splice(index,1);dirty();renderEditor();}));});els.editor.appendChild(section.section); }
+      async function save() { setMessage('Enregistrement en cours…');els.save.disabled=true;try{state.catalog=await window.AMIToolsData.saveCatalog(state.catalog);state.dirty=false;els.dirty.classList.add('hidden');setMessage('Tuiles enregistrées. L’application va recevoir la modification.','success');renderPreview();renderEditor();}catch(error){setMessage(error.message||'Enregistrement impossible.','error');renderStatus();} }
+      els.login.addEventListener('submit',async function(event){event.preventDefault();setMessage('Connexion en cours…');try{await window.AMIToolsData.signIn(els.email.value.trim(),els.password.value);state.user=await window.AMIToolsData.getUser();els.password.value='';setMessage('Connexion réussie.','success');renderStatus();}catch(error){setMessage(error.message||'Connexion impossible.','error');}});
+      els.save.addEventListener('click',save);
+      window.addEventListener('beforeunload',function(event){if(state.dirty){event.preventDefault();event.returnValue='';}});
+      document.addEventListener('amitools:catalog-changed',function(event){if(!state.dirty&&event.detail&&event.detail.catalog){state.catalog=clone(event.detail.catalog);if(state.selectedId&&!selected())state.selectedId=null;renderPreview();renderEditor();}else renderStatus();});
+      window.AMIToolsData.ready.then(async function(){state.catalog=window.AMIToolsData.getCatalog();state.user=await window.AMIToolsData.getUser();renderPreview();renderEditor();});renderPreview();renderEditor();
+    })();
+  </script>
+</body>
+</html>

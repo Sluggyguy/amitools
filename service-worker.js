@@ -1,9 +1,10 @@
-const CACHE_NAME = 'amitools-shell-v5';
+const CACHE_NAME = 'amitools-shell-v6';
 const APP_SHELL = [
   './',
   './index.html',
   './referent.html',
   './admin.html',
+  './tiles-admin.html',
   './config.js',
   './js/network-data.js',
   './manifest.webmanifest',
