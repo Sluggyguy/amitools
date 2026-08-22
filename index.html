@@ -2036,6 +2036,7 @@
 
           <section class="ps-card">
             <h2 class="ps-sectionTitle">Nouvelle mission</h2>
+            <div class="ps-hidden" id="psSyncStatus" style="margin-bottom:10px; padding:10px 12px; border-radius:14px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; font-size:12px; font-weight:900;"></div>
             <div class="ps-hidden" id="psMissionSuccessMessage" style="margin-bottom:10px; padding:10px 12px; border-radius:14px; background:#ecfdf5; border:1px solid #a7f3d0; color:#166534; font-size:12px; font-weight:900;">Mission ajoutée avec succès</div>
             <div class="ps-grid">
               <div class="ps-field">
@@ -2926,6 +2927,7 @@
         tabFollowBtn: $('psTabFollowBtn'),
         toggleEditBtn: $('psToggleEditBtn'),
         editModeNote: $('psEditModeNote'),
+        syncStatus: $('psSyncStatus'),
         missionSuccessMessage: $('psMissionSuccessMessage'),
         commentEnabled: $('psCommentEnabled'),
         commentBox: $('psCommentBox'),
@@ -3484,9 +3486,36 @@
         if (target) target.classList.add('active');
       }
       function currentPauseEnd() { return els.pauseStart.value ? addMinutes(els.pauseStart.value, PAUSE_DURATION_MIN) : ''; }
+      function setOnlineSyncStatus(status, error) {
+        if (!els.syncStatus) return;
+        if (!status) {
+          els.syncStatus.classList.add('ps-hidden');
+          els.syncStatus.textContent = '';
+          return;
+        }
+        els.syncStatus.classList.remove('ps-hidden');
+        if (status === 'pending') {
+          els.syncStatus.textContent = 'Enregistrement en ligne…';
+          els.syncStatus.style.background = '#eff6ff';
+          els.syncStatus.style.borderColor = '#bfdbfe';
+          els.syncStatus.style.color = '#1d4ed8';
+        } else if (status === 'saved') {
+          els.syncStatus.textContent = 'Mission synchronisée en ligne';
+          els.syncStatus.style.background = '#ecfdf5';
+          els.syncStatus.style.borderColor = '#a7f3d0';
+          els.syncStatus.style.color = '#166534';
+        } else {
+          els.syncStatus.textContent = 'Synchronisation impossible : ' + (error && error.message ? error.message : 'vérifie la connexion internet.');
+          els.syncStatus.style.background = '#fef2f2';
+          els.syncStatus.style.borderColor = '#fecaca';
+          els.syncStatus.style.color = '#b91c1c';
+        }
+      }
       async function saveAppState() {
         const storage = safeLocalStorage();
-        if (!storage) return;
+        if (state.missions.length && !/^[0-9a-f]{64}$/.test(String(state.shareKey || ''))) {
+          state.shareKey = window.AMIToolsFieldTeams.ensureShareKey(state);
+        }
         const payload = {
           shareKey: state.shareKey || '',
           teamLabel: state.teamLabel || '',
@@ -3510,19 +3539,22 @@
         };
         const activeMediator = getCurrentMediatorSessionName();
         if (activeMediator) {
-          storage.setItem(STORAGE_KEY, JSON.stringify({
-            serviceDate: payload.serviceDate,
-            activeMediator,
-            savedAt: Date.now()
-          }));
+          if (storage) {
+            storage.setItem(STORAGE_KEY, JSON.stringify({
+              serviceDate: payload.serviceDate,
+              activeMediator,
+              savedAt: Date.now()
+            }));
+          }
           await writeSessionRecord(activeMediator, payload);
         }
         if (payload.shareKey) {
+          const fallbackTeamLabel = payload.members.length ? `Equipe · ${payload.members.join(', ')}` : 'Equipe terrain';
           window.AMIToolsFieldTeams.schedulePublish({
             ...payload,
-            label: payload.teamLabel || 'Equipe terrain',
+            label: payload.teamLabel || fallbackTeamLabel,
             comment: payload.validatedComment || payload.commentText || ''
-          }, 'mobile');
+          }, 'mobile', setOnlineSyncStatus);
         }
       }
       function clearSavedState(name) {
@@ -4398,7 +4430,14 @@
         return parsed;
       }
       async function applyParsedQrData(parsed) {
-        state.shareKey = /^[0-9a-f]{64}$/.test(String(parsed.shareKey || '')) ? parsed.shareKey : '';
+        const previousShareKey = state.shareKey;
+        const importedShareKey = /^[0-9a-f]{64}$/.test(String(parsed.shareKey || '')) ? parsed.shareKey : '';
+        if (importedShareKey && /^[0-9a-f]{64}$/.test(String(previousShareKey || '')) && importedShareKey !== previousShareKey) {
+          try {
+            await window.AMIToolsFieldTeams.archiveTeam({ shareKey: previousShareKey });
+          } catch (_) {}
+        }
+        state.shareKey = importedShareKey;
         state.teamLabel = String(parsed.teamLabel || '').trim();
         if (parsed.serviceDate) {
           els.serviceDate.value = parsed.serviceDate;
@@ -4777,6 +4816,7 @@
       function applyDefaultState() {
         const d = nowDate();
         const activeMediator = getStoredMediator();
+        setOnlineSyncStatus('');
         state.shareKey = '';
         state.teamLabel = '';
         state.members = [activeMediator];
@@ -5005,6 +5045,9 @@
       els.tabFormBtn.onclick = () => { stopLiveQrScan();
         showToolScreen('form'); saveAppState(); };
       els.tabFollowBtn.onclick = () => { showToolScreen('follow'); saveAppState(); };
+      window.addEventListener('online', () => {
+        if (state.missions.length) saveAppState();
+      });
       els.toggleEditBtn.onclick = () => { state.editMode = !state.editMode; renderMissions(); saveAppState(); };
       els.qrBtn.onclick = () => {
         clearQrStatus();
