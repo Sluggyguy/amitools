@@ -1103,6 +1103,78 @@
       gap: 6px;
     }
 
+    .ps-cabotageChoices {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .ps-cabotageChoice {
+      position: relative;
+      min-width: 0;
+      cursor: pointer;
+    }
+
+    .ps-cabotageChoice input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .ps-cabotageChoiceCard {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 9px;
+      border: 2px solid #d9deea;
+      border-radius: 14px;
+      background: #fff;
+      color: #111827;
+      font-size: 12px;
+      font-weight: 1000;
+      line-height: 1.1;
+      transition: border-color .12s ease, background .12s ease, color .12s ease, transform .12s ease;
+    }
+
+    .ps-cabotageModeBadge {
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+      background: #eef2f7;
+      color: #111827;
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
+    .ps-cabotageChoiceCheck {
+      margin-left: auto;
+      opacity: 0;
+      font-size: 15px;
+    }
+
+    .ps-cabotageChoice input:checked + .ps-cabotageChoiceCard {
+      border-color: #111827;
+      background: #111827;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 7px 15px rgba(15, 23, 42, .16);
+    }
+
+    .ps-cabotageChoice input:checked + .ps-cabotageChoiceCard .ps-cabotageModeBadge {
+      background: #fff;
+      color: #111827;
+    }
+
+    .ps-cabotageChoice input:checked + .ps-cabotageChoiceCard .ps-cabotageChoiceCheck { opacity: 1; }
+    .ps-cabotageChoice input:focus-visible + .ps-cabotageChoiceCard { outline: 3px solid #93c5fd; outline-offset: 2px; }
+
     .ps-chip {
       display: inline-flex;
       align-items: center;
@@ -2076,9 +2148,15 @@
                 <div style="height:8px"></div>
                 <input id="psOtherMissionCustom" type="text" placeholder="Ajouter une mission" />
               </div>
-              <div class="ps-field ps-hidden" id="psCabotageModeField">
-                <div class="ps-label">Cabotage</div>
-                <select id="psCabotageMode">
+              <div class="ps-field ps-full ps-hidden" id="psCabotageModeField">
+                <div class="ps-label">Transport du cabotage</div>
+                <div class="ps-cabotageChoices" id="psCabotageModeChoices" role="radiogroup" aria-label="Transport du cabotage">
+                  <label class="ps-cabotageChoice"><input type="radio" name="psCabotageModeChoice" value="metroA" /><span class="ps-cabotageChoiceCard"><span class="ps-cabotageModeBadge">A</span><span>Métro A</span><span class="ps-cabotageChoiceCheck" aria-hidden="true">✓</span></span></label>
+                  <label class="ps-cabotageChoice"><input type="radio" name="psCabotageModeChoice" value="metroB" /><span class="ps-cabotageChoiceCard"><span class="ps-cabotageModeBadge">B</span><span>Métro B</span><span class="ps-cabotageChoiceCheck" aria-hidden="true">✓</span></span></label>
+                  <label class="ps-cabotageChoice"><input type="radio" name="psCabotageModeChoice" value="bus" /><span class="ps-cabotageChoiceCard"><span class="ps-cabotageModeBadge">BUS</span><span>Bus</span><span class="ps-cabotageChoiceCheck" aria-hidden="true">✓</span></span></label>
+                  <label class="ps-cabotageChoice"><input type="radio" name="psCabotageModeChoice" value="busMetro" /><span class="ps-cabotageChoiceCard"><span class="ps-cabotageModeBadge">BM</span><span>Bus métropolitain</span><span class="ps-cabotageChoiceCheck" aria-hidden="true">✓</span></span></label>
+                </div>
+                <select id="psCabotageMode" class="ps-hidden" tabindex="-1" aria-hidden="true">
                   <option value="">Choisir</option>
                   <option value="metroA">Métro A</option>
                   <option value="metroB">Métro B</option>
@@ -2880,6 +2958,7 @@
         pauseStart: $('psPauseStart'),
         cabotageModeField: $('psCabotageModeField'),
         cabotageMode: $('psCabotageMode'),
+        cabotageModeChoices: $('psCabotageModeChoices'),
         cabotageSectorField: $('psCabotageSectorField'),
         cabotageSector: $('psCabotageSector'),
         specialHoursField: $('psSpecialHoursField'),
@@ -3772,6 +3851,12 @@
           btn.className = `ps-btn ps-small ${isActive ? '' : 'ps-secondary'}`;
         });
       }
+      function syncCabotageModeChoices() {
+        if (!els.cabotageModeChoices) return;
+        els.cabotageModeChoices.querySelectorAll('input[name="psCabotageModeChoice"]').forEach((input) => {
+          input.checked = input.value === els.cabotageMode.value;
+        });
+      }
       function updateMissionFields() {
         els.busZoneField.classList.add('ps-hidden');
         els.busLineField.classList.add('ps-hidden');
@@ -3807,6 +3892,8 @@
         const isTacOrGuide = selectedOther === 'TAC' || selectedOther === 'STAR me guide';
         const isKnownOtherMission = ['RDS', 'TAC', 'STAR me guide', 'SNCF'].includes(selectedOther);
         const isCustomOtherMission = isOther && !!selectedOther && !isKnownOtherMission;
+
+        syncCabotageModeChoices();
 
         if (isOther && els.otherMissionField) {
           els.otherMissionField.classList.remove('ps-hidden');
@@ -3878,9 +3965,6 @@
         } else if (isBusMetro) {
           els.missionLineField.classList.remove('ps-hidden');
           els.missionPlace.value = '';
-        } else {
-          els.missionPlaceField.classList.remove('ps-hidden');
-          els.missionLineField.classList.remove('ps-hidden');
         }
       }
       function fillBusZoneOptions() {
@@ -4957,7 +5041,8 @@
         saveAppState();
       };
       els.missionStart.oninput = () => { saveAppState(); };
-      els.cabotageMode.onchange = () => {
+      function onCabotageModeChange() {
+        syncCabotageModeChoices();
         fillCabotageSectorOptions();
         els.cabotageSector.value = '';
         els.missionPlace.value = '';
@@ -4967,7 +5052,17 @@
         els.missionLine.value = '';
         updateMissionFields();
         saveAppState();
-      };
+      }
+      els.cabotageMode.onchange = onCabotageModeChange;
+      if (els.cabotageModeChoices) {
+        els.cabotageModeChoices.querySelectorAll('input[name="psCabotageModeChoice"]').forEach((input) => {
+          input.onchange = () => {
+            if (!input.checked) return;
+            els.cabotageMode.value = input.value;
+            onCabotageModeChange();
+          };
+        });
+      }
       els.busZoneSelect.onchange = () => {
         const busLines = [els.busLineSelect.value, els.busLineSelectSecondary ? els.busLineSelectSecondary.value : ''].filter(Boolean).join(' + ');
         els.missionLine.value = [busLines, els.busZoneSelect.value].filter(Boolean).join(' · ');
@@ -5244,6 +5339,8 @@
         fillCabotageSectorOptions();
         updateMissionFields();
         assert(!els.cabotageModeField.classList.contains('ps-hidden'), 'cabotage mode visible');
+        assert(els.cabotageModeChoices.querySelectorAll('input[name="psCabotageModeChoice"]').length === 4, 'quatre raccourcis cabotage visibles');
+        assert(els.cabotageModeChoices.querySelector('input[value="metroA"]').checked, 'raccourci métro A synchronisé');
         assert(!els.cabotageSectorField.classList.contains('ps-hidden'), 'metro sector visible');
         assert(els.missionPlaceField.classList.contains('ps-hidden'), 'place field hidden for metro cabotage');
         assert(els.missionLineField.classList.contains('ps-hidden'), 'line field hidden for metro cabotage');

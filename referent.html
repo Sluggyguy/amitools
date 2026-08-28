@@ -244,6 +244,82 @@
       flex-wrap: wrap;
     }
 
+    .cabotageChoices {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .cabotageChoice {
+      position: relative;
+      min-width: 0;
+      cursor: pointer;
+    }
+
+    .cabotageChoice input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .cabotageChoiceCard {
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 8px;
+      border: 2px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 1000;
+      line-height: 1.1;
+      transition: border-color .12s ease, background .12s ease, color .12s ease, transform .12s ease;
+    }
+
+    .cabotageModeBadge {
+      width: 26px;
+      height: 26px;
+      flex: 0 0 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: #eef2f7;
+      color: #111827;
+      font-size: 10px;
+      font-weight: 1000;
+    }
+
+    .cabotageChoiceCheck {
+      margin-left: auto;
+      opacity: 0;
+      font-size: 14px;
+    }
+
+    .cabotageChoice input:checked + .cabotageChoiceCard {
+      border-color: #111827;
+      background: #111827;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 7px 15px rgba(15, 23, 42, .14);
+    }
+
+    .cabotageChoice input:checked + .cabotageChoiceCard .cabotageModeBadge {
+      background: #fff;
+      color: #111827;
+    }
+
+    .cabotageChoice input:checked + .cabotageChoiceCard .cabotageChoiceCheck { opacity: 1; }
+    .cabotageChoice input:focus-visible + .cabotageChoiceCard { outline: 3px solid #93c5fd; outline-offset: 2px; }
+
+    @media (max-width: 760px) {
+      .cabotageChoices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
     .chip {
       display: inline-flex;
       align-items: center;
@@ -754,9 +830,15 @@
               </select>
               <input id="otherMissionCustom" class="hidden" type="text" placeholder="Nom de la mission" />
             </div>
-            <div class="field hidden" id="cabotageModeField">
-              <label class="small" for="cabotageMode">Cabotage</label>
-              <select id="cabotageMode">
+            <div class="field full hidden" id="cabotageModeField">
+              <label class="small">Transport du cabotage</label>
+              <div class="cabotageChoices" id="cabotageModeChoices" role="radiogroup" aria-label="Transport du cabotage">
+                <label class="cabotageChoice"><input type="radio" name="cabotageModeChoice" value="metroA" /><span class="cabotageChoiceCard"><span class="cabotageModeBadge">A</span><span>Métro A</span><span class="cabotageChoiceCheck" aria-hidden="true">✓</span></span></label>
+                <label class="cabotageChoice"><input type="radio" name="cabotageModeChoice" value="metroB" /><span class="cabotageChoiceCard"><span class="cabotageModeBadge">B</span><span>Métro B</span><span class="cabotageChoiceCheck" aria-hidden="true">✓</span></span></label>
+                <label class="cabotageChoice"><input type="radio" name="cabotageModeChoice" value="bus" /><span class="cabotageChoiceCard"><span class="cabotageModeBadge">BUS</span><span>Bus</span><span class="cabotageChoiceCheck" aria-hidden="true">✓</span></span></label>
+                <label class="cabotageChoice"><input type="radio" name="cabotageModeChoice" value="busMetro" /><span class="cabotageChoiceCard"><span class="cabotageModeBadge">BM</span><span>Bus métropolitain</span><span class="cabotageChoiceCheck" aria-hidden="true">✓</span></span></label>
+              </div>
+              <select id="cabotageMode" class="hidden" tabindex="-1" aria-hidden="true">
                 <option value="">Choisir</option>
                 <option value="metroA">Métro A</option>
                 <option value="metroB">Métro B</option>
@@ -956,7 +1038,7 @@
         specialStart: $('specialStart'), specialEnd: $('specialEnd'), phoneNumber: $('phoneNumber'), kizeoNumber: $('kizeoNumber'),
         phoneAssignedTo: $('phoneAssignedTo'), pauseStart: $('pauseStart'), memberInput: $('memberInput'), addMemberBtn: $('addMemberBtn'),
         membersList: $('membersList'), memberSelector: $('memberSelector'), missionStart: $('missionStart'), missionEnd: $('missionEnd'),
-        missionType: $('missionType'), otherMissionField: $('otherMissionField'), otherMissionSelect: $('otherMissionSelect'), otherMissionCustom: $('otherMissionCustom'), cabotageModeField: $('cabotageModeField'), cabotageMode: $('cabotageMode'),
+        missionType: $('missionType'), otherMissionField: $('otherMissionField'), otherMissionSelect: $('otherMissionSelect'), otherMissionCustom: $('otherMissionCustom'), cabotageModeField: $('cabotageModeField'), cabotageMode: $('cabotageMode'), cabotageModeChoices: $('cabotageModeChoices'),
         cabotageSectorField: $('cabotageSectorField'), cabotageSector: $('cabotageSector'), missionPlaceField: $('missionPlaceField'),
         missionPlace: $('missionPlace'), missionPapSelect: $('missionPapSelect'), missionBoardingSelect: $('missionBoardingSelect'),
         boardingSchoolInline: $('boardingSchoolInline'), boardingSchoolToggle: $('boardingSchoolToggle'), missionPlaceSelect: $('missionPlaceSelect'),
@@ -1253,6 +1335,13 @@
         if (zones.indexOf(previous) !== -1) els.busZoneSelect.value = previous;
       }
 
+      function syncCabotageModeChoices() {
+        if (!els.cabotageModeChoices) return;
+        els.cabotageModeChoices.querySelectorAll('input[name="cabotageModeChoice"]').forEach(function (input) {
+          input.checked = input.value === els.cabotageMode.value;
+        });
+      }
+
       function updateSlotUi() {
         var team = getActiveTeam();
         var isSpe = team && team.serviceSlot === 'SPE';
@@ -1274,6 +1363,8 @@
         var isBoarding = type === 'Embarquement';
         var isSncf = type === 'SNCF' || (type === 'Autre' && els.otherMissionSelect && els.otherMissionSelect.value === 'SNCF');
         var mode;
+
+        syncCabotageModeChoices();
 
         if (els.otherMissionField) els.otherMissionField.classList.toggle('hidden', !isOther);
         if (els.otherMissionCustom) els.otherMissionCustom.classList.toggle('hidden', !(isOther && els.otherMissionSelect && els.otherMissionSelect.value === 'Ajouter une mission'));
@@ -1955,7 +2046,26 @@
         el.addEventListener('change', function () { syncFormToActiveTeam(); updateSlotUi(); buildExport(); resetMissionForm(); });
       });
 
-      els.cabotageMode.onchange = function () { updateMissionFields(); };
+      function onCabotageModeChange() {
+        syncCabotageModeChoices();
+        els.cabotageSector.value = '';
+        els.missionPlace.value = '';
+        els.busLineSelect.value = '';
+        if (els.busLine2Select) els.busLine2Select.value = '';
+        els.busZoneSelect.value = '';
+        els.missionLine.value = '';
+        updateMissionFields();
+      }
+      els.cabotageMode.onchange = onCabotageModeChange;
+      if (els.cabotageModeChoices) {
+        els.cabotageModeChoices.querySelectorAll('input[name="cabotageModeChoice"]').forEach(function (input) {
+          input.onchange = function () {
+            if (!input.checked) return;
+            els.cabotageMode.value = input.value;
+            onCabotageModeChange();
+          };
+        });
+      }
       els.missionType.onchange = function () { updateMissionFields(); };
       if (els.otherMissionSelect) els.otherMissionSelect.onchange = function () { updateMissionFields(); };
       if (els.otherMissionCustom) els.otherMissionCustom.addEventListener('input', function () {});
