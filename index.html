@@ -1532,6 +1532,48 @@
       flex-wrap: wrap;
     }
 
+    .ps-cabotageTiming {
+      margin-top: 8px;
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+
+    .ps-cabotageTimingTitle {
+      margin-bottom: 6px;
+      color: #475569;
+      font-size: 10px;
+      font-weight: 1000;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .ps-cabotageTimingGrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .ps-cabotageTimingItem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 6px 7px;
+      border-radius: 9px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .ps-cabotageTimingItem strong {
+      color: #111827;
+      font-size: 11px;
+    }
+
     .ps-inlineAction {
       margin-top: 0;
       display: inline-flex;
@@ -2441,6 +2483,8 @@
         <ul id="rList"></ul>
       </div>
 
+      <button class="btn primaryAction full hidden" id="btnApplyCabotageToMission">Ajouter les horaires au suivi de mission</button>
+
       <div class="footerActions">
         <button class="btn secondary footerBtn" id="btnNewCalc">Recalculer</button>
         <button class="btn secondary footerBtn followBackBtn hidden" id="btnMissionReturn">Retour</button>
@@ -2467,6 +2511,7 @@
       let durationMinutes = 60;
       let includeTravel = false;
       let cabotageMissionReturnTarget = null;
+      let cabotageMissionContext = null;
       const TRAVEL_SECONDS = 210;
       const CABOTAGE_STORAGE_KEY = 'amistar-cabotage-state-v1';
       const ACTIVE_MEDIATOR_STORAGE_KEY = 'amistar-active-mediator-v1';
@@ -2522,6 +2567,7 @@
         newCalc: $('btnNewCalc'),
         menuBtn: $('btnMenu'),
         missionReturnBtn: $('btnMissionReturn'),
+        missionApplyBtn: $('btnApplyCabotageToMission'),
         logoutBtn: $('btnLogout'),
         weatherWidget: $('weatherWidget'),
         weatherIcon: $('weatherIcon'),
@@ -2539,6 +2585,7 @@
 
       function pad(n) { return String(n).padStart(2, '0'); }
       function fmt(d) { return `${pad(d.getHours())}h${pad(d.getMinutes())}`; }
+      function fmtHHMM(d) { return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
       function addM(d, m) { return new Date(d.getTime() + m * 60000); }
       function addS(d, s) { return new Date(d.getTime() + s * 1000); }
       function minutesFromHHMM(v) {
@@ -2696,11 +2743,29 @@
         return { end: depTimes[depTimes.length - 1], dwellMins, depTimes, arrTimesDisplay };
       }
 
+      function buildMissionTimingPayload() {
+        if (!cabotageMissionContext || !cabotageMissionContext.missionId || !startDate) return null;
+        const { dwellMins, depTimes, arrTimesDisplay } = compute();
+        const stationNames = Array.isArray(cabotageMissionContext.stations) ? cabotageMissionContext.stations : [];
+        return {
+          missionId: cabotageMissionContext.missionId,
+          includeTravel,
+          dwellMinutes: Math.round(dwellMins * 10) / 10,
+          stations: depTimes.map((dep, index) => ({
+            name: stationNames[index] || `Station ${index + 1}`,
+            arrival: fmtHHMM(arrTimesDisplay[index]),
+            departure: fmtHHMM(dep)
+          }))
+        };
+      }
+
       function updateResultUI() {
         if (!startDate) return;
         if (els.menuBtn) els.menuBtn.classList.toggle('hidden', !!cabotageMissionReturnTarget);
         if (els.missionReturnBtn) els.missionReturnBtn.classList.toggle('hidden', !cabotageMissionReturnTarget);
+        if (els.missionApplyBtn) els.missionApplyBtn.classList.toggle('hidden', !(cabotageMissionContext && cabotageMissionContext.missionId));
         const { end, dwellMins, depTimes, arrTimesDisplay } = compute();
+        const stationNames = cabotageMissionContext && Array.isArray(cabotageMissionContext.stations) ? cabotageMissionContext.stations : [];
         els.rStart.textContent = fmt(startDate);
         els.rEnd.textContent = fmt(end);
         els.rStations.textContent = String(stationsCount);
@@ -2709,7 +2774,7 @@
         els.rList.innerHTML = '';
         depTimes.forEach((dep, i) => {
           const li = document.createElement('li');
-          li.textContent = `Station ${i + 1} → Arrivée ${fmt(arrTimesDisplay[i])} | Départ ${fmt(dep)}`;
+          li.textContent = `${stationNames[i] || `Station ${i + 1}`} → Arrivée ${fmt(arrTimesDisplay[i])} | Départ ${fmt(dep)}`;
           els.rList.appendChild(li);
         });
       }
@@ -2749,6 +2814,7 @@
         durationMinutes = 60;
         includeTravel = false;
         cabotageMissionReturnTarget = null;
+        cabotageMissionContext = null;
         renderSetup();
         currentMediatorSessionName = '';
         window.__amistarCurrentMediatorSessionName = '';
@@ -2764,6 +2830,7 @@
 
       wire(els.tileCabotage, () => {
         cabotageMissionReturnTarget = null;
+        cabotageMissionContext = null;
         loadCabotageState();
         setStations(stationsCount);
         if (!startDate) {
@@ -2780,7 +2847,11 @@
       wire(els.backAccueilBtn, () => show('menu'), 'btnBackAccueil');
       wire(els.backZonesBtn, () => show('menu'), 'btnBackZones');
       wire(els.backInformationBtn, () => show('menu'), 'btnBackInformation');
-      wire(els.backSetupMenuBtn, () => show('menu'), 'btnBackSetupMenu');
+      wire(els.backSetupMenuBtn, () => {
+        cabotageMissionReturnTarget = null;
+        cabotageMissionContext = null;
+        show('menu');
+      }, 'btnBackSetupMenu');
       wire(els.backPriseServiceBtn, () => show('menu'), 'btnBackPriseService');
       wire(els.backTetrisBtn, () => {
         if (els.tetrisFrame) {
@@ -2808,7 +2879,11 @@
       wire(els.st4, () => setStations(4), 'st4');
       wire(els.calcBtn, () => { if (!startDate) return; updateResultUI(); show('result'); }, 'btnCalculate');
       wire(els.newCalc, () => { setStations(stationsCount); show('setup'); }, 'btnNewCalc');
-      wire(els.menuBtn, () => { cabotageMissionReturnTarget = null; show('menu'); }, 'btnMenu');
+      wire(els.menuBtn, () => {
+        cabotageMissionReturnTarget = null;
+        cabotageMissionContext = null;
+        show('menu');
+      }, 'btnMenu');
       wire(els.missionReturnBtn, () => {
         if (cabotageMissionReturnTarget === 'priseServiceFollow') {
           const tabBtn = document.getElementById('psTabFollowBtn');
@@ -2818,7 +2893,18 @@
           show('setup');
         }
         cabotageMissionReturnTarget = null;
+        cabotageMissionContext = null;
       }, 'btnMissionReturn');
+      wire(els.missionApplyBtn, () => {
+        const timing = buildMissionTimingPayload();
+        if (!timing || typeof window.applyCabotageTimingToMission !== 'function') return;
+        if (!window.applyCabotageTimingToMission(timing)) return;
+        const tabBtn = document.getElementById('psTabFollowBtn');
+        if (tabBtn) tabBtn.click();
+        show('priseService');
+        cabotageMissionReturnTarget = null;
+        cabotageMissionContext = null;
+      }, 'btnApplyCabotageToMission');
 
       window.openCabotageFromMission = function openCabotageFromMission(payload) {
         assert(payload && payload.start && payload.end, 'Mission cabotage invalide');
@@ -2829,6 +2915,10 @@
         durationMinutes = Math.max(5, durationBetweenHHMM(payload.start, payload.end));
         if (typeof payload.includeTravel === 'boolean') includeTravel = payload.includeTravel;
         cabotageMissionReturnTarget = payload.returnTarget || 'priseServiceFollow';
+        cabotageMissionContext = {
+          missionId: payload.missionId || null,
+          stations: Array.isArray(payload.stations) ? payload.stations.slice(0, stationsCount) : []
+        };
         setStations(stationsCount);
         renderSetup();
         updateResultUI();
@@ -4139,15 +4229,11 @@
         if (item.isPause) subParts.push('Pause automatique de 20 minutes');
         return subParts.join(' • ') || '—';
       }
-      function getCabotageStationCount(item) {
-        if (!item || item.type !== 'Cabotage') return 0;
-        if (!(item.cabMode === 'metroA' || item.cabMode === 'metroB')) return 0;
+      function getCabotageStations(item) {
+        if (!item || item.type !== 'Cabotage') return [];
+        if (!(item.cabMode === 'metroA' || item.cabMode === 'metroB')) return [];
         const raw = String(item.place || '').trim();
-        if (!raw) return 0;
-
-        if (raw === 'CAB sud HFR : GCL - JCA') {
-          return 4;
-        }
+        if (!raw) return [];
 
         const parts = raw.split(':');
         const leftPart = (parts[0] || '').trim();
@@ -4160,12 +4246,51 @@
           .map((v) => v.trim())
           .filter(Boolean);
 
-        return (firstStation ? 1 : 0) + otherStations.length;
+        const stations = [firstStation, ...otherStations].filter(Boolean);
+        if (/^CAB sud HFR\s*:\s*GCL\s*-\s*JCA$/i.test(raw) && stations.length === 3) stations.push('HFR');
+        return stations;
+      }
+      function getCabotageStationCount(item) {
+        const stations = getCabotageStations(item);
+        return Array.isArray(stations) ? stations.length : 0;
+      }
+      function escapeFollowHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
+      }
+      function buildCabotageTimingHtml(item) {
+        const timing = item && item.cabotageTiming;
+        const stations = timing && Array.isArray(timing.stations) ? timing.stations : [];
+        if (!stations.length) return '';
+        const rows = stations.map((station) => {
+          const name = escapeFollowHtml(station && station.name || 'Station');
+          const arrival = escapeFollowHtml(station && station.arrival || '--:--');
+          const departure = escapeFollowHtml(station && station.departure || '--:--');
+          return `<div class="ps-cabotageTimingItem"><strong>${name}</strong><span>${arrival} → ${departure}</span></div>`;
+        }).join('');
+        const travelLabel = timing.includeTravel ? ' · trajet métro inclus' : '';
+        return `<div class="ps-cabotageTiming"><div class="ps-cabotageTimingTitle">Horaires des stations${travelLabel}</div><div class="ps-cabotageTimingGrid">${rows}</div></div>`;
       }
       function canSendToCabotage(item) {
         const count = getCabotageStationCount(item);
         return !!item && item.type === 'Cabotage' && (item.cabMode === 'metroA' || item.cabMode === 'metroB') && count >= 2 && count <= 4;
       }
+      window.applyCabotageTimingToMission = function applyCabotageTimingToMission(timing) {
+        const mission = state.missions.find((item) => String(item.id) === String(timing && timing.missionId));
+        const stations = timing && Array.isArray(timing.stations) ? timing.stations : [];
+        if (!mission || !canSendToCabotage(mission) || !stations.length) return false;
+        mission.cabotageTiming = {
+          includeTravel: !!timing.includeTravel,
+          dwellMinutes: Number(timing.dwellMinutes || 0),
+          stations: stations.map((station) => ({
+            name: String(station && station.name || 'Station'),
+            arrival: String(station && station.arrival || ''),
+            departure: String(station && station.departure || '')
+          }))
+        };
+        renderMissions();
+        saveAppState();
+        return true;
+      };
       function getFollowMissionClasses(item) {
         const classes = ['ps-followMission'];
         if (item.isPause) classes.push('ps-pauseMission');
@@ -4670,6 +4795,7 @@
                 <div class="ps-followMain">
                   <div class="ps-followTitle">${buildFollowTitle(item)}${showBusInfoBtn ? ` <button class="ps-btn ps-secondary ps-small ps-inlineAction" data-open-bus-info="1" aria-label="Afficher le détail de zone BUS" title="Afficher le détail de zone BUS">ℹ️</button>` : ''}</div>
                   <div class="ps-followSub">${buildFollowSub(item)}${showCabBtn ? ` <button class="ps-btn ps-secondary ps-small ps-inlineAction" data-open-cabotage="1" aria-label="Ouvrir Cabotage calculator" title="Ouvrir Cabotage calculator">🕒</button>` : ''}</div>
+                  ${buildCabotageTimingHtml(item)}
                   ${!item.isPause && state.editMode ? `<div class="ps-row" style="margin-top:6px; gap:6px;"><button class="ps-btn ps-secondary ps-small" data-edit-mission-id="${item.id || ''}">Modifier</button><button class="ps-btn ps-danger ps-small" data-delete-mission-id="${item.id || ''}">Supprimer</button></div>` : ''}
                 </div>
               </div>
@@ -4688,10 +4814,12 @@
                 openBtn.onclick = () => {
                   if (typeof window.openCabotageFromMission === 'function') {
                     window.openCabotageFromMission({
+                      missionId: item.id,
                       start: item.start,
                       end: item.end,
                       stationsCount: stationCount,
-                      includeTravel: false,
+                      stations: getCabotageStations(item),
+                      includeTravel: !!(item.cabotageTiming && item.cabotageTiming.includeTravel),
                       returnTarget: 'priseServiceFollow'
                     });
                   }
