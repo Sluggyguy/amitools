@@ -2654,8 +2654,8 @@
       async function fetchWeather() {
         if (!els.weatherWidget || !els.weatherIcon || !els.weatherText) return;
         try {
-          const lat = 48.1113;
-          const lon = -1.6800;
+          const lat = 48.0695;
+          const lon = -1.7348;
           const cacheBuster = Date.now();
           const url = `https://api.open-meteo.com/v1/meteofrance?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,cloud_cover,cloud_cover_low&timezone=Europe%2FParis&_=${cacheBuster}`;
           const response = await fetch(url, { cache: 'no-store' });
@@ -2663,7 +2663,12 @@
           const data = await response.json();
           const current = data.current;
           if (!current) throw new Error('missing current weather');
-          const temp = Math.round(current.temperature_2m);
+          const rawTemp = Number(current.temperature_2m);
+          if (!Number.isFinite(rawTemp)) throw new Error('invalid temperature');
+          const temp = rawTemp.toLocaleString('fr-FR', {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1
+          });
           const isDay = Number(current.is_day) === 1;
           const ui = weatherCodeToUi(current.weather_code, isDay, current.cloud_cover, current.cloud_cover_low);
           els.weatherIcon.textContent = ui.icon;
